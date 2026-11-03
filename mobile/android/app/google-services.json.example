@@ -1,0 +1,24 @@
+{
+  "_comment": "PLACEHOLDER ONLY — Copy your real google-services.json generated from the Firebase Console for package 'com.naseebak.app' to mobile/android/app/google-services.json before building for Android devices.",
+  "project_info": {
+    "project_number": "YOUR_FIREBASE_PROJECT_NUMBER",
+    "project_id": "YOUR_FIREBASE_PROJECT_ID",
+    "storage_bucket": "YOUR_FIREBASE_STORAGE_BUCKET"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:YOUR_PROJECT_NUMBER:android:YOUR_APP_ID",
+        "android_client_info": {
+          "package_name": "com.naseebak.app"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "YOUR_ANDROID_FIREBASE_API_KEY"
+        }
+      ]
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,17 @@
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+  errors:
+    deprecated_member_use: ignore
+    unnecessary_brace_in_string_interps: ignore
+    prefer_const_declarations: ignore
+
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    prefer_const_constructors: true
+    prefer_const_literals_to_create_immutables: true
+    avoid_print: true
+    use_key_in_widget_constructors: true

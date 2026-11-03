@@ -1,0 +1,123 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../matchmaking/presentation/screens/matchmaking_requests_screen.dart';
+import '../../../messaging/data/services/realtime_messaging_service.dart';
+import '../../../messaging/presentation/screens/conversations_screen.dart';
+import '../../../notifications/data/services/notification_navigation_service.dart';
+import '../../../notifications/data/services/push_notification_service.dart';
+import '../../../notifications/presentation/providers/notification_provider.dart';
+import '../../../profile/presentation/screens/my_profile_screen.dart';
+import 'discovery_home_screen.dart';
+
+/// Main Authenticated Shell with 4 Bottom Navigation Tabs (RTL):
+/// 1. اكتشف -> Opens DiscoveryHomeScreen (Screen 07)
+/// 2. الطلبات -> Opens MatchmakingRequestsScreen (Screen 13)
+/// 3. الرسائل -> Opens ConversationsScreen (Screen 24)
+/// 4. حسابي -> Opens MyProfileScreen (Screen 18)
+class HomeDiscoveryPlaceholderScreen extends ConsumerStatefulWidget {
+  const HomeDiscoveryPlaceholderScreen({super.key});
+
+  @override
+  ConsumerState<HomeDiscoveryPlaceholderScreen> createState() =>
+      _HomeDiscoveryPlaceholderScreenState();
+}
+
+class _HomeDiscoveryPlaceholderScreenState
+    extends ConsumerState<HomeDiscoveryPlaceholderScreen> {
+  int _selectedIndex = 0;
+  StreamSubscription<IncomingPushPayload>? _notificationTapSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId = ref.read(authControllerProvider).user?.id;
+      if (userId != null && userId > 0) {
+        ref.read(realtimeMessagingServiceProvider).connectForUser(userId);
+      }
+      ref
+          .read(notificationProvider.notifier)
+          .initializeForAuthenticatedUser();
+
+      _notificationTapSubscription?.cancel();
+      _notificationTapSubscription = ref
+          .read(pushNotificationServiceProvider)
+          .notificationTapStream
+          .listen((payload) {
+        if (!mounted) return;
+        final notifId = payload.notificationId;
+        if (notifId != null && notifId > 0) {
+          ref
+              .read(notificationProvider.notifier)
+              .markNotificationAsRead(notifId);
+        }
+        NotificationNavigationService.navigateFromPushPayload(
+          context: context,
+          ref: ref,
+          payload: payload,
+        );
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _notificationTapSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.backgroundPrimary,
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          DiscoveryHomeScreen(
+            onOpenMyProfileTab: () => setState(() => _selectedIndex = 3),
+          ),
+          const MatchmakingRequestsScreen(),
+          const ConversationsScreen(),
+          const MyProfileScreen(),
+        ],
+      ),
+      bottomNavigationBar: NavigationBar(
+        backgroundColor: AppColors.backgroundPrimary,
+        indicatorColor: AppColors.surfaceSubtleBlue,
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (index) {
+          setState(() => _selectedIndex = index);
+        },
+        destinations: const [
+          NavigationDestination(
+            key: Key('bottom_nav_discover_tab'),
+            icon: Icon(Icons.explore_outlined),
+            selectedIcon: Icon(Icons.explore, color: AppColors.primaryBlue),
+            label: 'اكتشف',
+          ),
+          NavigationDestination(
+            key: Key('bottom_nav_requests_tab'),
+            icon: Icon(Icons.favorite_border_rounded),
+            selectedIcon: Icon(Icons.favorite, color: AppColors.primaryBlue),
+            label: 'الطلبات',
+          ),
+          NavigationDestination(
+            key: Key('bottom_nav_messages_tab'),
+            icon: Icon(Icons.chat_bubble_outline_rounded),
+            selectedIcon: Icon(Icons.chat_bubble, color: AppColors.primaryBlue),
+            label: 'الرسائل',
+          ),
+          NavigationDestination(
+            key: Key('bottom_nav_my_profile_tab'),
+            icon: Icon(Icons.person_outline_rounded),
+            selectedIcon: Icon(Icons.person, color: AppColors.primaryBlue),
+            label: 'حسابي',
+          ),
+        ],
+      ),
+    );
+  }
+}

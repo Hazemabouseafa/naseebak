@@ -1,0 +1,254 @@
+# ==============================================================================
+# Naseebak (نصيبك) — Isolated Coolify Production Docker Compose Stack
+# Target Environment: Shared Ubuntu VPS (4 GB RAM, 50 GB Disk)
+# Resource Budget Cap: <= 1,248 MB total across all Naseebak containers
+# ==============================================================================
+
+services:
+  naseebak-postgres:
+    image: postgres:16.4-alpine
+    container_name: naseebak-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-naseebak_prod}
+      POSTGRES_USER: ${DB_USERNAME:-naseebak_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in Coolify secrets}
+      TZ: UTC
+      PGTZ: UTC
+    command: >
+      postgres
+      -c shared_buffers=128MB
+      -c effective_cache_size=256MB
+      -c work_mem=4MB
+      -c maintenance_work_mem=32MB
+      -c max_connections=60
+      -c timezone=UTC
+      -c log_timezone=UTC
+    volumes:
+      - naseebak_pgdata:/var/lib/postgresql/data
+    networks:
+      - naseebak_internal
+    # SECURITY: Never expose 5432 to the public host interface
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+          cpus: "0.75"
+
+  naseebak-api:
+    build:
+      context: ../..
+      dockerfile: backend/Dockerfile
+    image: naseebak/backend:${IMAGE_TAG:-v1.0.0}
+    container_name: naseebak-api
+    restart: unless-stopped
+    depends_on:
+      naseebak-postgres:
+        condition: service_healthy
+    environment:
+      CONTAINER_ROLE: app
+      APP_NAME: "نصيبك - Naseebak"
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${APP_KEY:?APP_KEY must be set in Coolify secrets}
+      APP_URL: ${APP_URL:?APP_URL must be set}
+      APP_TIMEZONE: UTC
+      APP_LOCALE: ar
+      LOG_CHANNEL: daily
+      LOG_LEVEL: warning
+      DB_CONNECTION: pgsql
+      DB_HOST: naseebak-postgres
+      DB_PORT: "5432"
+      DB_DATABASE: ${DB_DATABASE:-naseebak_prod}
+      DB_USERNAME: ${DB_USERNAME:-naseebak_user}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+      FILESYSTEM_DISK: private
+      PRIVATE_STORAGE_ROOT: /var/www/html/storage/app/private
+      QUEUE_CONNECTION: database
+      CACHE_STORE: database
+      SESSION_DRIVER: database
+      SESSION_LIFETIME: "120"
+      SESSION_ENCRYPT: "true"
+      SESSION_SECURE_COOKIE: "true"
+      SESSION_HTTP_ONLY: "true"
+      SESSION_SAME_SITE: lax
+      TRUSTED_PROXIES: "*"
+      BROADCAST_CONNECTION: reverb
+      REVERB_APP_ID: ${REVERB_APP_ID:?REVERB_APP_ID must be set}
+      REVERB_APP_KEY: ${REVERB_APP_KEY:?REVERB_APP_KEY must be set}
+      REVERB_APP_SECRET: ${REVERB_APP_SECRET:?REVERB_APP_SECRET must be set}
+      REVERB_HOST: naseebak-reverb
+      REVERB_PORT: "8081"
+      REVERB_SCHEME: http
+      GOOGLE_ANDROID_CLIENT_ID: ${GOOGLE_ANDROID_CLIENT_ID:-}
+      GOOGLE_WEB_CLIENT_ID: ${GOOGLE_WEB_CLIENT_ID:-}
+      GOOGLE_PLAY_PACKAGE_NAME: com.naseebak.app
+      GOOGLE_PLAY_MONTHLY_SUBSCRIPTION_ID: ${GOOGLE_PLAY_MONTHLY_SUBSCRIPTION_ID:-naseebak_monthly_membership}
+      GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_PATH: ${GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_PATH:-}
+      GOOGLE_PLAY_RTDN_OIDC_AUDIENCE: ${GOOGLE_PLAY_RTDN_OIDC_AUDIENCE:-}
+      GOOGLE_PLAY_RTDN_SERVICE_ACCOUNT_EMAIL: ${GOOGLE_PLAY_RTDN_SERVICE_ACCOUNT_EMAIL:-}
+      FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
+      FCM_SERVICE_ACCOUNT_JSON_PATH: ${FCM_SERVICE_ACCOUNT_JSON_PATH:-}
+      PAYMOB_API_KEY: ${PAYMOB_API_KEY:-}
+      PAYMOB_SECRET_KEY: ${PAYMOB_SECRET_KEY:-}
+      PAYMOB_PUBLIC_KEY: ${PAYMOB_PUBLIC_KEY:-}
+      PAYMOB_HMAC_SECRET: ${PAYMOB_HMAC_SECRET:-}
+      PAYMOB_INTEGRATION_ID_CARD: ${PAYMOB_INTEGRATION_ID_CARD:-}
+      PAYMOB_IFRAME_ID: ${PAYMOB_IFRAME_ID:-}
+      SHA7NAWY_API_KEY: ${SHA7NAWY_API_KEY:-}
+      SHA7NAWY_MERCHANT_ID: ${SHA7NAWY_MERCHANT_ID:-}
+      SHA7NAWY_WEBHOOK_SECRET: ${SHA7NAWY_WEBHOOK_SECRET:-}
+    volumes:
+      # Mount ONLY storage/app/private so private photos survive redeployments without masking source code
+      - naseebak_private_photos:/var/www/html/storage/app/private
+      - naseebak_backups:/var/www/html/storage/app/backups
+    networks:
+      - naseebak_internal
+      - coolify
+    expose:
+      - "8080"
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+          cpus: "0.75"
+
+  naseebak-worker:
+    image: naseebak/backend:${IMAGE_TAG:-v1.0.0}
+    container_name: naseebak-worker
+    restart: unless-stopped
+    depends_on:
+      naseebak-postgres:
+        condition: service_healthy
+      naseebak-api:
+        condition: service_started
+    environment:
+      CONTAINER_ROLE: worker
+      APP_NAME: "نصيبك - Naseebak"
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${APP_KEY}
+      APP_URL: ${APP_URL}
+      DB_CONNECTION: pgsql
+      DB_HOST: naseebak-postgres
+      DB_PORT: "5432"
+      DB_DATABASE: ${DB_DATABASE:-naseebak_prod}
+      DB_USERNAME: ${DB_USERNAME:-naseebak_user}
+      DB_PASSWORD: ${DB_PASSWORD}
+      FILESYSTEM_DISK: private
+      PRIVATE_STORAGE_ROOT: /var/www/html/storage/app/private
+      QUEUE_CONNECTION: database
+      CACHE_STORE: database
+      BROADCAST_CONNECTION: reverb
+      REVERB_APP_ID: ${REVERB_APP_ID}
+      REVERB_APP_KEY: ${REVERB_APP_KEY}
+      REVERB_APP_SECRET: ${REVERB_APP_SECRET}
+      REVERB_HOST: naseebak-reverb
+      REVERB_PORT: "8081"
+      REVERB_SCHEME: http
+      FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
+      FCM_SERVICE_ACCOUNT_JSON_PATH: ${FCM_SERVICE_ACCOUNT_JSON_PATH:-}
+      GOOGLE_PLAY_PACKAGE_NAME: com.naseebak.app
+      GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_PATH: ${GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_PATH:-}
+    volumes:
+      - naseebak_private_photos:/var/www/html/storage/app/private
+    networks:
+      - naseebak_internal
+    deploy:
+      resources:
+        limits:
+          memory: 192M
+          cpus: "0.35"
+
+  naseebak-reverb:
+    image: naseebak/backend:${IMAGE_TAG:-v1.0.0}
+    container_name: naseebak-reverb
+    restart: unless-stopped
+    depends_on:
+      naseebak-postgres:
+        condition: service_healthy
+    environment:
+      CONTAINER_ROLE: reverb
+      APP_NAME: "نصيبك - Naseebak"
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${APP_KEY}
+      APP_URL: ${APP_URL}
+      DB_CONNECTION: pgsql
+      DB_HOST: naseebak-postgres
+      DB_PORT: "5432"
+      DB_DATABASE: ${DB_DATABASE:-naseebak_prod}
+      DB_USERNAME: ${DB_USERNAME:-naseebak_user}
+      DB_PASSWORD: ${DB_PASSWORD}
+      BROADCAST_CONNECTION: reverb
+      REVERB_APP_ID: ${REVERB_APP_ID}
+      REVERB_APP_KEY: ${REVERB_APP_KEY}
+      REVERB_APP_SECRET: ${REVERB_APP_SECRET}
+      REVERB_SERVER_HOST: 0.0.0.0
+      REVERB_SERVER_PORT: "8081"
+      REVERB_HOST: ${REVERB_PUBLIC_HOST:?REVERB_PUBLIC_HOST must be set}
+      REVERB_PORT: "443"
+      REVERB_SCHEME: https
+    networks:
+      - naseebak_internal
+      - coolify
+    expose:
+      - "8081"
+    deploy:
+      resources:
+        limits:
+          memory: 160M
+          cpus: "0.35"
+
+  naseebak-scheduler:
+    image: naseebak/backend:${IMAGE_TAG:-v1.0.0}
+    container_name: naseebak-scheduler
+    restart: unless-stopped
+    depends_on:
+      naseebak-postgres:
+        condition: service_healthy
+    environment:
+      CONTAINER_ROLE: scheduler
+      APP_NAME: "نصيبك - Naseebak"
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${APP_KEY}
+      APP_URL: ${APP_URL}
+      DB_CONNECTION: pgsql
+      DB_HOST: naseebak-postgres
+      DB_PORT: "5432"
+      DB_DATABASE: ${DB_DATABASE:-naseebak_prod}
+      DB_USERNAME: ${DB_USERNAME:-naseebak_user}
+      DB_PASSWORD: ${DB_PASSWORD}
+      QUEUE_CONNECTION: database
+      CACHE_STORE: database
+    networks:
+      - naseebak_internal
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.20"
+
+volumes:
+  naseebak_pgdata:
+    name: naseebak_pgdata
+  naseebak_private_photos:
+    name: naseebak_private_photos
+  naseebak_backups:
+    name: naseebak_backups
+
+networks:
+  naseebak_internal:
+    name: naseebak_internal
+    driver: bridge
+    internal: false
+  coolify:
+    external: true

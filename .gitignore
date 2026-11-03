@@ -1,0 +1,69 @@
+# ==============================================================================
+# Naseebak (نصيبك) — Root Monorepo .gitignore (Strict Secret & Build Exclusion)
+# ==============================================================================
+
+# 1. Environment & Secret Configuration Files (NEVER COMMIT)
+.env
+.env.*
+!.env.example
+!.env.production.example
+!.env.staging.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+!backend/.env.production.example
+!backend/.env.staging.example
+
+# 2. Cloud Credentials, Service Accounts, Certificates & Keys (NEVER COMMIT)
+*service-account*.json
+*firebase-adminsdk*.json
+google-services.json
+GoogleService-Info.plist
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+key.properties
+id_rsa*
+id_ed25519*
+
+# 3. Private User Data, Backups & Runtime Storage (NEVER COMMIT)
+backend/storage/app/private/member-photos/*
+!backend/storage/app/private/member-photos/.gitkeep
+backend/storage/app/backups/*
+!backend/storage/app/backups/.gitkeep
+backend/storage/logs/*.log
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/database/*.sqlite
+*.dump
+*.sql
+*.sql.gz
+*.tar.gz
+*.enc
+
+# 4. Dependencies & Build Artifacts
+/backend/vendor/
+/backend/node_modules/
+/backend/bootstrap/cache/*.php
+/backend/.phpunit.result.cache
+/mobile/.dart_tool/
+/mobile/build/
+/mobile/.flutter-plugins
+/mobile/.flutter-plugins-dependencies
+/mobile/android/.gradle/
+/mobile/android/local.properties
+/mobile/android/app/debug/
+/mobile/android/app/profile/
+/mobile/android/app/release/
+
+# 5. OS & Editor Files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
