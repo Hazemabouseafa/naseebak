@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/design_system/naseebak_design_system.dart';
 import '../providers/discovery_provider.dart';
-import '../widgets/member_card.dart';
 import 'advanced_search_screen.dart';
 import 'member_profile_screen.dart';
 
-/// 09. Search Results Screen (نتائج البحث)
+/// 09. Search Results Screen (نتائج البحث — تصميم Astra)
 /// تعرض نتائج البحث المفلترة على خادم PostgreSQL مع:
 /// - شرائح الفلاتر النشطة القابلة للإزالة (Removable Chips)
 /// - خيارات الترتيب المحددة مسبقاً (الأحدث انضماماً، العمر تصاعدياً، العمر تنازلياً)
-/// - التحميل التدريجي (Pagination: 20 عضو في الصفحة) مع منع الطلبات المكررة
-/// - حالات التحميل الأولي، تحميل الصفحات، عدم وجود نتائج، خطأ الاتصال، ونهاية النتائج.
+/// - التحميل التدريجي (Pagination: 20 عضو في الصفحة) مع بطاقات Astra الفاخرة.
 class SearchResultsScreen extends ConsumerStatefulWidget {
   const SearchResultsScreen({super.key});
 
@@ -68,14 +66,10 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
     final activeChips = state.filters.activeFilterChips;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 19),
-          onPressed: () => Navigator.of(context).pop(),
-          tooltip: 'رجوع',
-        ),
-        title: const Text('نتائج البحث'),
+      backgroundColor: AppColors.softBackground,
+      appBar: NaseebakAppBar(
+        title: 'نتائج البحث',
+        onBack: () => Navigator.of(context).pop(),
         actions: [
           IconButton(
             key: const Key('results_modify_filters_btn'),
@@ -83,35 +77,46 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
             onPressed: _openFilterEditor,
             icon: const Icon(
               Icons.tune_rounded,
-              color: AppColors.primaryBlue,
+              color: AppColors.primaryNavy,
             ),
           ),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: AppColors.borderLight),
-        ),
       ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 1. Top Summary & Sort Selector Bar (Matching Mockup Screen 07)
+            // 1. Top Summary & Sort Selector Bar
             Container(
-              padding: const EdgeInsets.fromLTRB(18, 12, 18, 10),
-              color: AppColors.backgroundPrimary,
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 12),
+              decoration: BoxDecoration(
+                color: AppColors.cardWhite,
+                border: const Border(
+                  bottom: BorderSide(color: AppColors.subtleBorder),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryNavy.withOpacity(0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        '${state.totalMatching} ملفًا مطابقًا لمعاييرك',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
+                      Flexible(
+                        child: Text(
+                          '${state.totalMatching} ملفًا مطابقًا لمعاييرك',
+                          style: const TextStyle(
+                            fontFamily: NaseebakTypography.fontFamily,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                       ),
                       PopupMenuButton<String>(
@@ -138,12 +143,15 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                         ],
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
+                            horizontal: 12,
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.surfaceSubtleBlue,
-                            borderRadius: BorderRadius.circular(8),
+                            color: AppColors.creamHighlight,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: AppColors.goldAccent.withOpacity(0.5),
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -155,16 +163,17 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                                   _ => 'الأحدث انضمامًا',
                                 },
                                 style: const TextStyle(
-                                  fontSize: 11.5,
+                                  fontFamily: NaseebakTypography.fontFamily,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.primaryBlue,
+                                  color: AppColors.primaryNavy,
                                 ),
                               ),
                               const SizedBox(width: 4),
                               const Icon(
                                 Icons.keyboard_arrow_down_rounded,
-                                size: 16,
-                                color: AppColors.primaryBlue,
+                                size: 17,
+                                color: AppColors.primaryNavy,
                               ),
                             ],
                           ),
@@ -186,15 +195,18 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                               key: Key('active_filter_chip_${chip.key}'),
                               label: Text(chip.labelAr),
                               labelStyle: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.primaryBlue,
+                                fontFamily: NaseebakTypography.fontFamily,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primaryNavy,
                               ),
-                              backgroundColor: AppColors.surfaceSubtleBlue,
-                              deleteIconColor: AppColors.primaryBlue,
-                              side: BorderSide.none,
+                              backgroundColor: AppColors.softBackground,
+                              deleteIconColor: AppColors.primaryNavy,
+                              side: const BorderSide(
+                                color: AppColors.subtleBorder,
+                              ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
+                                borderRadius: BorderRadius.circular(20),
                               ),
                               onDeleted: () {
                                 ref
@@ -210,7 +222,6 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                 ],
               ),
             ),
-            const Divider(height: 1, color: AppColors.borderLight),
 
             // 3. Results Body: Initial Loading / Error / Empty / Paginated List
             Expanded(
@@ -222,13 +233,14 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           CircularProgressIndicator(
-                            color: AppColors.primaryBlue,
+                            color: AppColors.primaryNavy,
                           ),
                           SizedBox(height: 14),
                           Text(
                             'جارٍ البحث عن الأعضاء المطابقين...',
                             style: TextStyle(
-                              fontSize: 13,
+                              fontFamily: NaseebakTypography.fontFamily,
+                              fontSize: 13.5,
                               fontWeight: FontWeight.w600,
                               color: AppColors.textSecondary,
                             ),
@@ -242,92 +254,59 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                       state.searchResults.isEmpty) {
                     return Padding(
                       padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Icon(
-                            Icons.error_outline_rounded,
-                            size: 46,
-                            color: AppColors.error,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            state.searchError!,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-                          ElevatedButton(
+                      child: Center(
+                        child: NaseebakEmptyState(
+                          icon: Icons.error_outline_rounded,
+                          title: state.searchError!,
+                          subtitle:
+                              'حدث تعذر أثناء تحميل النتائج، يرجى المحاولة مرة أخرى.',
+                          actionButton: NaseebakPrimaryButton(
+                            label: 'إعادة المحاولة',
                             onPressed: () {
                               ref
                                   .read(discoveryProvider.notifier)
                                   .executeSearch(savePreferences: false);
                             },
-                            child: const Text('إعادة المحاولة'),
                           ),
-                        ],
+                        ),
                       ),
                     );
                   }
 
                   if (state.searchResults.isEmpty) {
                     return Padding(
-                      padding: const EdgeInsets.all(26),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Icon(
-                            Icons.person_search_outlined,
-                            size: 52,
-                            color: AppColors.primaryBlue,
-                          ),
-                          const SizedBox(height: 14),
-                          const Text(
-                            'لم نجد أعضاء مطابقين لمعايير البحث الحالية.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary,
+                      padding: const EdgeInsets.all(24),
+                      child: Center(
+                        child: NaseebakEmptyState(
+                          icon: Icons.person_search_outlined,
+                          title: 'لم نجد أعضاء مطابقين لمعايير البحث الحالية.',
+                          subtitle:
+                              'جرّب تخفيف بعض القيود مثل الفئة العمرية أو المنطقة للوصول إلى نتائج أوسع.',
+                          actionButton: NaseebakPrimaryButton(
+                            buttonKey:
+                                const Key('empty_results_modify_search_btn'),
+                            icon: const Icon(
+                              Icons.tune_rounded,
+                              size: 19,
+                              color: AppColors.goldAccent,
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'جرّب تخفيف بعض القيود مثل الفئة العمرية أو المنطقة للوصول إلى نتائج أوسع.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              color: AppColors.textSecondary,
-                              height: 1.7,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          ElevatedButton.icon(
-                            key: const Key('empty_results_modify_search_btn'),
+                            label: 'تعديل البحث',
                             onPressed: _openFilterEditor,
-                            icon: const Icon(Icons.tune_rounded, size: 19),
-                            label: const Text('تعديل البحث'),
                           ),
-                        ],
+                        ),
                       ),
                     );
                   }
 
                   return ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 26),
                     itemCount: state.searchResults.length + 1,
                     itemBuilder: (context, index) {
                       if (index < state.searchResults.length) {
                         final member = state.searchResults[index];
                         return Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.only(bottom: 14),
                           child: MemberCard(
                             member: member,
                             onTapViewProfile: () =>
@@ -355,7 +334,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                           padding: EdgeInsets.symmetric(vertical: 18),
                           child: Center(
                             child: CircularProgressIndicator(
-                              color: AppColors.primaryBlue,
+                              color: AppColors.primaryNavy,
                             ),
                           ),
                         );
@@ -367,7 +346,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: AppColors.error.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(11),
+                            borderRadius: BorderRadius.circular(14),
                           ),
                           child: Row(
                             children: [
@@ -375,6 +354,7 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                                 child: Text(
                                   state.paginationError!,
                                   style: const TextStyle(
+                                    fontFamily: NaseebakTypography.fontFamily,
                                     fontSize: 12,
                                     color: AppColors.error,
                                     fontWeight: FontWeight.w600,
@@ -397,26 +377,30 @@ class _SearchResultsScreenState extends ConsumerState<SearchResultsScreen> {
                       if (!state.hasMorePages) {
                         return Container(
                           margin: const EdgeInsets.only(top: 10),
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: AppColors.backgroundSecondary,
-                            borderRadius: BorderRadius.circular(11),
+                            color: AppColors.cardWhite,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.subtleBorder),
                           ),
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
                                 Icons.verified_user_outlined,
-                                size: 16,
-                                color: AppColors.primaryBlue,
+                                size: 17,
+                                color: AppColors.primaryNavy,
                               ),
                               SizedBox(width: 8),
-                              Text(
-                                'تم عرض جميع الملفات المطابقة والمسموح بنشرها.',
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textSecondary,
+                              Flexible(
+                                child: Text(
+                                  'تم عرض جميع الملفات المطابقة والمسموح بنشرها.',
+                                  style: TextStyle(
+                                    fontFamily: NaseebakTypography.fontFamily,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textSecondary,
+                                  ),
                                 ),
                               ),
                             ],

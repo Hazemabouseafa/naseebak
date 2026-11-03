@@ -54,7 +54,7 @@ class IncomingPushPayload {
       eventId: (data['event_id'] as String?) ?? (message.messageId ?? ''),
       notificationId: int.tryParse('${data['notification_id'] ?? ''}'),
       eventType: (data['event_type'] as String?) ?? 'admin_announcement',
-      titleAr: notif?.title ?? (data['title_ar'] as String?) ?? 'نصيبك',
+      titleAr: notif?.title ?? (data['title_ar'] as String?) ?? 'نَصِيبُكَ',
       bodyAr: notif?.body ?? (data['body_ar'] as String?) ?? 'لديك إشعار جديد',
       actionRoute: (data['action_route'] as String?) ?? 'notification_center',
       routingMetadata: {
@@ -127,7 +127,7 @@ class PushNotificationService {
     AndroidNotificationChannel(
       'matchmaking_requests',
       'طلبات التعارف',
-      description: 'إشعارات طلبات التعارف الجديدة والمقبولة في نصيبك',
+      description: 'إشعارات طلبات التعارف الجديدة والمقبولة في نَصِيبُكَ',
       importance: Importance.high,
     ),
     AndroidNotificationChannel(
@@ -145,7 +145,7 @@ class PushNotificationService {
     AndroidNotificationChannel(
       'announcements',
       'الإعلانات العامة',
-      description: 'التنبيهات والإعلانات الإدارية العامة من منصة نصيبك',
+      description: 'التنبيهات والإعلانات الإدارية العامة من منصة نَصِيبُكَ',
       importance: Importance.defaultImportance,
     ),
   ];

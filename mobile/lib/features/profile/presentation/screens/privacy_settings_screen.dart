@@ -135,7 +135,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      'تُحفظ صورتك في مساحة خاصة محمية على خادم نصيبك، ولا يتم عرضها إلا للفئة التي تحددها هنا:',
+                      'تُحفظ صورتك في مساحة خاصة محمية على خادم نَصِيبُكَ، ولا يتم عرضها إلا للفئة التي تحددها هنا:',
                       style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
@@ -197,7 +197,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
                           SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              'تُطبّق هذه الإعدادات فوراً على خادم نصيبك، ويُمنع الأعضاء المحظورون أو الموقوفون من الوصول إلى ملفك أو صورك بشكل قاطع.',
+                              'تُطبّق هذه الإعدادات فوراً على خادم نَصِيبُكَ، ويُمنع الأعضاء المحظورون أو الموقوفون من الوصول إلى ملفك أو صورك بشكل قاطع.',
                               style: TextStyle(
                                 fontSize: 11.5,
                                 color: AppColors.textSecondary,

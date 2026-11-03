@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/design_system/naseebak_design_system.dart';
 import '../../../profile/presentation/widgets/step_progress_header.dart';
 import '../../data/models/search_preferences_model.dart';
 import '../providers/discovery_provider.dart';
 import 'search_results_screen.dart';
 
-/// 08. Advanced Search Screen (مواصفات شريك حياتك)
-/// تدعم الفلاتر المطلوبة: النوع، الفئة العمرية (>= 18)، الحالة الاجتماعية (اختيار واحد أو متعدد)،
-/// المؤهل الدراسي، التدخين (غير مدخن / مدخن / الكل)، المهنة، الجنسية، بلد الإقامة، والمنطقة.
-/// تحفظ التفضيلات في PostgreSQL وتنفذ البحث بالكامل على الخادم.
+/// 08. Advanced Search Screen (مواصفات شريك حياتك — تصميم Astra)
+/// بطاقات فلاتر مقسمة بوضوح: النوع، الفئة العمرية (>= 18)، الحالة الاجتماعية،
+/// المؤهل الدراسي، التدخين، المهنة، الجنسية، بلد الإقامة، والمنطقة.
 class AdvancedSearchScreen extends ConsumerStatefulWidget {
   final bool openedFromResults;
 
@@ -127,18 +126,10 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
           };
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 19),
-          onPressed: () => Navigator.of(context).pop(),
-          tooltip: 'رجوع',
-        ),
-        title: const Text('مواصفات شريك حياتك'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: AppColors.borderLight),
-        ),
+      backgroundColor: AppColors.softBackground,
+      appBar: NaseebakAppBar(
+        title: 'مواصفات شريك حياتك',
+        onBack: () => Navigator.of(context).pop(),
       ),
       body: SafeArea(
         child: Column(
@@ -146,17 +137,18 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
           children: [
             if (_localValidationError != null)
               Container(
-                margin: const EdgeInsets.fromLTRB(18, 12, 18, 0),
+                margin: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: AppColors.error.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(11),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: AppColors.error.withOpacity(0.4)),
                 ),
                 child: Text(
                   _localValidationError!,
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontFamily: NaseebakTypography.fontFamily,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w700,
                     color: AppColors.error,
                   ),
@@ -164,52 +156,60 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
               ),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
-                      'حدّد أولوياتك للوصول إلى نتائج أقرب لما تبحث عنه.',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 1. Gender
-                    const _SearchLabel('أبحث عن'),
-                    NaseebakSegmentedControl<String>(
-                      options: const {
-                        'male': 'ذكر',
-                        'female': 'أنثى',
-                      },
-                      selectedValue: _draftFilters.gender ?? 'male',
-                      onChanged: (val) => setState(() {
-                        _draftFilters = _draftFilters.copyWith(gender: val);
-                      }),
-                    ),
-                    const SizedBox(height: 18),
-
-                    // 2. Age Range (>= 18 and minAge <= maxAge)
-                    const _SearchLabel('الفئة العمرية (18 سنة فأكثر)'),
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.backgroundSecondary,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.borderLight),
-                      ),
+                    // Group 1: Basic Criteria Card
+                    NaseebakInfoCard(
+                      title: 'المواصفات الأساسية',
+                      icon: Icons.person_search_outlined,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Text(
-                            'من ${_draftFilters.minAge} إلى ${_draftFilters.maxAge} سنة',
-                            style: const TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.primaryBlue,
-                            ),
+                          const _SearchLabel('أبحث عن'),
+                          NaseebakSegmentedControl<String>(
+                            options: const {
+                              'male': 'ذكر',
+                              'female': 'أنثى',
+                            },
+                            selectedValue: _draftFilters.gender ?? 'male',
+                            onChanged: (val) => setState(() {
+                              _draftFilters =
+                                  _draftFilters.copyWith(gender: val);
+                            }),
+                          ),
+                          const SizedBox(height: 18),
+
+                          // Age Range (>= 18)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Flexible(
+                                child: _SearchLabel(
+                                  'الفئة العمرية (18 سنة فأكثر)',
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.creamHighlight,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  'من ${_draftFilters.minAge} إلى ${_draftFilters.maxAge} سنة',
+                                  style: const TextStyle(
+                                    fontFamily: NaseebakTypography.fontFamily,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primaryNavy,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           RangeSlider(
                             values: RangeValues(
@@ -219,7 +219,8 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                             min: 18,
                             max: 85,
                             divisions: 67,
-                            activeColor: AppColors.primaryBlue,
+                            activeColor: AppColors.primaryNavy,
+                            inactiveColor: AppColors.subtleBorder,
                             labels: RangeLabels(
                               '${_draftFilters.minAge}',
                               '${_draftFilters.maxAge}',
@@ -233,195 +234,223 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                               });
                             },
                           ),
+                          const SizedBox(height: 10),
+
+                          // Marital Status (Multi-select)
+                          const _SearchLabel(
+                            'الحالة الاجتماعية (يمكن اختيار أكثر من حالة)',
+                          ),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: maritalOptions.entries.map((entry) {
+                              final isSelected = _draftFilters.maritalStatuses
+                                  .contains(entry.key);
+                              return FilterChip(
+                                key: Key('search_marital_${entry.key}'),
+                                label: Text(entry.value),
+                                selected: isSelected,
+                                selectedColor: AppColors.primaryNavy,
+                                backgroundColor: AppColors.softBackground,
+                                checkmarkColor: AppColors.goldAccent,
+                                labelStyle: TextStyle(
+                                  fontFamily: NaseebakTypography.fontFamily,
+                                  fontSize: 13,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : AppColors.textPrimary,
+                                ),
+                                onSelected: (selected) {
+                                  final updated = List<String>.from(
+                                    _draftFilters.maritalStatuses,
+                                  );
+                                  if (selected) {
+                                    updated.add(entry.key);
+                                  } else {
+                                    updated.remove(entry.key);
+                                  }
+                                  setState(() {
+                                    _draftFilters = _draftFilters.copyWith(
+                                      maritalStatuses: updated,
+                                    );
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 16),
 
-                    // 3. Marital Status (Multi-select supported)
-                    const _SearchLabel(
-                      'الحالة الاجتماعية (يمكن اختيار أكثر من حالة)',
-                    ),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: maritalOptions.entries.map((entry) {
-                        final isSelected = _draftFilters.maritalStatuses
-                            .contains(entry.key);
-                        return FilterChip(
-                          key: Key('search_marital_${entry.key}'),
-                          label: Text(entry.value),
-                          selected: isSelected,
-                          selectedColor: AppColors.surfaceSubtleBlue,
-                          checkmarkColor: AppColors.primaryBlue,
-                          labelStyle: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: isSelected
-                                ? FontWeight.w800
-                                : FontWeight.w600,
-                            color: isSelected
-                                ? AppColors.primaryBlue
-                                : AppColors.textSecondary,
+                    // Group 2: Education, Occupation & Lifestyle Card
+                    NaseebakInfoCard(
+                      title: 'المؤهل والمهنة وأسلوب الحياة',
+                      icon: Icons.school_outlined,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const _SearchLabel('المؤهل الدراسي'),
+                          DropdownButtonFormField<String?>(
+                            value: _draftFilters.educationLevel,
+                            items: const [
+                              DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text('جميع المؤهلات الدراسية'),
+                              ),
+                              DropdownMenuItem<String?>(
+                                value: 'bachelor',
+                                child: Text('بكالوريوس / ليسانس'),
+                              ),
+                              DropdownMenuItem<String?>(
+                                value: 'master',
+                                child: Text('ماجستير'),
+                              ),
+                              DropdownMenuItem<String?>(
+                                value: 'doctorate',
+                                child: Text('دكتوراه'),
+                              ),
+                              DropdownMenuItem<String?>(
+                                value: 'diploma',
+                                child: Text('دبلوم متوسط / فوق متوسط'),
+                              ),
+                              DropdownMenuItem<String?>(
+                                value: 'high_school',
+                                child: Text('ثانوية عامة أو ما يعادلها'),
+                              ),
+                              DropdownMenuItem<String?>(
+                                value: 'other',
+                                child: Text('مؤهل آخر'),
+                              ),
+                            ],
+                            onChanged: (val) => setState(() {
+                              if (val == null) {
+                                _draftFilters = _draftFilters.copyWith(
+                                  clearEducation: true,
+                                );
+                              } else {
+                                _draftFilters = _draftFilters.copyWith(
+                                  educationLevel: val,
+                                );
+                              }
+                            }),
                           ),
-                          onSelected: (selected) {
-                            final updated = List<String>.from(
-                              _draftFilters.maritalStatuses,
-                            );
-                            if (selected) {
-                              updated.add(entry.key);
-                            } else {
-                              updated.remove(entry.key);
-                            }
-                            setState(() {
-                              _draftFilters = _draftFilters.copyWith(
-                                maritalStatuses: updated,
-                              );
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 18),
+                          const SizedBox(height: 16),
 
-                    // 4. Educational Qualification
-                    const _SearchLabel('المؤهل الدراسي'),
-                    DropdownButtonFormField<String?>(
-                      value: _draftFilters.educationLevel,
-                      items: const [
-                        DropdownMenuItem<String?>(
-                          value: null,
-                          child: Text('جميع المؤهلات الدراسية'),
-                        ),
-                        DropdownMenuItem<String?>(
-                          value: 'bachelor',
-                          child: Text('بكالوريوس / ليسانس'),
-                        ),
-                        DropdownMenuItem<String?>(
-                          value: 'master',
-                          child: Text('ماجستير'),
-                        ),
-                        DropdownMenuItem<String?>(
-                          value: 'doctorate',
-                          child: Text('دكتوراه'),
-                        ),
-                        DropdownMenuItem<String?>(
-                          value: 'diploma',
-                          child: Text('دبلوم متوسط / فوق متوسط'),
-                        ),
-                        DropdownMenuItem<String?>(
-                          value: 'high_school',
-                          child: Text('ثانوية عامة أو ما يعادلها'),
-                        ),
-                        DropdownMenuItem<String?>(
-                          value: 'other',
-                          child: Text('مؤهل آخر'),
-                        ),
-                      ],
-                      onChanged: (val) => setState(() {
-                        if (val == null) {
-                          _draftFilters =
-                              _draftFilters.copyWith(clearEducation: true);
-                        } else {
-                          _draftFilters =
-                              _draftFilters.copyWith(educationLevel: val);
-                        }
-                      }),
-                    ),
-                    const SizedBox(height: 18),
+                          const _SearchLabel('المهنة / العمل'),
+                          TextField(
+                            key: const Key('search_occupation_input'),
+                            controller: _occupationController,
+                            decoration: const InputDecoration(
+                              hintText:
+                                  'أي مهنة (مثال: مهندس، طبيب، محاسب...)',
+                            ),
+                            onChanged: (val) => setState(() {
+                              _draftFilters =
+                                  _draftFilters.copyWith(occupation: val);
+                            }),
+                          ),
+                          const SizedBox(height: 16),
 
-                    // 5. Smoking Status
-                    const _SearchLabel('التدخين'),
-                    NaseebakSegmentedControl<String>(
-                      options: const {
-                        'all': 'الكل',
-                        'non_smoker': 'غير مدخن',
-                        'smoker': 'مدخن',
-                      },
-                      selectedValue: _draftFilters.smokingStatus ?? 'all',
-                      onChanged: (val) => setState(() {
-                        if (val == 'all') {
-                          _draftFilters =
-                              _draftFilters.copyWith(clearSmoking: true);
-                        } else {
-                          _draftFilters =
-                              _draftFilters.copyWith(smokingStatus: val);
-                        }
-                      }),
-                    ),
-                    const SizedBox(height: 18),
-
-                    // 6. Occupation
-                    const _SearchLabel('المهنة / العمل'),
-                    TextField(
-                      key: const Key('search_occupation_input'),
-                      controller: _occupationController,
-                      decoration: const InputDecoration(
-                        hintText: 'أي مهنة (مثال: مهندس، طبيب، محاسب...)',
+                          const _SearchLabel('التدخين'),
+                          NaseebakSegmentedControl<String>(
+                            options: const {
+                              'all': 'الكل',
+                              'non_smoker': 'غير مدخن',
+                              'smoker': 'مدخن',
+                            },
+                            selectedValue:
+                                _draftFilters.smokingStatus ?? 'all',
+                            onChanged: (val) => setState(() {
+                              if (val == 'all') {
+                                _draftFilters =
+                                    _draftFilters.copyWith(clearSmoking: true);
+                              } else {
+                                _draftFilters = _draftFilters.copyWith(
+                                  smokingStatus: val,
+                                );
+                              }
+                            }),
+                          ),
+                        ],
                       ),
-                      onChanged: (val) => setState(() {
-                        _draftFilters = _draftFilters.copyWith(occupation: val);
-                      }),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 16),
 
-                    // 7. Optional Nationality, Country of Residence, Region
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    // Group 3: Location & Nationality Card
+                    NaseebakInfoCard(
+                      title: 'الجنسية والإقامة',
+                      icon: Icons.location_on_outlined,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
                             children: [
-                              const _SearchLabel('الجنسية · اختياري'),
-                              TextField(
-                                key: const Key('search_nationality_input'),
-                                controller: _nationalityController,
-                                decoration: const InputDecoration(
-                                  hintText: 'الكل (مثال: مصري)',
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const _SearchLabel('الجنسية · اختياري'),
+                                    TextField(
+                                      key: const Key(
+                                          'search_nationality_input'),
+                                      controller: _nationalityController,
+                                      decoration: const InputDecoration(
+                                        hintText: 'الكل (مثال: مصري)',
+                                      ),
+                                      onChanged: (val) => setState(() {
+                                        _draftFilters =
+                                            _draftFilters.copyWith(
+                                          nationality: val,
+                                        );
+                                      }),
+                                    ),
+                                  ],
                                 ),
-                                onChanged: (val) => setState(() {
-                                  _draftFilters = _draftFilters.copyWith(
-                                    nationality: val,
-                                  );
-                                }),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const _SearchLabel('بلد الإقامة · اختياري'),
+                                    TextField(
+                                      key: const Key('search_country_input'),
+                                      controller: _countryController,
+                                      decoration: const InputDecoration(
+                                        hintText: 'الكل (مثال: مصر)',
+                                      ),
+                                      onChanged: (val) => setState(() {
+                                        _draftFilters =
+                                            _draftFilters.copyWith(
+                                          countryOfResidence: val,
+                                        );
+                                      }),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const _SearchLabel('بلد الإقامة · اختياري'),
-                              TextField(
-                                key: const Key('search_country_input'),
-                                controller: _countryController,
-                                decoration: const InputDecoration(
-                                  hintText: 'الكل (مثال: مصر)',
-                                ),
-                                onChanged: (val) => setState(() {
-                                  _draftFilters = _draftFilters.copyWith(
-                                    countryOfResidence: val,
-                                  );
-                                }),
-                              ),
-                            ],
+                          const SizedBox(height: 14),
+                          const _SearchLabel('المحافظة / المنطقة · اختياري'),
+                          TextField(
+                            key: const Key('search_region_input'),
+                            controller: _regionController,
+                            decoration: const InputDecoration(
+                              hintText:
+                                  'الكل (مثال: القاهرة، الجيزة، الإسكندرية...)',
+                            ),
+                            onChanged: (val) => setState(() {
+                              _draftFilters =
+                                  _draftFilters.copyWith(region: val);
+                            }),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-
-                    const _SearchLabel('المحافظة / المنطقة · اختياري'),
-                    TextField(
-                      key: const Key('search_region_input'),
-                      controller: _regionController,
-                      decoration: const InputDecoration(
-                        hintText: 'الكل (مثال: القاهرة، الجيزة، الإسكندرية...)',
+                        ],
                       ),
-                      onChanged: (val) => setState(() {
-                        _draftFilters = _draftFilters.copyWith(region: val);
-                      }),
                     ),
                   ],
                 ),
@@ -430,41 +459,44 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
 
             // Bottom Primary & Secondary Action Buttons
             Container(
-              padding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
-              decoration: const BoxDecoration(
-                color: AppColors.backgroundPrimary,
-                border: Border(top: BorderSide(color: AppColors.borderLight)),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+              decoration: BoxDecoration(
+                color: AppColors.cardWhite,
+                border:
+                    const Border(top: BorderSide(color: AppColors.subtleBorder)),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryNavy.withOpacity(0.05),
+                    blurRadius: 12,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
                   Expanded(
                     flex: 2,
-                    child: OutlinedButton(
-                      key: const Key('search_reset_btn'),
-                      onPressed:
-                          discoveryState.isSearchingInitial ? null : _handleReset,
-                      child: const Text('إعادة تعيين'),
+                    child: NaseebakSecondaryButton(
+                      buttonKey: const Key('search_reset_btn'),
+                      label: 'إعادة تعيين',
+                      onPressed: discoveryState.isSearchingInitial
+                          ? null
+                          : _handleReset,
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     flex: 4,
-                    child: ElevatedButton.icon(
-                      key: const Key('search_submit_btn'),
-                      onPressed: discoveryState.isSearchingInitial
-                          ? null
-                          : _handleSearchSubmit,
-                      icon: discoveryState.isSearchingInitial
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.search_rounded, size: 19),
-                      label: const Text('عرض النتائج'),
+                    child: NaseebakPrimaryButton(
+                      buttonKey: const Key('search_submit_btn'),
+                      isLoading: discoveryState.isSearchingInitial,
+                      icon: const Icon(
+                        Icons.search_rounded,
+                        size: 20,
+                        color: AppColors.goldAccent,
+                      ),
+                      label: 'عرض النتائج',
+                      onPressed: _handleSearchSubmit,
                     ),
                   ),
                 ],
@@ -484,14 +516,10 @@ class _SearchLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 7),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
-        style: const TextStyle(
-          fontSize: 12.5,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textPrimary,
-        ),
+        style: NaseebakTypography.formLabel,
       ),
     );
   }

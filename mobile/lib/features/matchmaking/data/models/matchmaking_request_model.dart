@@ -28,7 +28,7 @@ class MatchmakingMemberSummary {
   factory MatchmakingMemberSummary.fromJson(Map<String, dynamic> json) {
     return MatchmakingMemberSummary(
       userId: (json['user_id'] as num?)?.toInt() ?? 0,
-      fullName: (json['full_name'] as String?) ?? 'عضو نصيبك',
+      fullName: (json['full_name'] as String?) ?? 'عضو نَصِيبُكَ',
       gender: (json['gender'] as String?) ?? 'female',
       ageYears: (json['age_years'] as num?)?.toInt() ?? 18,
       maritalStatus: (json['marital_status'] as String?) ?? 'single',

@@ -79,7 +79,7 @@ class ProfileRegistrationNotifier
     if (age < 18) {
       state = state.copyWith(
         validationError:
-            'عذراً، تطبيق نصيبك مخصص حصرياً للبالغين من عمر 18 عاماً فأكثر.',
+            'عذراً، تطبيق نَصِيبُكَ مخصص حصرياً للبالغين من عمر 18 عاماً فأكثر.',
       );
       return false;
     }

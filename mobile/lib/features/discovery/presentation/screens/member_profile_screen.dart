@@ -1,20 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/design_system/naseebak_design_system.dart';
 import '../../data/models/member_profile_model.dart';
 import '../providers/discovery_provider.dart';
-import '../widgets/authorized_photo_avatar.dart';
 import '../../../matchmaking/presentation/providers/matchmaking_provider.dart';
 import '../../../messaging/presentation/screens/chat_screen.dart';
 import '../../../subscription/presentation/screens/subscription_screen.dart';
 
-/// 10. Member Profile Screen (الملف الشخصي للعضو)
+/// 10. Member Profile Screen (الملف الشخصي للعضو — تصميم Astra الفاخر)
 /// تعرض بيانات العضو المسموح بها من GET /api/v1/members/{targetUser}/profile
 /// مع احترام تام لإعدادات خصوصية الصورة الشخصية، وعدم كشف تاريخ الميلاد الدقيق أو البريد أو أي بيانات خاصة.
-/// تتضمن:
-/// - زر أساسي بارز "طلب التعارف" (يوضح شرط الاشتراك الشهري النشط دون إنشاء طلب وهمي أو دفع وهمي قبل المرحلتين 5 و6)
-/// - زر ثانوي "إضافة إلى المفضلة" / "إزالة من المفضلة"
-/// - إجراءات الأمان: "حظر العضو" و"الإبلاغ عن العضو" مربوطة فعلياً بقاعدة البيانات.
 class MemberProfileScreen extends ConsumerStatefulWidget {
   final int memberUserId;
 
@@ -107,7 +102,7 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
     if (buttonState == 'request_pending') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: AppColors.primaryBlue,
+          backgroundColor: AppColors.primaryNavy,
           content: Text('طلب التعارف قيد الانتظار لدى العضو.'),
         ),
       );
@@ -125,21 +120,23 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           key: const Key('confirm_send_match_request_dialog'),
-          backgroundColor: AppColors.backgroundPrimary,
+          backgroundColor: AppColors.cardWhite,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(20),
           ),
           title: Text(
             'طلب التعارف • ${member.fullName}',
             style: const TextStyle(
+              fontFamily: NaseebakTypography.fontFamily,
               fontSize: 16,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
           ),
           content: const Text(
             'هل ترغب في إرسال طلب تعارف إلى هذا العضو؟',
             style: TextStyle(
+              fontFamily: NaseebakTypography.fontFamily,
               fontSize: 13.5,
               color: AppColors.textSecondary,
               height: 1.7,
@@ -178,7 +175,7 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
           );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: AppColors.primaryBlue,
+          backgroundColor: AppColors.primaryNavy,
           content: Text('تم إرسال طلب التعارف بنجاح'),
         ),
       );
@@ -203,9 +200,9 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.backgroundPrimary,
+      backgroundColor: AppColors.cardWhite,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetContext) {
         return Directionality(
@@ -218,20 +215,20 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
               children: [
                 Center(
                   child: Container(
-                    width: 58,
-                    height: 58,
+                    width: 60,
+                    height: 60,
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceSubtleBlue,
-                      borderRadius: BorderRadius.circular(18),
+                      color: AppColors.creamHighlight,
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: AppColors.accentYellow,
+                        color: AppColors.goldAccent,
                         width: 1.8,
                       ),
                     ),
                     child: const Icon(
                       Icons.workspace_premium_outlined,
-                      size: 30,
-                      color: AppColors.primaryBlue,
+                      size: 32,
+                      color: AppColors.primaryNavy,
                     ),
                   ),
                 ),
@@ -240,24 +237,27 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                   'يتطلب التواصل اشتراكًا شهريًا',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
+                    fontFamily: NaseebakTypography.fontFamily,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'يمكنك تصفح الملفات والبحث وإضافة الأعضاء إلى المفضلة مجانًا، أما إرسال طلب التعارف وبدء التواصل فيتطلب عضوية شهرية نشطة وموثقة في نصيبك.',
+                  'يمكنك تصفح الملفات والبحث وإضافة الأعضاء إلى المفضلة مجانًا، أما إرسال طلب التعارف وبدء التواصل فيتطلب عضوية شهرية نشطة وموثقة في نَصِيبُكَ.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontFamily: NaseebakTypography.fontFamily,
+                    fontSize: 13,
                     color: AppColors.textSecondary,
                     height: 1.75,
                   ),
                 ),
                 const SizedBox(height: 18),
-                ElevatedButton(
-                  key: const Key('sheet_open_subscription_screen_btn'),
+                NaseebakPrimaryButton(
+                  buttonKey: const Key('sheet_open_subscription_screen_btn'),
+                  label: 'اشترك الآن',
                   onPressed: () async {
                     Navigator.of(sheetContext).pop();
                     await Navigator.of(context).push(
@@ -271,12 +271,11 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                           .loadMemberProfile(widget.memberUserId);
                     }
                   },
-                  child: const Text('اشترك الآن'),
                 ),
-                const SizedBox(height: 8),
-                OutlinedButton(
+                const SizedBox(height: 10),
+                NaseebakSecondaryButton(
+                  label: 'لاحقاً',
                   onPressed: () => Navigator.of(sheetContext).pop(),
-                  child: const Text('لاحقاً'),
                 ),
               ],
             ),
@@ -334,15 +333,20 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
       builder: (dialogContext) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          backgroundColor: AppColors.backgroundPrimary,
+          backgroundColor: AppColors.cardWhite,
           title: Text(
             'حظر ${member.fullName}؟',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            style: const TextStyle(
+              fontFamily: NaseebakTypography.fontFamily,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           content: const Text(
             'عند حظر هذا العضو، لن يتمكن من رؤية ملفك الشخصي أو التواصل معك، وسيتم إزالته فوراً من نتائج البحث والمفضلة.',
             style: TextStyle(
-              fontSize: 12.5,
+              fontFamily: NaseebakTypography.fontFamily,
+              fontSize: 13,
               color: AppColors.textSecondary,
               height: 1.7,
             ),
@@ -355,7 +359,7 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.error,
-                minimumSize: const Size(110, 40),
+                minimumSize: const Size(110, 42),
               ),
               onPressed: () => Navigator.of(dialogContext).pop(true),
               child: const Text('تأكيد الحظر'),
@@ -383,7 +387,7 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: AppColors.primaryBlue,
+          backgroundColor: AppColors.primaryNavy,
           content: Text('تم حظر العضو بنجاح.'),
         ),
       );
@@ -404,12 +408,13 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
             return Directionality(
               textDirection: TextDirection.rtl,
               child: AlertDialog(
-                backgroundColor: AppColors.backgroundPrimary,
+                backgroundColor: AppColors.cardWhite,
                 title: Text(
                   'الإبلاغ عن ${member.fullName}',
                   style: const TextStyle(
+                    fontFamily: NaseebakTypography.fontFamily,
                     fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 content: SingleChildScrollView(
@@ -420,7 +425,8 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                       const Text(
                         'سبب البلاغ',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontFamily: NaseebakTypography.fontFamily,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -459,7 +465,8 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                       const Text(
                         'تفاصيل البلاغ',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontFamily: NaseebakTypography.fontFamily,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -477,6 +484,7 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                         Text(
                           dialogError!,
                           style: const TextStyle(
+                            fontFamily: NaseebakTypography.fontFamily,
                             fontSize: 11.5,
                             color: AppColors.error,
                             fontWeight: FontWeight.w600,
@@ -493,7 +501,7 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                   ),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(110, 40),
+                      minimumSize: const Size(110, 42),
                     ),
                     onPressed: () async {
                       if (detailsController.text.trim().length < 5) {
@@ -530,9 +538,9 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
     if (reported == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: AppColors.primaryBlue,
+          backgroundColor: AppColors.primaryNavy,
           content: Text(
-            'تم إرسال البلاغ إلى إدارة نصيبك وسيتم التعامل معه بسرية تامة.',
+            'تم إرسال البلاغ إلى إدارة نَصِيبُكَ وسيتم التعامل معه بسرية تامة.',
           ),
         ),
       );
@@ -545,14 +553,10 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
     final member = state.activeMemberProfile;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 19),
-          onPressed: () => Navigator.of(context).pop(),
-          tooltip: 'رجوع',
-        ),
-        title: const Text('الملف الشخصي'),
+      backgroundColor: AppColors.softBackground,
+      appBar: NaseebakAppBar(
+        title: 'الملف الشخصي',
+        onBack: () => Navigator.of(context).pop(),
         actions: [
           if (member != null)
             PopupMenuButton<String>(
@@ -600,49 +604,31 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
               ],
             ),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: AppColors.borderLight),
-        ),
       ),
       body: SafeArea(
         child: Builder(
           builder: (context) {
             if (state.isLoadingMemberDetail) {
               return const Center(
-                child: CircularProgressIndicator(color: AppColors.primaryBlue),
+                child: CircularProgressIndicator(color: AppColors.primaryNavy),
               );
             }
 
             if (state.memberDetailError != null || member == null) {
               return Padding(
                 padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Icon(
-                      Icons.lock_person_outlined,
-                      size: 48,
-                      color: AppColors.primaryBlue,
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      state.memberDetailError ??
-                          'هذا الملف الشخصي غير متاح للعرض حالياً.',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    OutlinedButton(
+                child: Center(
+                  child: NaseebakEmptyState(
+                    icon: Icons.lock_person_outlined,
+                    title: state.memberDetailError ??
+                        'هذا الملف الشخصي غير متاح للعرض حالياً.',
+                    subtitle:
+                        'قد يكون الملف غير متاح وفق إعدادات الخصوصية الحالية.',
+                    actionButton: NaseebakSecondaryButton(
+                      label: 'العودة',
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('العودة'),
                     ),
-                  ],
+                  ),
                 ),
               );
             }
@@ -652,16 +638,19 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
               children: [
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // 1. Profile Header Card (Matching Mockup Screen 08)
+                        // 1. Astra Hero Member Profile Card
                         Container(
                           decoration: BoxDecoration(
-                            color: AppColors.backgroundPrimary,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.borderLight),
+                            color: AppColors.cardWhite,
+                            borderRadius: BorderRadius.circular(
+                              NaseebakSpacing.cardRadius,
+                            ),
+                            border: Border.all(color: AppColors.subtleBorder),
+                            boxShadow: NaseebakSpacing.subtleCardShadow,
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -670,35 +659,45 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                                 alignment: Alignment.center,
                                 children: [
                                   Container(
-                                    height: 150,
+                                    height: 158,
                                     decoration: const BoxDecoration(
                                       gradient: LinearGradient(
+                                        begin: Alignment.topRight,
+                                        end: Alignment.bottomLeft,
                                         colors: [
-                                          AppColors.surfaceSubtleBlue,
-                                          AppColors.surfaceSubtleYellow,
+                                          AppColors.primaryNavy,
+                                          AppColors.deepNavy,
                                         ],
                                       ),
                                       borderRadius: BorderRadius.vertical(
-                                        top: Radius.circular(15),
+                                        top: Radius.circular(21),
                                       ),
+                                    ),
+                                  ),
+                                  const Positioned(
+                                    bottom: -10,
+                                    right: -10,
+                                    child: NaseebakGoldBotanicalDecoration(
+                                      size: 95,
+                                      opacity: 0.25,
                                     ),
                                   ),
                                   AuthorizedPhotoAvatar(
                                     photoId: member.primaryPhotoId,
                                     photoAuthorized: member.photoAuthorized,
                                     fallbackName: member.fullName,
-                                    radius: 46,
+                                    radius: 48,
                                   ),
                                   Positioned(
-                                    bottom: 10,
-                                    left: 12,
+                                    bottom: 12,
+                                    left: 14,
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 9,
-                                        vertical: 4,
+                                        horizontal: 10,
+                                        vertical: 5,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.92),
+                                        color: Colors.white.withOpacity(0.94),
                                         borderRadius: BorderRadius.circular(20),
                                       ),
                                       child: Row(
@@ -709,7 +708,7 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                                                 ? Icons.verified_user_outlined
                                                 : Icons.lock_outline_rounded,
                                             size: 13,
-                                            color: AppColors.primaryBlue,
+                                            color: AppColors.primaryNavy,
                                           ),
                                           const SizedBox(width: 4),
                                           Text(
@@ -717,9 +716,11 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                                                 ? 'ملف موثق'
                                                 : 'صورة بإذن صاحب الملف',
                                             style: const TextStyle(
-                                              fontSize: 10,
+                                              fontFamily:
+                                                  NaseebakTypography.fontFamily,
+                                              fontSize: 10.5,
                                               fontWeight: FontWeight.w700,
-                                              color: AppColors.primaryBlue,
+                                              color: AppColors.primaryNavy,
                                             ),
                                           ),
                                         ],
@@ -729,7 +730,7 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                                 ],
                               ),
                               Padding(
-                                padding: const EdgeInsets.all(16),
+                                padding: const EdgeInsets.all(18),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -740,48 +741,32 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                                         Expanded(
                                           child: Text(
                                             '${member.fullName} • ${member.ageYears} سنة',
-                                            style: const TextStyle(
-                                              fontSize: 19,
-                                              fontWeight: FontWeight.w800,
-                                              color: AppColors.textPrimary,
+                                            style: NaseebakTypography
+                                                .sectionHeading
+                                                .copyWith(
+                                              fontWeight: FontWeight.w700,
                                             ),
                                           ),
                                         ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 9,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.surfaceSubtleBlue,
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                          ),
-                                          child: Text(
-                                            member.maritalStatusLabelAr,
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w800,
-                                              color: AppColors.primaryBlue,
-                                            ),
-                                          ),
+                                        NaseebakStatusBadge(
+                                          label: member.maritalStatusLabelAr,
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 6),
+                                    const SizedBox(height: 8),
                                     Row(
                                       children: [
                                         const Icon(
                                           Icons.location_on_outlined,
                                           size: 16,
-                                          color: AppColors.textMuted,
+                                          color: AppColors.warmGold,
                                         ),
                                         const SizedBox(width: 4),
-                                        Text(
-                                          '${member.region}، ${member.countryOfResidence}',
-                                          style: const TextStyle(
-                                            fontSize: 12.5,
-                                            color: AppColors.textSecondary,
+                                        Expanded(
+                                          child: Text(
+                                            '${member.region}، ${member.countryOfResidence}',
+                                            style: NaseebakTypography
+                                                .supportingText,
                                           ),
                                         ),
                                       ],
@@ -792,11 +777,12 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 16),
 
                         // 2. Personal Information Section
                         _MemberInfoSectionCard(
-                          title: 'المعلومات الشخصية',
+                          title: 'المعلومات الشخصية والتعليم والمهنة',
+                          icon: Icons.badge_outlined,
                           items: [
                             _MemberFieldPair('النوع', member.genderLabelAr),
                             _MemberFieldPair(
@@ -830,11 +816,12 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                             _MemberFieldPair('المنطقة', member.region),
                           ],
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 16),
 
                         // 3. Family Information Section
                         _MemberInfoSectionCard(
                           title: 'المعلومات الأسرية والسكن',
+                          icon: Icons.home_outlined,
                           items: [
                             _MemberFieldPair(
                               'سبق الزواج',
@@ -857,87 +844,55 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
 
                         // 4. Interests & Hobbies Section
                         if (member.hobbies.isNotEmpty) ...[
-                          const SizedBox(height: 14),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppColors.backgroundPrimary,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: AppColors.borderLight),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'الهوايات والاهتمامات',
-                                  style: TextStyle(
-                                    fontSize: 13.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.textPrimary,
+                          const SizedBox(height: 16),
+                          NaseebakInfoCard(
+                            title: 'الهوايات والاهتمامات',
+                            icon: Icons.auto_awesome_outlined,
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: member.hobbies.map((hobby) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
                                   ),
-                                ),
-                                const SizedBox(height: 10),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: member.hobbies.map((hobby) {
-                                    return Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 11,
-                                        vertical: 5,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.surfaceSubtleBlue,
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      child: Text(
-                                        hobby,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.primaryBlue,
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ],
+                                  decoration: BoxDecoration(
+                                    color: AppColors.creamHighlight,
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(
+                                      color:
+                                          AppColors.goldAccent.withOpacity(0.5),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    hobby,
+                                    style: const TextStyle(
+                                      fontFamily: NaseebakTypography.fontFamily,
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.primaryNavy,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
                             ),
                           ),
                         ],
 
-                        // 5. Optional Biography (Only shown if member actually provided it)
+                        // 5. Optional Biography
                         if (member.bio != null &&
                             member.bio!.trim().isNotEmpty) ...[
-                          const SizedBox(height: 14),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppColors.backgroundPrimary,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: AppColors.borderLight),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'نبذة عني',
-                                  style: TextStyle(
-                                    fontSize: 13.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  member.bio!,
-                                  style: const TextStyle(
-                                    fontSize: 12.5,
-                                    color: AppColors.textSecondary,
-                                    height: 1.8,
-                                  ),
-                                ),
-                              ],
+                          const SizedBox(height: 16),
+                          NaseebakInfoCard(
+                            title: 'نبذة عني',
+                            icon: Icons.format_quote_rounded,
+                            child: Text(
+                              member.bio!,
+                              style: NaseebakTypography.bodyText.copyWith(
+                                fontSize: 13.5,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           ),
                         ],
@@ -959,7 +914,8 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                               label: const Text(
                                 'الإبلاغ عن العضو',
                                 style: TextStyle(
-                                  fontSize: 11.5,
+                                  fontFamily: NaseebakTypography.fontFamily,
+                                  fontSize: 12,
                                   color: AppColors.textMuted,
                                 ),
                               ),
@@ -976,7 +932,8 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                               label: const Text(
                                 'حظر العضو',
                                 style: TextStyle(
-                                  fontSize: 11.5,
+                                  fontFamily: NaseebakTypography.fontFamily,
+                                  fontSize: 12,
                                   color: AppColors.error,
                                 ),
                               ),
@@ -988,13 +945,21 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                   ),
                 ),
 
-                // Bottom Action Bar: Primary "طلب التعارف" + Secondary "إضافة إلى المفضلة"
+                // Bottom Action Bar: Primary Matchmaking Action + Secondary Favorite Action
                 Container(
-                  padding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
-                  decoration: const BoxDecoration(
-                    color: AppColors.backgroundPrimary,
-                    border:
-                        Border(top: BorderSide(color: AppColors.borderLight)),
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardWhite,
+                    border: const Border(
+                      top: BorderSide(color: AppColors.subtleBorder),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primaryNavy.withOpacity(0.05),
+                        blurRadius: 12,
+                        offset: const Offset(0, -4),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
@@ -1007,7 +972,13 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                               onPressed: meta.isEnabled
                                   ? () => _handleMatchmakingRequestTap(member)
                                   : null,
-                              icon: Icon(meta.icon, size: 19),
+                              icon: Icon(
+                                meta.icon,
+                                size: 19,
+                                color: meta.isEnabled
+                                    ? AppColors.goldAccent
+                                    : AppColors.textSecondary,
+                              ),
                               label: Text(
                                 meta.label,
                                 maxLines: 1,
@@ -1021,11 +992,11 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                       OutlinedButton.icon(
                         key: const Key('member_favorite_action_btn'),
                         style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(145, 50),
+                          minimumSize: const Size(148, 54),
                           side: BorderSide(
                             color: member.isFavorited
-                                ? AppColors.accentYellow
-                                : AppColors.borderLight,
+                                ? AppColors.goldAccent
+                                : AppColors.subtleBorder,
                             width: 1.4,
                           ),
                         ),
@@ -1047,15 +1018,19 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                               ? Icons.favorite_rounded
                               : Icons.favorite_border_rounded,
                           color: member.isFavorited
-                              ? AppColors.accentYellow
-                              : AppColors.primaryBlue,
+                              ? AppColors.warmGold
+                              : AppColors.primaryNavy,
                           size: 19,
                         ),
                         label: Text(
                           member.isFavorited
                               ? 'في المفضلة'
                               : 'إضافة إلى المفضلة',
-                          style: const TextStyle(fontSize: 12.5),
+                          style: const TextStyle(
+                            fontFamily: NaseebakTypography.fontFamily,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
@@ -1078,65 +1053,51 @@ class _MemberFieldPair {
 
 class _MemberInfoSectionCard extends StatelessWidget {
   final String title;
+  final IconData icon;
   final List<_MemberFieldPair> items;
 
   const _MemberInfoSectionCard({
     required this.title,
+    required this.icon,
     required this.items,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundPrimary,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const Divider(height: 22),
-          Wrap(
-            spacing: 14,
-            runSpacing: 14,
-            children: items.map((item) {
-              return SizedBox(
-                width: 140,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.label,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      item.value,
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
+    return NaseebakInfoCard(
+      title: title,
+      icon: icon,
+      child: Wrap(
+        spacing: 14,
+        runSpacing: 14,
+        children: items.map((item) {
+          return SizedBox(
+            width: 138,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.label,
+                  style: const TextStyle(
+                    fontFamily: NaseebakTypography.fontFamily,
+                    fontSize: 11.5,
+                    color: AppColors.textMuted,
+                  ),
                 ),
-              );
-            }).toList(),
-          ),
-        ],
+                const SizedBox(height: 3),
+                Text(
+                  item.value,
+                  style: const TextStyle(
+                    fontFamily: NaseebakTypography.fontFamily,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
       ),
     );
   }

@@ -261,7 +261,7 @@ class ProfileManagementNotifier extends StateNotifier<ProfileManagementState> {
       return 'يرجى تحديد تاريخ الميلاد.';
     }
     if (age < 18) {
-      return 'تطبيق نصيبك مخصص للبالغين من عمر 18 عاماً فأكثر فقط.';
+      return 'تطبيق نَصِيبُكَ مخصص للبالغين من عمر 18 عاماً فأكثر فقط.';
     }
 
     if (draft.maritalStatus == 'single' && draft.previouslyMarried) {

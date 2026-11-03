@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/design_system/naseebak_design_system.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../matchmaking/presentation/screens/matchmaking_requests_screen.dart';
 import '../../../messaging/data/services/realtime_messaging_service.dart';
@@ -72,7 +72,7 @@ class _HomeDiscoveryPlaceholderScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
+      backgroundColor: AppColors.softBackground,
       body: IndexedStack(
         index: _selectedIndex,
         children: [
@@ -84,39 +84,11 @@ class _HomeDiscoveryPlaceholderScreenState
           const MyProfileScreen(),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        backgroundColor: AppColors.backgroundPrimary,
-        indicatorColor: AppColors.surfaceSubtleBlue,
+      bottomNavigationBar: NaseebakBottomNavigation(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
           setState(() => _selectedIndex = index);
         },
-        destinations: const [
-          NavigationDestination(
-            key: Key('bottom_nav_discover_tab'),
-            icon: Icon(Icons.explore_outlined),
-            selectedIcon: Icon(Icons.explore, color: AppColors.primaryBlue),
-            label: 'اكتشف',
-          ),
-          NavigationDestination(
-            key: Key('bottom_nav_requests_tab'),
-            icon: Icon(Icons.favorite_border_rounded),
-            selectedIcon: Icon(Icons.favorite, color: AppColors.primaryBlue),
-            label: 'الطلبات',
-          ),
-          NavigationDestination(
-            key: Key('bottom_nav_messages_tab'),
-            icon: Icon(Icons.chat_bubble_outline_rounded),
-            selectedIcon: Icon(Icons.chat_bubble, color: AppColors.primaryBlue),
-            label: 'الرسائل',
-          ),
-          NavigationDestination(
-            key: Key('bottom_nav_my_profile_tab'),
-            icon: Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person, color: AppColors.primaryBlue),
-            label: 'حسابي',
-          ),
-        ],
       ),
     );
   }

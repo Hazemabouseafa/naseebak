@@ -95,7 +95,7 @@ class GoogleAuthRepository {
           ? (responseData['message'] as String?)
           : null;
       throw Exception(
-        serverMessage ?? 'تعذر الاتصال بخادم نصيبك. يرجى التحقق من اتصال الإنترنت.',
+        serverMessage ?? 'تعذر الاتصال بخادم نَصِيبُكَ. يرجى التحقق من اتصال الإنترنت.',
       );
     }
   }

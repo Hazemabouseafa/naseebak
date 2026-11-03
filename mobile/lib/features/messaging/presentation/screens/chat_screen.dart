@@ -159,7 +159,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ],
           ),
           content: const Text(
-            'يمكنك قراءة رسائل المحادثة مجانًا، بينما يتطلب إرسال الرسائل الخاصة اشتراكًا شهريًا نشطًا في نصيبك. تم الاحتفاظ بمسودة رسالتك لتتمكن من إرسالها فور تفعيل الاشتراك.',
+            'يمكنك قراءة رسائل المحادثة مجانًا، بينما يتطلب إرسال الرسائل الخاصة اشتراكًا شهريًا نشطًا في نَصِيبُكَ. تم الاحتفاظ بمسودة رسالتك لتتمكن من إرسالها فور تفعيل الاشتراك.',
             style: TextStyle(
               fontSize: 13,
               color: AppColors.textSecondary,
@@ -745,7 +745,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                               ),
                               const SizedBox(height: 6),
                               const Text(
-                                'نوصي بالالتزام بالجدية والاحترام المتبادل وفق ضوابط منصة نصيبك.',
+                                'نوصي بالالتزام بالجدية والاحترام المتبادل وفق ضوابط منصة نَصِيبُكَ.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 12.5,

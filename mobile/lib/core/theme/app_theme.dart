@@ -1,105 +1,228 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
 
+/// نظام الثيم الموحد لتطبيق نصيبك — Naseebak (Astra Premium Design)
+/// يعتمد خط IBM Plex Sans Arabic المضمّن محلياً في التطبيق (Regular, Medium, SemiBold, Bold)
+/// مع التدرج اللوني الكحلي الملكي والذهبي الدافئ.
 class AppTheme {
   AppTheme._();
 
+  static const String fontFamily = 'IBMPlexSansArabic';
+
   static ThemeData get lightTheme {
-    final baseTextTheme = GoogleFonts.notoSansArabicTextTheme();
+    const baseTextStyle = TextStyle(
+      fontFamily: fontFamily,
+      color: AppColors.textPrimary,
+      height: 1.5,
+    );
+
+    final textTheme = TextTheme(
+      displayLarge: baseTextStyle.copyWith(
+        fontSize: 32,
+        fontWeight: FontWeight.w700,
+      ),
+      displayMedium: baseTextStyle.copyWith(
+        fontSize: 26,
+        fontWeight: FontWeight.w700,
+      ),
+      headlineLarge: baseTextStyle.copyWith(
+        fontSize: 24,
+        fontWeight: FontWeight.w700,
+      ),
+      headlineMedium: baseTextStyle.copyWith(
+        fontSize: 19,
+        fontWeight: FontWeight.w600,
+      ),
+      titleLarge: baseTextStyle.copyWith(
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+      ),
+      titleMedium: baseTextStyle.copyWith(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
+      titleSmall: baseTextStyle.copyWith(
+        fontSize: 14.5,
+        fontWeight: FontWeight.w500,
+      ),
+      bodyLarge: baseTextStyle.copyWith(
+        fontSize: 15,
+        fontWeight: FontWeight.w400,
+      ),
+      bodyMedium: baseTextStyle.copyWith(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+      ),
+      bodySmall: baseTextStyle.copyWith(
+        fontSize: 13,
+        fontWeight: FontWeight.w400,
+        color: AppColors.textSecondary,
+      ),
+      labelLarge: baseTextStyle.copyWith(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
+    );
 
     return ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: AppColors.backgroundPrimary,
+      fontFamily: fontFamily,
+      scaffoldBackgroundColor: AppColors.softBackground,
       colorScheme: const ColorScheme.light(
-        primary: AppColors.primaryBlue,
+        primary: AppColors.primaryNavy,
         onPrimary: Colors.white,
-        secondary: AppColors.accentYellow,
-        onSecondary: AppColors.textPrimary,
-        surface: AppColors.backgroundPrimary,
+        secondary: AppColors.goldAccent,
+        onSecondary: AppColors.primaryNavy,
+        tertiary: AppColors.primaryBlue,
+        surface: AppColors.cardWhite,
         onSurface: AppColors.textPrimary,
         error: AppColors.error,
         onError: Colors.white,
       ),
-      textTheme: baseTextTheme.apply(
-        bodyColor: AppColors.textPrimary,
-        displayColor: AppColors.textPrimary,
-      ),
-      appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.backgroundPrimary,
+      textTheme: textTheme,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: AppColors.cardWhite,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         centerTitle: true,
         scrolledUnderElevation: 0,
-        titleTextStyle: GoogleFonts.notoSansArabic(
-          fontSize: 16,
+        titleTextStyle: TextStyle(
+          fontFamily: fontFamily,
+          fontSize: 17,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryBlue,
+          backgroundColor: AppColors.primaryNavy,
           foregroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(50),
+          disabledBackgroundColor: AppColors.subtleBorder,
+          disabledForegroundColor: AppColors.textSecondary,
+          minimumSize: const Size.fromHeight(54),
           elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(13),
+            borderRadius: BorderRadius.circular(28),
           ),
-          textStyle: GoogleFonts.notoSansArabic(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
+          textStyle: const TextStyle(
+            fontFamily: fontFamily,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            height: 1.35,
           ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primaryBlue,
-          backgroundColor: AppColors.backgroundPrimary,
-          minimumSize: const Size.fromHeight(50),
-          side: const BorderSide(color: AppColors.borderLight, width: 1.2),
+          foregroundColor: AppColors.primaryNavy,
+          backgroundColor: AppColors.cardWhite,
+          minimumSize: const Size.fromHeight(52),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+          side: const BorderSide(color: AppColors.subtleBorder, width: 1.3),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(13),
+            borderRadius: BorderRadius.circular(28),
           ),
-          textStyle: GoogleFonts.notoSansArabic(
+          textStyle: const TextStyle(
+            fontFamily: fontFamily,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            height: 1.35,
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primaryBlue,
+          textStyle: const TextStyle(
+            fontFamily: fontFamily,
             fontSize: 14,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.backgroundPrimary,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-        hintStyle: GoogleFonts.notoSansArabic(
-          fontSize: 13,
-          color: AppColors.textMuted,
+        fillColor: AppColors.softBackground,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 15,
+        ),
+        hintStyle: const TextStyle(
+          fontFamily: fontFamily,
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          color: AppColors.textSecondary,
+        ),
+        labelStyle: const TextStyle(
+          fontFamily: fontFamily,
+          fontSize: 14.5,
+          fontWeight: FontWeight.w500,
+          color: AppColors.textPrimary,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(11),
-          borderSide: const BorderSide(color: AppColors.borderLight),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.subtleBorder, width: 1.2),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(11),
-          borderSide: const BorderSide(color: AppColors.borderLight),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.subtleBorder, width: 1.2),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(11),
-          borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.6),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.primaryNavy, width: 1.6),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(11),
-          borderSide: const BorderSide(color: AppColors.error),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.3),
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.cardWhite,
+        selectedColor: AppColors.primaryNavy,
+        secondarySelectedColor: AppColors.primaryNavy,
+        side: const BorderSide(color: AppColors.subtleBorder),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        labelStyle: const TextStyle(
+          fontFamily: fontFamily,
+          fontSize: 13.5,
+          fontWeight: FontWeight.w500,
+          color: AppColors.textPrimary,
+        ),
+        secondaryLabelStyle: const TextStyle(
+          fontFamily: fontFamily,
+          fontSize: 13.5,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
         ),
       ),
       cardTheme: CardThemeData(
-        color: AppColors.backgroundPrimary,
+        color: AppColors.cardWhite,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: AppColors.borderLight),
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: AppColors.subtleBorder),
         ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: AppColors.cardWhite,
+        indicatorColor: AppColors.creamHighlight,
+        height: 70,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final isSelected = states.contains(WidgetState.selected);
+          return TextStyle(
+            fontFamily: fontFamily,
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected ? AppColors.primaryNavy : AppColors.textSecondary,
+          );
+        }),
       ),
     );
   }
 }
+
+/// Alias for centralized design system nomenclature
+typedef NaseebakTheme = AppTheme;

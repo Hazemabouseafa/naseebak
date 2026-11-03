@@ -1,16 +1,19 @@
 class AppStrings {
   AppStrings._();
 
-  static const String appNameAr = 'نصيبك';
+  static const String appNameAr = 'نَصِيبُكَ';
   static const String appNameEn = 'Naseebak';
-  static const String taglineBadge = 'مساحة آمنة للتعارف بغرض الزواج';
-  static const String welcomeHeadline = 'علاقة جادة.\nبداية تستحق الثقة.';
+  static const String startNow = 'ابدأ الآن';
+  static const String taglineBadge = 'رحلتك للبحث عن شريك حياتك';
+  static const String welcomeHeadline = 'رحلتك للبحث عن شريك حياتك';
   static const String welcomeSubtitle =
-      'تعرّف على أشخاص يشاركونك الرغبة في بناء حياة أسرية مستقرة ضمن بيئة محترمة وموثوقة.';
+      'منصة عربية جادة وموثوقة للزواج وبناء أسرة مستقرة ضمن بيئة محترمة تحمي خصوصيتك.';
+  static const String googleWelcomeHeadline = 'مرحبًا بك في نَصِيبُكَ';
+  static const String googleWelcomeSubtitle = 'ابدأ رحلتك للبحث عن شريك حياتك.';
   static const String adultsOnlyNotice = 'مخصص حصرياً للبالغين من 18 عاماً فأكثر';
   static const String continueWithGoogle = 'المتابعة باستخدام Google';
   static const String termsAcceptanceNotice =
-      'بالمتابعة، أقر بأن عمري 18 عاماً فأكثر وأوافق على شروط الاستخدام وسياسة الخصوصية.';
-  static const String placeholderLogoNotice =
-      'شعار مرجعي مؤقت (العريس والعروس) — سيتم استبداله بالشعار المتجه النهائي المعتمد قبل النشر';
+      'بالمتابعة، أنت توافق على شروط الخدمة و سياسة الخصوصية الخاصة بنا.';
+  static const String officialLogoAsset = 'assets/images/naseebak_logo_emblem.png';
+  static const String officialAppIconAsset = 'assets/images/naseebak_app_icon.png';
 }

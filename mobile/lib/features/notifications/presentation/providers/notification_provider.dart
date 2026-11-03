@@ -451,7 +451,7 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
     if (data is Map<String, dynamic> && data['message'] is String) {
       return data['message'] as String;
     }
-    return 'تعذر الاتصال بخادم نصيبك. يرجى التحقق من اتصال الإنترنت.';
+    return 'تعذر الاتصال بخادم نَصِيبُكَ. يرجى التحقق من اتصال الإنترنت.';
   }
 
   @override

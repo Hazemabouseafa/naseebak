@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/design_system/naseebak_design_system.dart';
 import '../../../../core/widgets/naseebak_logo_badge.dart';
 import '../providers/auth_provider.dart';
 
-/// 01. Welcome Screen (شاشة الترحيب)
-/// مطابقة لتخطيط الـ Mockup المعتمد مع تطبيق الهوية الجديدة لتطبيق "نصيبك":
-/// الأزرق الملكي (#145A9E) والأزرق الداكن (#123D6A) والأصفر المميز (#FFC43D) والخلفية البيضاء (#FFFFFF).
+/// 01. Splash / Welcome Screen (شاشة الترحيب الفاخرة — تصميم Astra Screen 01)
+/// خلفية كحلية ملكية متدرجة (#123D6A -> #0A294E) مع الشعار الرسمي المعتمد لتطبيق نصيبك
+/// (العريس والعروس داخل القلب الذهبي)، وموجة الشريط الذهبي المنساب وأوراق الغار الذهبية.
 class WelcomeScreen extends ConsumerWidget {
   const WelcomeScreen({super.key});
 
@@ -16,203 +16,245 @@ class WelcomeScreen extends ConsumerWidget {
     final authState = ref.watch(authControllerProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
-      body: SafeArea(
-        top: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      backgroundColor: AppColors.deepNavy,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.primaryNavy,
+              AppColors.deepNavy,
+            ],
+          ),
+        ),
+        child: Stack(
           children: [
-            // Hero Banner (replaces the old green gradient with Naseebak Dark Blue -> Primary Blue)
-            Expanded(
-              flex: 7,
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topRight,
-                    end: Alignment.bottomLeft,
-                    colors: [
-                      AppColors.darkBlue,
-                      AppColors.primaryBlue,
-                    ],
+            // Soft Golden Radial Halo behind the Couple Emblem
+            Positioned(
+              top: 90,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  width: 280,
+                  height: 280,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        AppColors.goldAccent.withOpacity(0.22),
+                        AppColors.primaryBlue.withOpacity(0.10),
+                        AppColors.primaryNavy.withOpacity(0.0),
+                      ],
+                    ),
                   ),
-                ),
-                child: Stack(
-                  children: [
-                    // Subtle geometric circles matching the approved mockup layout
-                    Positioned(
-                      top: 110,
-                      left: -120,
-                      child: Container(
-                        width: 260,
-                        height: 260,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.14),
-                            width: 1.2,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 135,
-                      left: -95,
-                      child: Container(
-                        width: 230,
-                        height: 230,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.accentYellow.withOpacity(0.28),
-                            width: 1.2,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Main Hero Content
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(26, 64, 26, 36),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const NaseebakLogoBadge(
-                            size: 52,
-                            showText: true,
-                            lightText: true,
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.accentYellow.withOpacity(0.18),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: AppColors.accentYellow.withOpacity(0.6),
-                              ),
-                            ),
-                            child: const Text(
-                              AppStrings.taglineBadge,
-                              style: TextStyle(
-                                color: AppColors.accentYellow,
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          const Text(
-                            AppStrings.welcomeHeadline,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 30,
-                              fontWeight: FontWeight.w800,
-                              height: 1.45,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            AppStrings.welcomeSubtitle,
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.90),
-                              fontSize: 13,
-                              height: 1.85,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ),
 
-            // Bottom Actions Area (Google Sign-In ONLY as required by Section 5)
-            Expanded(
-              flex: 3,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(22, 24, 22, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    ElevatedButton.icon(
-                      key: const Key('welcome_continue_google_btn'),
-                      onPressed: authState.isLoading
-                          ? null
-                          : () {
-                              ref
-                                  .read(authControllerProvider.notifier)
-                                  .navigateToGoogleSignIn();
-                            },
-                      icon: Container(
-                        width: 26,
-                        height: 26,
-                        alignment: Alignment.center,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Text(
-                          'G',
-                          style: TextStyle(
-                            color: AppColors.primaryBlue,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ),
-                      label: const Text(AppStrings.continueWithGoogle),
+            // Golden Sweeping Ribbon Wave (Astra Screen 01 Signature)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(
+                  painter: NaseebakGoldenRibbonWavePainter(),
+                ),
+              ),
+            ),
+
+            // Decorative Botanical Leaves at Bottom Right & Left
+            const Positioned(
+              bottom: 36,
+              right: -12,
+              child: NaseebakGoldBotanicalDecoration(
+                size: 130,
+                opacity: 0.32,
+              ),
+            ),
+            const Positioned(
+              bottom: 50,
+              left: -16,
+              child: NaseebakGoldBotanicalDecoration(
+                size: 115,
+                opacity: 0.24,
+                flipHorizontal: true,
+              ),
+            ),
+
+            // Foreground Content
+            SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) => SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 20,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: (constraints.maxHeight - 40)
+                          .clamp(0.0, double.infinity),
                     ),
-                    const SizedBox(height: 12),
-                    OutlinedButton(
-                      key: const Key('welcome_existing_account_btn'),
-                      onPressed: authState.isLoading
-                          ? null
-                          : () {
-                              ref
-                                  .read(authControllerProvider.notifier)
-                                  .navigateToGoogleSignIn();
+                    child: IntrinsicHeight(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Spacer(flex: 2),
+
+                          // Animated Official Naseebak Couple & Golden Heart Emblem
+                          TweenAnimationBuilder<double>(
+                            tween: Tween<double>(begin: 0.92, end: 1.0),
+                            duration: const Duration(milliseconds: 550),
+                            curve: Curves.easeOutCubic,
+                            builder: (context, scale, child) {
+                              return Transform.scale(
+                                scale: scale,
+                                child: child,
+                              );
                             },
-                      child: const Text('لدي حساب بالفعل — الدخول عبر Google'),
-                    ),
-                    const Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceSubtleYellow,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: AppColors.accentYellow),
-                          ),
-                          child: const Text(
-                            '+18',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.darkBlue,
+                            child: const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(8),
+                                child: NaseebakLogoBadge(
+                                  size: 164,
+                                  showText: false,
+                                  lightText: true,
+                                  useFullEmblem: true,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          AppStrings.adultsOnlyNotice,
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            color: AppColors.textMuted,
-                            fontWeight: FontWeight.w600,
+
+                          const SizedBox(height: 18),
+
+                          // Brand Title: "نصيبك"
+                          const Text(
+                            AppStrings.appNameAr,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: NaseebakTypography.fontFamily,
+                              fontSize: 40,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              height: 1.2,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 10),
+
+                          // Golden Tagline: "رحلتك للبحث عن شريك حياتك"
+                          const Text(
+                            AppStrings.taglineBadge,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: NaseebakTypography.fontFamily,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.goldAccent,
+                              height: 1.45,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+
+                          Text(
+                            AppStrings.welcomeSubtitle,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: NaseebakTypography.fontFamily,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.white.withOpacity(0.84),
+                              height: 1.65,
+                            ),
+                          ),
+
+                          const Spacer(flex: 3),
+
+                          // Single Primary Transition Button -> Navigates to Login Screen
+                          ElevatedButton(
+                            key: const Key('welcome_continue_google_btn'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.cardWhite,
+                              foregroundColor: AppColors.primaryNavy,
+                              minimumSize: const Size.fromHeight(54),
+                              elevation: 4,
+                              shadowColor: Colors.black.withOpacity(0.25),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(28),
+                              ),
+                            ),
+                            onPressed: authState.isLoading
+                                ? null
+                                : () {
+                                    ref
+                                        .read(authControllerProvider.notifier)
+                                        .navigateToGoogleSignIn();
+                                  },
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  AppStrings.startNow,
+                                  style: TextStyle(
+                                    fontFamily: NaseebakTypography.fontFamily,
+                                    fontSize: 16.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primaryNavy,
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Icon(
+                                  Icons.arrow_forward_rounded,
+                                  color: AppColors.primaryNavy,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Adults Only +18 Notice
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.goldAccent,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Text(
+                                  '+18',
+                                  style: TextStyle(
+                                    fontFamily: NaseebakTypography.fontFamily,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primaryNavy,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  AppStrings.adultsOnlyNotice,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: NaseebakTypography.fontFamily,
+                                    fontSize: 12,
+                                    color: Colors.white.withOpacity(0.86),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),

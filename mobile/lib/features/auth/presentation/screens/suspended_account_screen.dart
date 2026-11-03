@@ -49,7 +49,7 @@ class SuspendedAccountScreen extends ConsumerWidget {
               const SizedBox(height: 10),
               Text(
                 authState.errorMessage ??
-                    'تم إيقاف هذا الحساب من قِبل إدارة تطبيق نصيبك لمخالفة ضوابط الاستخدام.',
+                    'تم إيقاف هذا الحساب من قِبل إدارة تطبيق نَصِيبُكَ لمخالفة ضوابط الاستخدام.',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 13,

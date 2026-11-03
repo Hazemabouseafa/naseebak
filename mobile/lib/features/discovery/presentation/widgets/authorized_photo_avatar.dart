@@ -1,17 +1,18 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/design_system/naseebak_design_system.dart';
 import '../providers/discovery_provider.dart';
 
-/// AuthorizedPhotoAvatar (مكوّن عرض الصورة الشخصية المحمية)
+/// AuthorizedPhotoAvatar / NaseebakAvatar (مكوّن عرض الصورة الشخصية المحمية بتصميم Astra)
 /// يمرر جلسة المصادقة (Sanctum Bearer Token) عبر DiscoveryRepository لتحميل الصورة
-/// إذا كان مصرّحاً بها، ويعرض رمزاً محايداً أنيقاً (بدون أي صورة مكسورة) إذا كانت محجوبة أو غير متوفرة.
+/// إذا كان مصرّحاً بها، ويعرض رمزاً محايداً فاخراً بإطار ذهبي ناعم إذا كانت محجوبة أو غير متوفرة.
 class AuthorizedPhotoAvatar extends ConsumerStatefulWidget {
   final int? photoId;
   final bool photoAuthorized;
   final String fallbackName;
   final double radius;
+  final bool showGoldBorder;
 
   const AuthorizedPhotoAvatar({
     super.key,
@@ -19,6 +20,7 @@ class AuthorizedPhotoAvatar extends ConsumerStatefulWidget {
     required this.photoAuthorized,
     required this.fallbackName,
     this.radius = 29,
+    this.showGoldBorder = true,
   });
 
   @override
@@ -48,9 +50,7 @@ class _AuthorizedPhotoAvatarState extends ConsumerState<AuthorizedPhotoAvatar> {
   }
 
   Future<void> _loadPhotoIfPermitted() async {
-    if (!widget.photoAuthorized ||
-        widget.photoId == null ||
-        _attemptedLoad) {
+    if (!widget.photoAuthorized || widget.photoId == null || _attemptedLoad) {
       return;
     }
 
@@ -73,21 +73,42 @@ class _AuthorizedPhotoAvatarState extends ConsumerState<AuthorizedPhotoAvatar> {
         ? widget.fallbackName.trim().substring(0, 1)
         : 'ن';
 
-    return CircleAvatar(
+    final avatar = CircleAvatar(
       radius: widget.radius,
-      backgroundColor: AppColors.surfaceSubtleBlue,
+      backgroundColor: AppColors.creamHighlight,
       backgroundImage:
           _loadedBytes != null ? MemoryImage(_loadedBytes!) : null,
       child: _loadedBytes == null
           ? Text(
               initial,
               style: TextStyle(
+                fontFamily: NaseebakTypography.fontFamily,
                 fontSize: widget.radius * 0.68,
-                fontWeight: FontWeight.w800,
-                color: AppColors.primaryBlue,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primaryNavy,
               ),
             )
           : null,
     );
+
+    if (!widget.showGoldBorder) {
+      return avatar;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(2.2),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: widget.photoAuthorized
+              ? AppColors.goldAccent
+              : AppColors.subtleBorder,
+          width: 1.6,
+        ),
+      ),
+      child: avatar,
+    );
   }
 }
+
+typedef NaseebakAvatar = AuthorizedPhotoAvatar;

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/design_system/naseebak_design_system.dart';
 import '../providers/profile_registration_provider.dart';
 import '../widgets/step_progress_header.dart';
 
-/// 03. Basic Profile Information Screen (الخطوة 1 من 4: البيانات الأساسية)
-/// تشمل: الصورة الشخصية، الاسم الكامل، النوع، تاريخ الميلاد (مع حساب العمر والبرج تلقائياً ومنع < 18)، والحالة الاجتماعية.
+/// 03. Basic Profile Information Screen (الخطوة 1 من 4: معلوماتك الشخصية — تصميم Astra Screen 03)
+/// تشمل: أيقونة الخطوة الذهبية، الصورة الشخصية، الاسم الكامل، الجنس (ذكر / أنثى)،
+/// تاريخ الميلاد (مع حساب العمر والبرج تلقائياً ومنع < 18)، والحالة الاجتماعية.
 class BasicProfileStepScreen extends ConsumerStatefulWidget {
   const BasicProfileStepScreen({super.key});
 
@@ -39,7 +40,8 @@ class _BasicProfileStepScreenState
 
     final picked = await showDatePicker(
       context: context,
-      initialDate: initialDate.isAfter(maxAdultDate) ? maxAdultDate : initialDate,
+      initialDate:
+          initialDate.isAfter(maxAdultDate) ? maxAdultDate : initialDate,
       firstDate: DateTime(1940, 1, 1),
       lastDate: now,
       helpText: 'اختر تاريخ الميلاد (18 عاماً فأكثر)',
@@ -70,30 +72,40 @@ class _BasicProfileStepScreenState
       children: [
         Expanded(
           child: SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Profile Photo Upload Row (Matching Mockup Screen 03)
+                // Astra Step 1 Header Badge
+                const NaseebakStepBadge(
+                  icon: Icons.person_outline_rounded,
+                  title: 'معلوماتك الشخصية',
+                  subtitle: 'أدخل بياناتك الأساسية لإنشاء ملفك',
+                ),
+                const SizedBox(height: 20),
+
+                // Profile Photo Upload Card
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: AppColors.backgroundSecondary,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.borderLight),
+                    color: AppColors.softBackground,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppColors.subtleBorder),
                   ),
                   child: Row(
                     children: [
                       Stack(
                         children: [
                           CircleAvatar(
-                            radius: 31,
-                            backgroundColor: AppColors.surfaceSubtleBlue,
+                            radius: 30,
+                            backgroundColor: AppColors.creamHighlight,
                             child: Text(
                               initialLetter,
                               style: const TextStyle(
+                                fontFamily: NaseebakTypography.fontFamily,
                                 fontSize: 22,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.primaryBlue,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primaryNavy,
                               ),
                             ),
                           ),
@@ -104,14 +116,17 @@ class _BasicProfileStepScreenState
                               width: 26,
                               height: 26,
                               decoration: BoxDecoration(
-                                color: AppColors.primaryBlue,
+                                color: AppColors.primaryNavy,
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
                               ),
                               child: const Icon(
                                 Icons.camera_alt_outlined,
-                                size: 14,
-                                color: Colors.white,
+                                size: 13,
+                                color: AppColors.goldAccent,
                               ),
                             ),
                           ),
@@ -125,17 +140,19 @@ class _BasicProfileStepScreenState
                             Text(
                               'الصورة الشخصية',
                               style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
+                                fontFamily: NaseebakTypography.fontFamily,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
                                 color: AppColors.textPrimary,
                               ),
                             ),
                             SizedBox(height: 3),
                             Text(
-                              'تُحفظ بأمان ويمكنك التحكم في خصوصية ظهورها (حد أقصى 2 ميجابايت)',
+                              'تُحفظ بأمان ويمكنك التحكم الكامل في خصوصية ظهورها للأعضاء',
                               style: TextStyle(
-                                fontSize: 11,
-                                color: AppColors.textMuted,
+                                fontFamily: NaseebakTypography.fontFamily,
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
                               ),
                             ),
                           ],
@@ -144,46 +161,32 @@ class _BasicProfileStepScreenState
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
 
-                // Full Name
-                const Text(
-                  'الاسم الكامل',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 7),
-                TextField(
-                  key: const Key('profile_full_name_input'),
+                // Full Name Input
+                NaseebakTextField(
+                  fieldKey: const Key('profile_full_name_input'),
+                  label: 'الاسم الكامل',
+                  hintText: 'أدخل اسمك الكامل',
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    hintText: 'مثال: سارة محمد / أحمد محمود',
-                  ),
                   onChanged: (value) {
                     ref.read(profileRegistrationProvider.notifier).updateDraft(
                           draft.copyWith(fullName: value),
                         );
                   },
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
 
-                // Gender
-                const Text(
-                  'النوع',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 7),
-                NaseebakSegmentedControl<String>(
+                // Gender Selection Pills (ذكر / أنثى)
+                NaseebakSelectionField<String>(
+                  label: 'الجنس',
                   options: const {
-                    'female': 'أنثى',
                     'male': 'ذكر',
+                    'female': 'أنثى',
+                  },
+                  optionIcons: const {
+                    'male': Icons.male_rounded,
+                    'female': Icons.female_rounded,
                   },
                   selectedValue: draft.gender,
                   onChanged: (gender) {
@@ -192,7 +195,7 @@ class _BasicProfileStepScreenState
                         );
                   },
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
 
                 // Date of Birth + Auto Age & Zodiac Badge
                 Row(
@@ -200,49 +203,53 @@ class _BasicProfileStepScreenState
                   children: [
                     const Text(
                       'تاريخ الميلاد',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
+                      style: NaseebakTypography.formLabel,
                     ),
                     if (ageYears != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 9,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: ageYears >= 18
-                              ? AppColors.surfaceSubtleBlue
-                              : AppColors.error.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'العمر: $ageYears سنة • البرج: ${draft.calculatedZodiacSignAr}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
                             color: ageYears >= 18
-                                ? AppColors.primaryBlue
-                                : AppColors.error,
+                                ? AppColors.creamHighlight
+                                : AppColors.error.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Text(
+                            'العمر: $ageYears سنة • البرج: ${draft.calculatedZodiacSignAr}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: NaseebakTypography.fontFamily,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: ageYears >= 18
+                                  ? AppColors.primaryNavy
+                                  : AppColors.error,
+                            ),
                           ),
                         ),
                       ),
                   ],
                 ),
-                const SizedBox(height: 7),
+                const SizedBox(height: 8),
                 InkWell(
                   key: const Key('profile_dob_picker'),
                   onTap: () => _selectDateOfBirth(context),
-                  borderRadius: BorderRadius.circular(11),
+                  borderRadius: BorderRadius.circular(16),
                   child: Container(
-                    height: 46,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    height: 52,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      color: AppColors.backgroundPrimary,
-                      borderRadius: BorderRadius.circular(11),
-                      border: Border.all(color: AppColors.borderLight),
+                      color: AppColors.softBackground,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.subtleBorder,
+                        width: 1.2,
+                      ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -250,34 +257,33 @@ class _BasicProfileStepScreenState
                         Text(
                           dob != null
                               ? '${dob.day.toString().padLeft(2, '0')} / ${dob.month.toString().padLeft(2, '0')} / ${dob.year}'
-                              : 'اختر تاريخ الميلاد',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                              : 'يوم / شهر / سنة',
+                          style: TextStyle(
+                            fontFamily: NaseebakTypography.fontFamily,
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w500,
+                            color: dob != null
+                                ? AppColors.textPrimary
+                                : AppColors.textSecondary,
                           ),
                         ),
                         const Icon(
                           Icons.calendar_today_outlined,
-                          size: 18,
-                          color: AppColors.primaryBlue,
+                          size: 19,
+                          color: AppColors.primaryNavy,
                         ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
 
-                // Marital Status
+                // Marital Status Pills
                 const Text(
                   'الحالة الاجتماعية',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
+                  style: NaseebakTypography.formLabel,
                 ),
-                const SizedBox(height: 7),
+                const SizedBox(height: 8),
                 NaseebakSegmentedControl<String>(
                   options: draft.gender == 'male'
                       ? const {
@@ -302,14 +308,14 @@ class _BasicProfileStepScreenState
           ),
         ),
         const SizedBox(height: 12),
-        ElevatedButton(
-          key: const Key('step1_next_btn'),
+        NaseebakPrimaryButton(
+          buttonKey: const Key('step1_next_btn'),
+          label: 'التالي',
           onPressed: () {
             ref
                 .read(profileRegistrationProvider.notifier)
                 .validateAndAdvanceFromStep1();
           },
-          child: const Text('التالي'),
         ),
       ],
     );

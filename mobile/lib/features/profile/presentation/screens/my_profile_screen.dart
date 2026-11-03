@@ -823,7 +823,7 @@ class _EmptyOrErrorProfileView extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             errorMessage ??
-                'يعرض تطبيق نصيبك بياناتك الحقيقية فقط دون توليد أي بيانات افتراضية. يرجى إكمال ملفك الشخصي ليظهر هنا.',
+                'يعرض تطبيق نَصِيبُكَ بياناتك الحقيقية فقط دون توليد أي بيانات افتراضية. يرجى إكمال ملفك الشخصي ليظهر هنا.',
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 12.5,

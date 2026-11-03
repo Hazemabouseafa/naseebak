@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/design_system/naseebak_design_system.dart';
 import '../providers/profile_registration_provider.dart';
 import '../widgets/step_progress_header.dart';
 
-/// 05. Additional Profile Details and Biography Screen (الخطوة 3 من 4: التفاصيل الإضافية والنبذة)
-/// تشمل: الطول بالسنتيمتر، البرج الفلكي (محسوب تلقائياً)، التدخين، الجنسية، بلد الإقامة، المنطقة/المحافظة، الهوايات، والنبذة الشخصية الاختيارية.
+/// 05. Additional Profile Details and Biography Screen (الخطوة 3 من 4: التفاصيل الإضافية والنبذة — تصميم Astra Screen 06)
+/// تشمل: أيقونة الخطوة الذهبية، الطول بالسنتيمتر، البرج الفلكي المحسوب تلقائياً، التدخين،
+/// الجنسية، بلد الإقامة، المنطقة، الهوايات، والنبذة الشخصية الاختيارية.
 class AdditionalDetailsStepScreen extends ConsumerStatefulWidget {
   const AdditionalDetailsStepScreen({super.key});
 
@@ -60,90 +61,103 @@ class _AdditionalDetailsStepScreenState
       children: [
         Expanded(
           child: SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Height & Auto-Calculated Zodiac Sign Row
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'الطول: ${draft.heightCm} سم',
-                            style: const TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
+                const NaseebakStepBadge(
+                  icon: Icons.description_outlined,
+                  title: 'نبذة عنك وتفاصيل إضافية',
+                  subtitle: 'أضف تفاصيلك وموقعك وهواياتك لإكمال ملفك',
+                ),
+                const SizedBox(height: 20),
+
+                // Height & Auto-Calculated Zodiac Sign Card
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.softBackground,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppColors.subtleBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'الطول: ${draft.heightCm} سم',
+                              style: NaseebakTypography.formLabel.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                          Slider(
-                            value: draft.heightCm.toDouble(),
-                            min: 140,
-                            max: 210,
-                            divisions: 70,
-                            activeColor: AppColors.primaryBlue,
-                            label: '${draft.heightCm} سم',
-                            onChanged: (val) {
-                              ref
-                                  .read(profileRegistrationProvider.notifier)
-                                  .updateDraft(
-                                    draft.copyWith(heightCm: val.round()),
-                                  );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceSubtleBlue,
-                        borderRadius: BorderRadius.circular(11),
-                        border: Border.all(
-                          color: AppColors.primaryBlue.withOpacity(0.3),
+                            Slider(
+                              value: draft.heightCm.toDouble(),
+                              min: 140,
+                              max: 210,
+                              divisions: 70,
+                              activeColor: AppColors.primaryNavy,
+                              inactiveColor: AppColors.subtleBorder,
+                              label: '${draft.heightCm} سم',
+                              onChanged: (val) {
+                                ref
+                                    .read(profileRegistrationProvider.notifier)
+                                    .updateDraft(
+                                      draft.copyWith(heightCm: val.round()),
+                                    );
+                              },
+                            ),
+                          ],
                         ),
                       ),
-                      child: Column(
-                        children: [
-                          const Text(
-                            'البرج الفلكي',
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              color: AppColors.textSecondary,
-                            ),
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.creamHighlight,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppColors.goldAccent.withOpacity(0.55),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            draft.calculatedZodiacSignAr,
-                            style: const TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.primaryBlue,
+                        ),
+                        child: Column(
+                          children: [
+                            const Text(
+                              'البرج الفلكي',
+                              style: TextStyle(
+                                fontFamily: NaseebakTypography.fontFamily,
+                                fontSize: 11,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 2),
+                            Text(
+                              draft.calculatedZodiacSignAr,
+                              style: const TextStyle(
+                                fontFamily: NaseebakTypography.fontFamily,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primaryNavy,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 18),
 
                 // Smoking Status
                 const Text(
-                  'حالة التدخين',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
+                  'التدخين',
+                  style: NaseebakTypography.formLabel,
                 ),
-                const SizedBox(height: 7),
+                const SizedBox(height: 8),
                 NaseebakSegmentedControl<String>(
                   options: const {
                     'non_smoker': 'غير مدخن',
@@ -157,86 +171,49 @@ class _AdditionalDetailsStepScreenState
                         );
                   },
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
 
-                // Location: Nationality, Country of Residence, Region
+                // Location: Nationality & Country of Residence
                 Row(
                   children: [
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'الجنسية',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _nationalityController,
-                            onChanged: (val) => ref
-                                .read(profileRegistrationProvider.notifier)
-                                .updateDraft(draft.copyWith(nationality: val)),
-                          ),
-                        ],
+                      child: NaseebakTextField(
+                        label: 'الجنسية',
+                        controller: _nationalityController,
+                        onChanged: (val) => ref
+                            .read(profileRegistrationProvider.notifier)
+                            .updateDraft(draft.copyWith(nationality: val)),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'بلد الإقامة',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
+                      child: NaseebakTextField(
+                        label: 'بلد الإقامة',
+                        controller: _countryController,
+                        onChanged: (val) => ref
+                            .read(profileRegistrationProvider.notifier)
+                            .updateDraft(
+                              draft.copyWith(countryOfResidence: val),
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _countryController,
-                            onChanged: (val) => ref
-                                .read(profileRegistrationProvider.notifier)
-                                .updateDraft(
-                                  draft.copyWith(countryOfResidence: val),
-                                ),
-                          ),
-                        ],
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                const Text(
-                  'المحافظة / المنطقة',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                TextField(
+                const SizedBox(height: 14),
+                NaseebakTextField(
+                  label: 'المحافظة / المنطقة',
+                  hintText: 'مثال: القاهرة / الجيزة / الإسكندرية / الرياض',
                   controller: _regionController,
-                  decoration: const InputDecoration(
-                    hintText: 'مثال: القاهرة / الجيزة / الإسكندرية / الرياض',
-                  ),
                   onChanged: (val) => ref
                       .read(profileRegistrationProvider.notifier)
                       .updateDraft(draft.copyWith(region: val)),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
 
                 // Hobbies Selection
                 const Text(
                   'الهوايات والاهتمامات',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
+                  style: NaseebakTypography.formLabel,
                 ),
                 const SizedBox(height: 8),
                 Wrap(
@@ -247,15 +224,15 @@ class _AdditionalDetailsStepScreenState
                     return FilterChip(
                       label: Text(hobby),
                       selected: selected,
-                      selectedColor: AppColors.surfaceSubtleBlue,
-                      checkmarkColor: AppColors.primaryBlue,
+                      selectedColor: AppColors.primaryNavy,
+                      backgroundColor: AppColors.cardWhite,
+                      checkmarkColor: AppColors.goldAccent,
                       labelStyle: TextStyle(
-                        fontSize: 12,
+                        fontFamily: NaseebakTypography.fontFamily,
+                        fontSize: 13,
                         fontWeight:
-                            selected ? FontWeight.w700 : FontWeight.w500,
-                        color: selected
-                            ? AppColors.primaryBlue
-                            : AppColors.textSecondary,
+                            selected ? FontWeight.w600 : FontWeight.w500,
+                        color: selected ? Colors.white : AppColors.textPrimary,
                       ),
                       onSelected: (isSelected) {
                         final updated = List<String>.from(draft.hobbies);
@@ -271,37 +248,16 @@ class _AdditionalDetailsStepScreenState
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
 
                 // Optional Biography
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'نبذة شخصية عنك وعن شريك الحياة',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      'اختياري',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 7),
-                TextField(
+                NaseebakTextField(
+                  label: 'نبذة شخصية',
+                  badgeText: 'اختياري',
+                  hintText:
+                      'اكتب نبذة مختصرة عن نفسك وما تبحث عنه في شريك حياتك...',
                   controller: _bioController,
                   maxLines: 3,
-                  decoration: const InputDecoration(
-                    hintText:
-                        'اكتب نبذة مختصرة ومحترمة تعبّر عن شخصيتك وما تبحث عنه في شريك الحياة...',
-                  ),
                   onChanged: (val) => ref
                       .read(profileRegistrationProvider.notifier)
                       .updateDraft(draft.copyWith(bio: val)),
@@ -311,14 +267,14 @@ class _AdditionalDetailsStepScreenState
           ),
         ),
         const SizedBox(height: 12),
-        ElevatedButton(
-          key: const Key('step3_next_btn'),
+        NaseebakPrimaryButton(
+          buttonKey: const Key('step3_next_btn'),
+          label: 'مراجعة الملف قبل النشر',
           onPressed: () {
             ref
                 .read(profileRegistrationProvider.notifier)
                 .validateAndAdvanceFromStep3();
           },
-          child: const Text('مراجعة الملف قبل النشر'),
         ),
       ],
     );

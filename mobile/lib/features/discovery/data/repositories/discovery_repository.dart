@@ -262,7 +262,7 @@ class DiscoveryRepository {
     }
 
     if (e.type == DioExceptionType.connectionError) {
-      return 'لا يوجد اتصال بالإنترنت أو تعذر الوصول إلى خادم نصيبك.';
+      return 'لا يوجد اتصال بالإنترنت أو تعذر الوصول إلى خادم نَصِيبُكَ.';
     }
 
     final statusCode = e.response?.statusCode;

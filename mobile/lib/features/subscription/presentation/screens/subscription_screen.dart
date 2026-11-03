@@ -418,7 +418,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                                 ),
                                 const SizedBox(height: 6),
                                 const Text(
-                                  'يعرض تطبيق نصيبك السعر الفعلي المحلي المعتمد من متجر Google Play فقط دون عرض أي أسعار افتراضية. يرجى التأكد من تسجيل الدخول في متجر Google Play وإعادة المحاولة.',
+                                  'يعرض تطبيق نَصِيبُكَ السعر الفعلي المحلي المعتمد من متجر Google Play فقط دون عرض أي أسعار افتراضية. يرجى التأكد من تسجيل الدخول في متجر Google Play وإعادة المحاولة.',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: AppColors.textSecondary,

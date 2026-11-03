@@ -128,6 +128,6 @@ class SubscriptionRepository {
     if (data is Map<String, dynamic> && data['message'] != null) {
       return data['message'].toString();
     }
-    return 'تعذر الاتصال بخادم نصيبك للتحقق من حالة الاشتراك. يرجى المحاولة مرة أخرى.';
+    return 'تعذر الاتصال بخادم نَصِيبُكَ للتحقق من حالة الاشتراك. يرجى المحاولة مرة أخرى.';
   }
 }

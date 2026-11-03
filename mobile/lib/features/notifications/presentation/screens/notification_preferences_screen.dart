@@ -114,7 +114,7 @@ class NotificationPreferencesScreen extends ConsumerWidget {
                     key: const ValueKey('pref_announcements'),
                     icon: Icons.campaign_outlined,
                     title: 'الإعلانات العامة',
-                    subtitle: 'تحديثات منصة نصيبك والإشعارات العامة',
+                    subtitle: 'تحديثات منصة نَصِيبُكَ والإشعارات العامة',
                     value: prefs.announcementsEnabled,
                     isUpdating: state.isUpdatingPreferences,
                     onChanged: (val) {

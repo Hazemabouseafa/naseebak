@@ -292,7 +292,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
           isLoading: true,
           uiPhase: SubscriptionUiPhase.verificationPending,
           statusBannerMessage:
-              'تم استلام عملية الشراء من Google Play، وجارٍ التحقق الرسمي عبر خادم نصيبك...',
+              'تم استلام عملية الشراء من Google Play، وجارٍ التحقق الرسمي عبر خادم نَصِيبُكَ...',
           clearError: true,
         );
 

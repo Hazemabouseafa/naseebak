@@ -1,140 +1,152 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_strings.dart';
 
-/// شعار نصيبك المرجعي (Placeholder) المستوحى من رسم بسيط للعريس والعروس
-/// بدون أي رموز دينية أو معمارية دينية، وبألوان الهوية الجديدة (الأزرق والذهبي/الأصفر).
-/// ملاحظة: هذا العنصر محدّد بوضوح كأصل مرجعي مؤقت (Placeholder) لحين تزويد ملف الشعار المتجه النهائي المعتمد.
+/// الشعار الرسمي المعتمد لتطبيق نصيبك — Naseebak
+/// يستخدم الأصول الرسمية المستخرجة من شعار نصيبك المعتمد (العريس والعروس داخل القلب الذهبي وأوراق الغار الذهبية)
+/// بدون أي رموز دينية أو مساجد أو أهلة.
 class NaseebakLogoBadge extends StatelessWidget {
   final double size;
   final bool showText;
   final bool lightText;
+  final bool useFullEmblem;
 
   const NaseebakLogoBadge({
     super.key,
     this.size = 56,
     this.showText = true,
     this.lightText = false,
+    this.useFullEmblem = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final assetPath = useFullEmblem
+        ? AppStrings.officialLogoAsset
+        : AppStrings.officialAppIconAsset;
+
+    final badgeGraphic = useFullEmblem
+        ? SizedBox(
+            width: size * 1.28,
+            height: size,
+            child: Image.asset(
+              assetPath,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.high,
+              errorBuilder: (_, __, ___) => _FallbackOfficialLogoMark(
+                size: size,
+                lightText: lightText,
+              ),
+            ),
+          )
+        : Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(size * 0.28),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryNavy.withOpacity(0.16),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(size * 0.28),
+              child: Image.asset(
+                assetPath,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.high,
+                errorBuilder: (_, __, ___) => _FallbackOfficialLogoMark(
+                  size: size,
+                  lightText: lightText,
+                ),
+              ),
+            ),
+          );
+
+    if (!showText) {
+      return badgeGraphic;
+    }
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: lightText ? Colors.white.withOpacity(0.14) : AppColors.surfaceSubtleBlue,
-            borderRadius: BorderRadius.circular(size * 0.30),
-            border: Border.all(
-              color: AppColors.accentYellow,
-              width: 2.0,
-            ),
-          ),
-          child: CustomPaint(
-            painter: _BrideAndGroomPlaceholderPainter(
-              primaryColor: lightText ? Colors.white : AppColors.primaryBlue,
-              accentColor: AppColors.accentYellow,
-            ),
-          ),
-        ),
-        if (showText) ...[
-          const SizedBox(width: 12),
-          Column(
+        badgeGraphic,
+        const SizedBox(width: 10),
+        Flexible(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'نصيبك',
+                AppStrings.appNameAr,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
+                  fontFamily: 'IBMPlexSansArabic',
                   fontSize: size * 0.44,
-                  fontWeight: FontWeight.w800,
-                  color: lightText ? Colors.white : AppColors.darkBlue,
+                  fontWeight: FontWeight.w700,
+                  color: lightText ? Colors.white : AppColors.primaryNavy,
                   height: 1.15,
                 ),
               ),
               Text(
                 'Naseebak',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: size * 0.20,
+                  fontFamily: 'IBMPlexSansArabic',
+                  fontSize: (size * 0.22).clamp(9.0, 14.0),
                   fontWeight: FontWeight.w600,
-                  letterSpacing: 1.1,
-                  color: lightText ? AppColors.accentYellow : AppColors.primaryBlue,
+                  letterSpacing: 0.8,
+                  color: lightText ? AppColors.goldAccent : AppColors.primaryBlue,
                 ),
               ),
             ],
           ),
-        ],
+        ),
       ],
     );
   }
 }
 
-class _BrideAndGroomPlaceholderPainter extends CustomPainter {
-  final Color primaryColor;
-  final Color accentColor;
+class _FallbackOfficialLogoMark extends StatelessWidget {
+  final double size;
+  final bool lightText;
 
-  _BrideAndGroomPlaceholderPainter({
-    required this.primaryColor,
-    required this.accentColor,
+  const _FallbackOfficialLogoMark({
+    required this.size,
+    required this.lightText,
   });
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final strokePaint = Paint()
-      ..color = primaryColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size.width * 0.055
-      ..strokeCap = StrokeCap.round;
-
-    final accentPaint = Paint()
-      ..color = accentColor
-      ..style = PaintingStyle.fill;
-
-    // Groom silhouette (Right side in RTL)
-    final groomCenterX = size.width * 0.62;
-    final headY = size.height * 0.34;
-    final headRadius = size.width * 0.11;
-
-    canvas.drawCircle(Offset(groomCenterX, headY), headRadius, strokePaint);
-    final groomShoulders = Path()
-      ..moveTo(groomCenterX - size.width * 0.17, size.height * 0.76)
-      ..quadraticBezierTo(
-        groomCenterX,
-        size.height * 0.48,
-        groomCenterX + size.width * 0.17,
-        size.height * 0.76,
-      );
-    canvas.drawPath(groomShoulders, strokePaint);
-
-    // Groom bow-tie accent
-    canvas.drawCircle(Offset(groomCenterX, size.height * 0.54), size.width * 0.035, accentPaint);
-
-    // Bride silhouette (Left side in RTL)
-    final brideCenterX = size.width * 0.38;
-    canvas.drawCircle(Offset(brideCenterX, headY + size.height * 0.02), headRadius * 0.94, strokePaint);
-    final brideShoulders = Path()
-      ..moveTo(brideCenterX - size.width * 0.16, size.height * 0.76)
-      ..quadraticBezierTo(
-        brideCenterX,
-        size.height * 0.50,
-        brideCenterX + size.width * 0.16,
-        size.height * 0.76,
-      );
-    canvas.drawPath(brideShoulders, strokePaint);
-
-    // Subtle crown / floral tiara dot in Accent Yellow (#FFC43D)
-    canvas.drawCircle(
-      Offset(brideCenterX, headY - headRadius * 1.15),
-      size.width * 0.045,
-      accentPaint,
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: [AppColors.primaryNavy, AppColors.primaryBlue],
+        ),
+        borderRadius: BorderRadius.circular(size * 0.28),
+        border: Border.all(
+          color: AppColors.goldAccent,
+          width: 1.8,
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.favorite_rounded,
+          color: AppColors.goldAccent,
+          size: size * 0.52,
+        ),
+      ),
     );
-  }
-
-  @override
-  bool shouldRepaint(covariant _BrideAndGroomPlaceholderPainter oldDelegate) {
-    return oldDelegate.primaryColor != primaryColor ||
-        oldDelegate.accentColor != accentColor;
   }
 }

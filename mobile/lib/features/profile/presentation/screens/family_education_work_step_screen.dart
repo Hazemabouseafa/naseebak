@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/design_system/naseebak_design_system.dart';
 import '../providers/profile_registration_provider.dart';
 import '../widgets/step_progress_header.dart';
 
-/// 04. Family, Education and Work Screen (الخطوة 2 من 4: الأسرة والعمل)
-/// مطابقة لتخطيط الـ Mockup Screen 04:
-/// هل سبق لك الزواج؟، هل لديك أطفال؟، المؤهل الدراسي، العمل، وهل لديك منزل؟
+/// 04. Family, Education and Work Screen (الخطوة 2 من 4: العائلة والتعليم والعمل — تصميم Astra Screens 04-05)
+/// تشمل: أيقونة الخطوة الذهبية، هل سبق لك الزواج؟، هل لديك أطفال؟، المؤهل الدراسي، المهنة، والسكن.
 class FamilyEducationWorkStepScreen extends ConsumerStatefulWidget {
   const FamilyEducationWorkStepScreen({super.key});
 
@@ -41,19 +40,23 @@ class _FamilyEducationWorkStepScreenState
       children: [
         Expanded(
           child: SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const NaseebakStepBadge(
+                  icon: Icons.home_outlined,
+                  title: 'العائلة والتعليم والعمل',
+                  subtitle: 'شاركنا المزيد عن وضعك العائلي والمهني',
+                ),
+                const SizedBox(height: 20),
+
                 // Previous Marriage
                 const Text(
                   'هل سبق لك الزواج؟',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
+                  style: NaseebakTypography.formLabel,
                 ),
-                const SizedBox(height: 7),
+                const SizedBox(height: 8),
                 NaseebakSegmentedControl<bool>(
                   options: const {
                     true: 'نعم',
@@ -66,18 +69,14 @@ class _FamilyEducationWorkStepScreenState
                         );
                   },
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
 
                 // Children
                 const Text(
                   'هل لديك أطفال؟',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
+                  style: NaseebakTypography.formLabel,
                 ),
-                const SizedBox(height: 7),
+                const SizedBox(height: 8),
                 NaseebakSegmentedControl<bool>(
                   options: const {
                     true: 'نعم',
@@ -93,18 +92,14 @@ class _FamilyEducationWorkStepScreenState
                         );
                   },
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
 
                 // Education Level
                 const Text(
                   'المؤهل الدراسي',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
+                  style: NaseebakTypography.formLabel,
                 ),
-                const SizedBox(height: 7),
+                const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   value: draft.educationLevel,
                   items: const [
@@ -141,59 +136,42 @@ class _FamilyEducationWorkStepScreenState
                     }
                   },
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
 
                 // Occupation
-                const Text(
-                  'العمل / المهنة',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 7),
-                TextField(
-                  key: const Key('profile_occupation_input'),
+                NaseebakTextField(
+                  fieldKey: const Key('profile_occupation_input'),
+                  label: 'المهنة / العمل',
+                  hintText: 'أدخل مهنتك (مثال: مهندس، طبيب، محاسب...)',
                   controller: _occupationController,
-                  decoration: const InputDecoration(
-                    hintText: 'مثال: مهندسة معمارية / محاسب / طبيب',
-                  ),
                   onChanged: (value) {
                     ref.read(profileRegistrationProvider.notifier).updateDraft(
                           draft.copyWith(occupation: value),
                         );
                   },
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
 
                 // Home Ownership
                 const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'حالة السكن / المنزل',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
+                      'السكن / المنزل',
+                      style: NaseebakTypography.formLabel,
                     ),
                     Text(
-                      'مطلوب للتوافق الأسري',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textMuted,
-                      ),
+                      'للتوافق الأسري',
+                      style: NaseebakTypography.supportingText,
                     ),
                   ],
                 ),
-                const SizedBox(height: 7),
+                const SizedBox(height: 8),
                 NaseebakSegmentedControl<String>(
                   options: const {
                     'owned': 'تمليك',
                     'rented': 'إيجار',
-                    'family_home': 'مع الأسرة',
+                    'family_home': 'مع العائلة',
                   },
                   selectedValue: draft.homeOwnership,
                   onChanged: (val) {
@@ -207,14 +185,14 @@ class _FamilyEducationWorkStepScreenState
           ),
         ),
         const SizedBox(height: 12),
-        ElevatedButton(
-          key: const Key('step2_next_btn'),
+        NaseebakPrimaryButton(
+          buttonKey: const Key('step2_next_btn'),
+          label: 'التالي',
           onPressed: () {
             ref
                 .read(profileRegistrationProvider.notifier)
                 .validateAndAdvanceFromStep2();
           },
-          child: const Text('التالي'),
         ),
       ],
     );

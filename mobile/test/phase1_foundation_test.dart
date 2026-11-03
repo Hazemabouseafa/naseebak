@@ -28,14 +28,16 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('نصيبك'), findsOneWidget);
-      expect(find.text('المتابعة باستخدام Google'), findsOneWidget);
+      expect(find.text('نَصِيبُكَ'), findsOneWidget);
+      expect(find.text('ابدأ الآن'), findsOneWidget);
       expect(find.text('مخصص حصرياً للبالغين من 18 عاماً فأكثر'), findsOneWidget);
 
-      // Navigate to Google Sign-In Screen (Screen 02)
+      // Navigate to Google Sign-In Screen (Screen 02 - Single Google Login Entry Point)
       await tester.tap(find.byKey(const Key('welcome_continue_google_btn')));
       await tester.pumpAndSettle();
 
+      expect(find.text('مرحبًا بك في نَصِيبُكَ'), findsOneWidget);
+      expect(find.text('المتابعة باستخدام Google'), findsOneWidget);
       expect(find.text('المتابعة بحساب Google الخاص بك'), findsOneWidget);
     });
 

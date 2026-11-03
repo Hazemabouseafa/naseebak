@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/design_system/naseebak_design_system.dart';
 import '../providers/profile_registration_provider.dart';
 
 /// 06. Profile Preview Screen (الخطوة 4 من 4: معاينة ومراجعة الملف الشخصي قبل النشر)
@@ -22,50 +22,66 @@ class ProfilePreviewStepScreen extends ConsumerWidget {
       children: [
         Expanded(
           child: SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Member Profile Card Preview (Matching Mockup Screen 08 layout hierarchy)
+                // Astra Preview Header Card
                 Container(
                   decoration: BoxDecoration(
-                    color: AppColors.backgroundPrimary,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.borderLight),
+                    color: AppColors.cardWhite,
+                    borderRadius:
+                        BorderRadius.circular(NaseebakSpacing.cardRadius),
+                    border: Border.all(color: AppColors.subtleBorder),
+                    boxShadow: NaseebakSpacing.subtleCardShadow,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Header Cover in Naseebak Subtle Blue & Yellow Accent
+                      // Navy & Gold Header Cover
                       Container(
-                        height: 125,
+                        height: 132,
                         decoration: const BoxDecoration(
                           gradient: LinearGradient(
+                            begin: Alignment.topRight,
+                            end: Alignment.bottomLeft,
                             colors: [
-                              AppColors.surfaceSubtleBlue,
-                              AppColors.surfaceSubtleYellow,
+                              AppColors.primaryNavy,
+                              AppColors.primaryBlue,
                             ],
                           ),
                           borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(15),
+                            top: Radius.circular(21),
                           ),
                         ),
                         child: Center(
-                          child: CircleAvatar(
-                            radius: 42,
-                            backgroundColor: AppColors.primaryBlue,
-                            child: Text(
-                              initialLetter,
-                              style: const TextStyle(
-                                fontSize: 30,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
+                          child: Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.goldAccent,
+                                width: 2.2,
+                              ),
+                            ),
+                            child: CircleAvatar(
+                              radius: 40,
+                              backgroundColor: AppColors.creamHighlight,
+                              child: Text(
+                                initialLetter,
+                                style: const TextStyle(
+                                  fontFamily: NaseebakTypography.fontFamily,
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.primaryNavy,
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(18),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -75,65 +91,45 @@ class ProfilePreviewStepScreen extends ConsumerWidget {
                                 Expanded(
                                   child: Text(
                                     '${draft.fullName} • $ageYears سنة',
-                                    style: const TextStyle(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.textPrimary,
-                                    ),
+                                    style: NaseebakTypography.sectionHeading,
                                   ),
                                 ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 9,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.surfaceSubtleBlue,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Text(
-                                    'معاينة قبل النشر',
-                                    style: TextStyle(
-                                      fontSize: 10.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.primaryBlue,
-                                    ),
-                                  ),
+                                const NaseebakStatusBadge(
+                                  label: 'معاينة قبل النشر',
+                                  icon: Icons.visibility_outlined,
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 6),
                             Row(
                               children: [
                                 const Icon(
                                   Icons.location_on_outlined,
-                                  size: 15,
-                                  color: AppColors.textMuted,
+                                  size: 16,
+                                  color: AppColors.warmGold,
                                 ),
                                 const SizedBox(width: 4),
-                                Text(
-                                  '${draft.region}، ${draft.countryOfResidence} (${draft.nationality})',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.textSecondary,
+                                Expanded(
+                                  child: Text(
+                                    '${draft.region}، ${draft.countryOfResidence} (${draft.nationality})',
+                                    style: NaseebakTypography.supportingText,
                                   ),
                                 ),
                               ],
                             ),
-                            const Divider(height: 24),
+                            const Divider(
+                              height: 26,
+                              color: AppColors.subtleBorder,
+                            ),
 
                             const Text(
                               'المعلومات الأساسية والأسرية',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.textPrimary,
-                              ),
+                              style: NaseebakTypography.cardTitle,
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 12),
                             Wrap(
                               spacing: 14,
-                              runSpacing: 10,
+                              runSpacing: 12,
                               children: [
                                 _InfoItem(
                                   label: 'الحالة الاجتماعية',
@@ -172,40 +168,36 @@ class ProfilePreviewStepScreen extends ConsumerWidget {
                             ),
 
                             if (draft.hobbies.isNotEmpty) ...[
-                              const Divider(height: 24),
+                              const Divider(
+                                height: 26,
+                                color: AppColors.subtleBorder,
+                              ),
                               const Text(
                                 'الهوايات',
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                                style: NaseebakTypography.formLabel,
                               ),
                               const SizedBox(height: 6),
                               Text(
                                 draft.hobbies.join(' • '),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary,
-                                ),
+                                style: NaseebakTypography.supportingText,
                               ),
                             ],
 
                             if (draft.bio.trim().isNotEmpty) ...[
-                              const Divider(height: 24),
+                              const Divider(
+                                height: 26,
+                                color: AppColors.subtleBorder,
+                              ),
                               const Text(
                                 'نبذة عني',
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                                style: NaseebakTypography.formLabel,
                               ),
                               const SizedBox(height: 6),
                               Text(
                                 draft.bio,
-                                style: const TextStyle(
-                                  fontSize: 12,
+                                style: NaseebakTypography.bodyText.copyWith(
+                                  fontSize: 13.5,
                                   color: AppColors.textSecondary,
-                                  height: 1.7,
                                 ),
                               ),
                             ],
@@ -220,19 +212,20 @@ class ProfilePreviewStepScreen extends ConsumerWidget {
                 // Visibility Control Switch
                 SwitchListTile(
                   contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 4,
+                    horizontal: 16,
+                    vertical: 6,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: const BorderSide(color: AppColors.borderLight),
+                    borderRadius: BorderRadius.circular(18),
+                    side: const BorderSide(color: AppColors.subtleBorder),
                   ),
-                  tileColor: AppColors.backgroundSecondary,
-                  activeColor: AppColors.primaryBlue,
+                  tileColor: AppColors.softBackground,
+                  activeColor: AppColors.primaryNavy,
                   title: const Text(
                     'إظهار ملفي الشخصي في نتائج البحث للأعضاء',
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontFamily: NaseebakTypography.fontFamily,
+                      fontSize: 13.5,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
                     ),
@@ -240,8 +233,9 @@ class ProfilePreviewStepScreen extends ConsumerWidget {
                   subtitle: const Text(
                     'يمكنك إخفاء أو إظهار ملفك الشخصي في أي وقت من إعدادات الخصوصية.',
                     style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textMuted,
+                      fontFamily: NaseebakTypography.fontFamily,
+                      fontSize: 11.5,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   value: draft.isVisible,
@@ -256,21 +250,20 @@ class ProfilePreviewStepScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 12),
-        ElevatedButton.icon(
-          key: const Key('publish_profile_btn'),
-          onPressed: regState.isSubmitting
-              ? null
-              : () {
-                  ref
-                      .read(profileRegistrationProvider.notifier)
-                      .publishProfile();
-                },
-          icon: const Icon(Icons.check_circle_outline_rounded, size: 19),
-          label: Text(
-            regState.isSubmitting
-                ? 'جارٍ حفظ ونشر الملف الشخصي...'
-                : 'اعتماد ونشر الملف الشخصي',
+        NaseebakPrimaryButton(
+          buttonKey: const Key('publish_profile_btn'),
+          isLoading: regState.isSubmitting,
+          icon: const Icon(
+            Icons.check_circle_outline_rounded,
+            size: 20,
+            color: AppColors.goldAccent,
           ),
+          label: regState.isSubmitting
+              ? 'جارٍ حفظ ونشر الملف الشخصي...'
+              : 'إنهاء الإعداد ونشر الملف الشخصي',
+          onPressed: () {
+            ref.read(profileRegistrationProvider.notifier).publishProfile();
+          },
         ),
       ],
     );
@@ -289,22 +282,24 @@ class _InfoItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 135,
+      width: 138,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
             style: const TextStyle(
-              fontSize: 10.5,
-              color: AppColors.textMuted,
+              fontFamily: NaseebakTypography.fontFamily,
+              fontSize: 11.5,
+              color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 3),
           Text(
             value,
             style: const TextStyle(
-              fontSize: 12,
+              fontFamily: NaseebakTypography.fontFamily,
+              fontSize: 13,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
