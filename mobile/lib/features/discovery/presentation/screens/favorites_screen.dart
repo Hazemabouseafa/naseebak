@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/design_system/naseebak_design_system.dart';
 import '../providers/discovery_provider.dart';
-import '../widgets/member_card.dart';
 import 'advanced_search_screen.dart';
 import 'member_profile_screen.dart';
 
-/// 16. Favorites Screen (المفضلة)
-/// تتيح للعضو عرض الأعضاء الذين قام بحفظهم في المفضلة، البحث المحلي السريع داخل المفضلة،
-/// فتح الملف الشخصي لأي عضو، أو إزالته من المفضلة.
+/// Screen 03 (Batch 2A) — Favorites Screen (`المفضلة`)
+/// تصميم Astra الفاخر لقائمة الأعضاء المفضلين مع البحث المحلي السريع،
+/// بطاقات الأعضاء الملكية، وحالة الفراغ الزخرفية.
 class FavoritesScreen extends ConsumerStatefulWidget {
   const FavoritesScreen({super.key});
 
@@ -47,170 +46,235 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                 m.occupation.contains(q);
           }).toList();
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 19),
-          onPressed: () => Navigator.of(context).pop(),
-          tooltip: 'رجوع',
-        ),
-        title: const Text('المفضلة'),
-        actions: [
-          IconButton(
-            tooltip: 'تحديث',
-            onPressed: state.isLoadingFavorites
-                ? null
-                : () {
-                    ref.read(discoveryProvider.notifier).loadFavorites();
-                  },
-            icon: const Icon(Icons.refresh_rounded, size: 20),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: AppColors.borderLight),
-        ),
-      ),
-      body: SafeArea(
-        child: Builder(
-          builder: (context) {
-            if (state.isLoadingFavorites && state.favorites.isEmpty) {
-              return const Center(
-                child: CircularProgressIndicator(color: AppColors.primaryBlue),
-              );
-            }
-
-            if (state.favoritesError != null && state.favorites.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Icon(
-                      Icons.error_outline_rounded,
-                      size: 46,
-                      color: AppColors.error,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      state.favoritesError!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        ref.read(discoveryProvider.notifier).loadFavorites();
-                      },
-                      child: const Text('إعادة المحاولة'),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            if (state.favorites.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.all(26),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Icon(
-                      Icons.favorite_border_rounded,
-                      size: 52,
-                      color: AppColors.primaryBlue,
-                    ),
-                    const SizedBox(height: 14),
-                    const Text(
-                      'لم تقم بإضافة أي أعضاء إلى المفضلة بعد.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'يمكنك حفظ الملفات الشخصية التي تثير اهتمامك أثناء التصفح للرجوع إليها بسهولة في أي وقت.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: AppColors.textSecondary,
-                        height: 1.7,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton.icon(
-                      key: const Key('empty_favorites_explore_btn'),
-                      onPressed: () {
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const AdvancedSearchScreen(),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.explore_outlined, size: 19),
-                      label: const Text('استكشف الأعضاء'),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (state.favorites.length > 2)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(18, 14, 18, 6),
-                    child: TextField(
-                      decoration: const InputDecoration(
-                        hintText: 'ابحث بالاسم أو المنطقة داخل المفضلة...',
-                        prefixIcon: Icon(Icons.search_rounded, size: 20),
-                      ),
-                      onChanged: (val) => setState(() => _localQuery = val),
-                    ),
-                  ),
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(18, 12, 18, 24),
-                    itemCount: filteredFavorites.length,
-                    itemBuilder: (context, index) {
-                      final member = filteredFavorites[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: MemberCard(
-                          member: member,
-                          onTapViewProfile: () =>
-                              _openMemberProfile(member.userId),
-                          onToggleFavorite: () async {
-                            final err = await ref
-                                .read(discoveryProvider.notifier)
-                                .toggleFavorite(member);
-                            if (err != null && context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  backgroundColor: AppColors.error,
-                                  content: Text(err),
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                      );
-                    },
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: AppColors.softBackground,
+        body: Column(
+          children: [
+            // Premium Royal Navy Curved Header
+            NaseebakCurvedHeader(
+              title: 'المفضلة',
+              subtitle: 'الملفات المحفوظة التي تهمك للعودة إليها بسهولة',
+              onBack: () => Navigator.of(context).pop(),
+              actions: [
+                IconButton(
+                  tooltip: 'تحديث',
+                  onPressed: state.isLoadingFavorites
+                      ? null
+                      : () {
+                          ref.read(discoveryProvider.notifier).loadFavorites();
+                        },
+                  icon: const Icon(
+                    Icons.refresh_rounded,
+                    color: Colors.white,
+                    size: 21,
                   ),
                 ),
               ],
-            );
-          },
+            ),
+
+            Expanded(
+              child: Builder(
+                builder: (context) {
+                  if (state.isLoadingFavorites && state.favorites.isEmpty) {
+                    return ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                      itemCount: 4,
+                      itemBuilder: (_, __) => const Padding(
+                        padding: EdgeInsets.only(bottom: 12),
+                        child: NaseebakLoadingSkeleton(
+                          height: 140,
+                          radius: 20,
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (state.favoritesError != null && state.favorites.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Center(
+                        child: NaseebakCard(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 56,
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  color: AppColors.error.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.error_outline_rounded,
+                                  size: 30,
+                                  color: AppColors.error,
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              Text(
+                                state.favoritesError!,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontFamily: NaseebakTypography.fontFamily,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 18),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primaryNavy,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  ref
+                                      .read(discoveryProvider.notifier)
+                                      .loadFavorites();
+                                },
+                                child: const Text(
+                                  'إعادة المحاولة',
+                                  style: TextStyle(
+                                    fontFamily: NaseebakTypography.fontFamily,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (state.favorites.isEmpty) {
+                    return Center(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(26),
+                        child: NaseebakEmptyState(
+                          icon: Icons.favorite_border_rounded,
+                          title: 'قائمة المفضلة فارغة',
+                          subtitle: 'لم تقم بإضافة أي أعضاء إلى المفضلة بعد.',
+                          action: ElevatedButton.icon(
+                            key: const Key('empty_favorites_explore_btn'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryNavy,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 13,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(22),
+                              ),
+                            ),
+                            onPressed: () {
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const AdvancedSearchScreen(),
+                                ),
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.explore_outlined,
+                              size: 19,
+                              color: AppColors.goldAccent,
+                            ),
+                            label: const Text(
+                              'استكشف الأعضاء',
+                              style: TextStyle(
+                                fontFamily: NaseebakTypography.fontFamily,
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  return Column(
+                    children: [
+                      if (state.favorites.length > 2)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.cardWhite,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: AppColors.subtleBorder,
+                              ),
+                              boxShadow: NaseebakSpacing.subtleCardShadow,
+                            ),
+                            child: TextField(
+                              decoration: const InputDecoration(
+                                hintText:
+                                    'ابحث بالاسم أو المنطقة داخل المفضلة...',
+                                hintStyle: TextStyle(
+                                  fontFamily: NaseebakTypography.fontFamily,
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                ),
+                                prefixIcon: Icon(
+                                  Icons.search_rounded,
+                                  color: AppColors.primaryNavy,
+                                  size: 20,
+                                ),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                              ),
+                              onChanged: (val) =>
+                                  setState(() => _localQuery = val),
+                            ),
+                          ),
+                        ),
+                      Expanded(
+                        child: ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                          itemCount: filteredFavorites.length,
+                          itemBuilder: (context, index) {
+                            final member = filteredFavorites[index];
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: MemberCard(
+                                member: member,
+                                onTapViewProfile: () =>
+                                    _openMemberProfile(member.userId),
+                                onToggleFavorite: () async {
+                                  final err = await ref
+                                      .read(discoveryProvider.notifier)
+                                      .toggleFavorite(member);
+                                  if (err != null && context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        backgroundColor: AppColors.error,
+                                        content: Text(err),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );

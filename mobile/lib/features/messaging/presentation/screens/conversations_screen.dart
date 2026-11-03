@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../discovery/presentation/widgets/authorized_photo_avatar.dart';
+import '../../../../core/design_system/naseebak_design_system.dart';
 import '../../data/models/conversation_model.dart';
 import '../providers/messaging_provider.dart';
 import 'chat_screen.dart';
 
 /// Screen 24 — Conversations List Screen (`الرسائل`)
-/// تعرض المحادثات الخاصة المصرح بها بعد قبول طلبات التعارف مرتبة بحسب أحدث نشاط.
+/// تعرض المحادثات الخاصة المصرح بها بعد قبول طلبات التعارف بتصميم نَصِيبُكَ الفاخر
 class ConversationsScreen extends ConsumerStatefulWidget {
   const ConversationsScreen({super.key});
 
@@ -53,172 +52,157 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.backgroundPrimary,
-        appBar: AppBar(
-          title: const Text('الرسائل'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh_rounded, size: 20),
-              tooltip: 'تحديث المحادثات',
-              onPressed: () =>
-                  ref.read(messagingProvider.notifier).loadConversations(),
+        backgroundColor: NaseebakColors.backgroundBeige,
+        body: Column(
+          children: [
+            NaseebakCurvedHeader(
+              title: 'الرسائل',
+              subtitle: 'محادثاتك الخاصة المصرح بها بعد قبول طلبات التعارف',
+              trailing: [
+                IconButton(
+                  icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 22),
+                  tooltip: 'تحديث المحادثات',
+                  onPressed: () =>
+                      ref.read(messagingProvider.notifier).loadConversations(),
+                ),
+              ],
             ),
-          ],
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(1),
-            child: Container(height: 1, color: AppColors.borderLight),
-          ),
-        ),
-        body: SafeArea(
-          child: RefreshIndicator(
-            color: AppColors.primaryBlue,
-            onRefresh: () =>
-                ref.read(messagingProvider.notifier).loadConversations(),
-            child: Builder(
-              builder: (context) {
-                if (state.isLoadingConversations &&
-                    state.conversations.isEmpty) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primaryBlue,
-                    ),
-                  );
-                }
-
-                if (state.conversationsError != null &&
-                    state.conversations.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.cloud_off_rounded,
-                            size: 44,
-                            color: AppColors.primaryBlue,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            state.conversationsError!,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          OutlinedButton(
-                            onPressed: () => ref
-                                .read(messagingProvider.notifier)
-                                .loadConversations(),
-                            child: const Text('إعادة المحاولة'),
-                          ),
+            Expanded(
+              child: RefreshIndicator(
+                color: NaseebakColors.accentGold,
+                backgroundColor: NaseebakColors.primaryNavy,
+                onRefresh: () =>
+                    ref.read(messagingProvider.notifier).loadConversations(),
+                child: Builder(
+                  builder: (context) {
+                    if (state.isLoadingConversations &&
+                        state.conversations.isEmpty) {
+                      return ListView(
+                        padding: const EdgeInsets.all(16),
+                        children: const [
+                          NaseebakLoadingSkeleton(height: 84),
+                          SizedBox(height: 12),
+                          NaseebakLoadingSkeleton(height: 84),
+                          SizedBox(height: 12),
+                          NaseebakLoadingSkeleton(height: 84),
                         ],
-                      ),
-                    ),
-                  );
-                }
+                      );
+                    }
 
-                if (state.conversations.isEmpty) {
-                  return ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    children: [
-                      const SizedBox(height: 110),
-                      Center(
+                    if (state.conversationsError != null &&
+                        state.conversations.isEmpty) {
+                      return Center(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 28),
+                          padding: const EdgeInsets.all(24),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Container(
-                                width: 68,
-                                height: 68,
+                                width: 64,
+                                height: 64,
                                 decoration: BoxDecoration(
-                                  color: AppColors.surfaceSubtleBlue,
-                                  borderRadius: BorderRadius.circular(22),
+                                  color: NaseebakColors.cardBackground,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: NaseebakColors.errorBorder),
                                 ),
                                 child: const Icon(
-                                  Icons.chat_bubble_outline_rounded,
+                                  Icons.cloud_off_rounded,
                                   size: 32,
-                                  color: AppColors.primaryBlue,
+                                  color: NaseebakColors.error,
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              Text(
+                                state.conversationsError!,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: NaseebakColors.textDarkNavy,
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              const Text(
-                                'لا توجد محادثات حتى الآن',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textPrimary,
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: NaseebakColors.primaryNavy,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'ستظهر محادثاتك هنا بعد قبول طلبات التعارف.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.textSecondary,
-                                  height: 1.7,
-                                ),
+                                onPressed: () => ref
+                                    .read(messagingProvider.notifier)
+                                    .loadConversations(),
+                                child: const Text('إعادة المحاولة'),
                               ),
                             ],
                           ),
                         ),
-                      ),
-                    ],
-                  );
-                }
+                      );
+                    }
 
-                return ListView.separated(
-                  key: const Key('conversations_list_view'),
-                  controller: _scrollController,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  itemCount: state.conversations.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    final conv = state.conversations[index];
-                    return _ConversationListTile(
-                      conversation: conv,
-                      onTap: () async {
-                        await Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => ChatScreen(
-                              conversationId: conv.id,
-                              initialMemberName: conv.otherMember.fullName,
-                            ),
+                    if (state.conversations.isEmpty) {
+                      return ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: const [
+                          SizedBox(height: 80),
+                          NaseebakEmptyState(
+                            icon: Icons.chat_bubble_outline_rounded,
+                            title: 'لا توجد محادثات حتى الآن',
+                            subtitle: 'ستظهر محادثاتك هنا بعد قبول طلبات التعارف.',
                           ),
+                        ],
+                      );
+                    }
+
+                    return ListView.separated(
+                      key: const Key('conversations_list_view'),
+                      controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      itemCount: state.conversations.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        final conv = state.conversations[index];
+                        return _ConversationListCard(
+                          conversation: conv,
+                          onTap: () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => ChatScreen(
+                                  conversationId: conv.id,
+                                  initialMemberName: conv.otherMember.fullName,
+                                ),
+                              ),
+                            );
+                            if (mounted) {
+                              ref
+                                  .read(messagingProvider.notifier)
+                                  .loadConversations();
+                            }
+                          },
                         );
-                        if (mounted) {
-                          ref
-                              .read(messagingProvider.notifier)
-                              .loadConversations();
-                        }
                       },
                     );
                   },
-                );
-              },
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _ConversationListTile extends StatelessWidget {
+class _ConversationListCard extends StatelessWidget {
   final ConversationSummaryModel conversation;
   final VoidCallback onTap;
 
-  const _ConversationListTile({
+  const _ConversationListCard({
     required this.conversation,
     required this.onTap,
   });
@@ -242,21 +226,53 @@ class _ConversationListTile extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: hasUnread
-              ? AppColors.surfaceSubtleBlue.withOpacity(0.55)
-              : AppColors.backgroundPrimary,
+              ? NaseebakColors.accentGoldMuted.withOpacity(0.18)
+              : NaseebakColors.cardBackground,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: hasUnread ? AppColors.primaryBlue : AppColors.borderLight,
-            width: hasUnread ? 1.3 : 1,
+            color: hasUnread
+                ? NaseebakColors.accentGold.withOpacity(0.55)
+                : NaseebakColors.borderLight,
+            width: hasUnread ? 1.4 : 1,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: hasUnread
+                  ? NaseebakColors.accentGold.withOpacity(0.08)
+                  : NaseebakColors.shadowColor,
+              offset: const Offset(0, 3),
+              blurRadius: 8,
+            ),
+          ],
         ),
         child: Row(
           children: [
-            AuthorizedPhotoAvatar(
-              photoId: other.primaryPhotoId,
-              photoAuthorized: other.photoAuthorized,
-              fallbackName: other.fullName,
-              radius: 26,
+            Stack(
+              children: [
+                AuthorizedPhotoAvatar(
+                  photoId: other.primaryPhotoId,
+                  photoAuthorized: other.photoAuthorized,
+                  fallbackName: other.fullName,
+                  radius: 26,
+                ),
+                if (hasUnread)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: NaseebakColors.accentGold,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: NaseebakColors.cardBackground,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -274,7 +290,7 @@ class _ConversationListTile extends StatelessWidget {
                             fontSize: 15,
                             fontWeight:
                                 hasUnread ? FontWeight.w800 : FontWeight.w700,
-                            color: AppColors.textPrimary,
+                            color: NaseebakColors.textDarkNavy,
                           ),
                         ),
                       ),
@@ -286,8 +302,8 @@ class _ConversationListTile extends StatelessWidget {
                             fontWeight:
                                 hasUnread ? FontWeight.w700 : FontWeight.w500,
                             color: hasUnread
-                                ? AppColors.primaryBlue
-                                : AppColors.textMuted,
+                                ? NaseebakColors.accentGoldDark
+                                : NaseebakColors.textMuted,
                           ),
                         ),
                     ],
@@ -305,8 +321,8 @@ class _ConversationListTile extends StatelessWidget {
                             fontWeight:
                                 hasUnread ? FontWeight.w700 : FontWeight.w400,
                             color: hasUnread
-                                ? AppColors.textPrimary
-                                : AppColors.textSecondary,
+                                ? NaseebakColors.textDarkNavy
+                                : NaseebakColors.textWarmGray,
                           ),
                         ),
                       ),
@@ -319,8 +335,17 @@ class _ConversationListTile extends StatelessWidget {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryBlue,
+                            gradient: const LinearGradient(
+                              colors: [
+                                NaseebakColors.primaryNavy,
+                                NaseebakColors.primaryNavyDark,
+                              ],
+                            ),
                             borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: NaseebakColors.accentGold.withOpacity(0.4),
+                              width: 1,
+                            ),
                           ),
                           child: Text(
                             conversation.unreadCount > 99
@@ -329,7 +354,7 @@ class _ConversationListTile extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
-                              color: Colors.white,
+                              color: NaseebakColors.accentGoldLight,
                             ),
                           ),
                         ),

@@ -717,9 +717,13 @@ class NaseebakEmptyState extends StatelessWidget {
     super.key,
     required this.icon,
     required this.title,
-    required this.subtitle,
-    this.actionButton,
-  });
+    String? subtitle,
+    String? message,
+    String? description,
+    Widget? actionButton,
+    Widget? action,
+  })  : subtitle = subtitle ?? message ?? description ?? '',
+        actionButton = actionButton ?? action;
 
   @override
   Widget build(BuildContext context) {
@@ -1000,4 +1004,359 @@ class NaseebakGoldenRibbonWavePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// هيدر كحلي ملكي منحنٍ موحد لتطبيق نَصِيبُكَ مع زخارف أوراق الغار الذهبية
+class NaseebakCurvedHeader extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final VoidCallback? onBack;
+  final Widget? leading;
+  final List<Widget>? actions;
+  final Widget? bottom;
+  final double? height;
+  final bool showBotanical;
+
+  const NaseebakCurvedHeader({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.onBack,
+    this.leading,
+    List<Widget>? actions,
+    List<Widget>? trailing,
+    this.bottom,
+    this.height,
+    this.showBotanical = true,
+  }) : actions = actions ?? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.primaryNavy,
+            AppColors.deepNavy,
+          ],
+        ),
+        borderRadius: BorderRadius.vertical(
+          bottom: Radius.circular(28),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x22123D6A),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          if (showBotanical)
+            const Positioned(
+              top: -10,
+              left: -15,
+              child: NaseebakGoldBotanicalDecoration(
+                size: 95,
+                opacity: 0.18,
+                flipHorizontal: true,
+              ),
+            ),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      if (leading != null)
+                        leading!
+                      else if (onBack != null)
+                        IconButton(
+                          onPressed: onBack,
+                          icon: const Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            color: Colors.white,
+                            size: 19,
+                          ),
+                          tooltip: 'رجوع',
+                        )
+                      else
+                        const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontFamily: NaseebakTypography.fontFamily,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                height: 1.3,
+                              ),
+                            ),
+                            if (subtitle != null) ...[
+                              const SizedBox(height: 3),
+                              Text(
+                                subtitle!,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: NaseebakTypography.fontFamily,
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.goldAccent.withOpacity(0.92),
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      if (actions != null) ...actions!,
+                    ],
+                  ),
+                  if (bottom != null) ...[
+                    const SizedBox(height: 14),
+                    bottom!,
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// بطاقة بيضاء فاخرة موحدة لجميع شاشات نَصِيبُكَ
+class NaseebakCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? margin;
+  final VoidCallback? onTap;
+  final Color? backgroundColor;
+  final Border? border;
+  final double radius;
+
+  const NaseebakCard({
+    super.key,
+    required this.child,
+    this.padding,
+    this.margin,
+    this.onTap,
+    this.backgroundColor,
+    this.border,
+    this.radius = 20.0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cardContent = Container(
+      margin: margin,
+      padding: padding ?? const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: backgroundColor ?? AppColors.cardWhite,
+        borderRadius: BorderRadius.circular(radius),
+        border: border ?? Border.all(color: AppColors.subtleBorder, width: 1.2),
+        boxShadow: NaseebakSpacing.subtleCardShadow,
+      ),
+      child: child,
+    );
+
+    if (onTap != null) {
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(radius),
+          child: cardContent,
+        ),
+      );
+    }
+
+    return cardContent;
+  }
+}
+
+/// هيكل تحميل نابض ناعم وفاخر لتجنب الشاشات البيضاء
+class NaseebakLoadingSkeleton extends StatelessWidget {
+  final double height;
+  final double? width;
+  final double radius;
+  final EdgeInsetsGeometry? margin;
+
+  const NaseebakLoadingSkeleton({
+    super.key,
+    required this.height,
+    this.width,
+    this.radius = 16.0,
+    this.margin,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      margin: margin,
+      decoration: BoxDecoration(
+        color: AppColors.subtleBorder.withOpacity(0.55),
+        borderRadius: BorderRadius.circular(radius),
+      ),
+    );
+  }
+}
+
+/// نافذة تأكيد فاخرة موحدة للإجراءات الهامة (الحظر، البلاغات، إلغاء الطلبات)
+class NaseebakConfirmationDialog extends StatelessWidget {
+  final String title;
+  final String message;
+  final String confirmText;
+  final String cancelText;
+  final VoidCallback onConfirm;
+  final VoidCallback? onCancel;
+  final bool isDestructive;
+  final IconData? icon;
+
+  const NaseebakConfirmationDialog({
+    super.key,
+    required this.title,
+    required this.message,
+    required this.confirmText,
+    this.cancelText = 'إلغاء',
+    required this.onConfirm,
+    this.onCancel,
+    this.isDestructive = false,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      backgroundColor: AppColors.cardWhite,
+      child: Padding(
+        padding: const EdgeInsets.all(22),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (icon != null) ...[
+              Center(
+                child: Container(
+                  width: 54,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: isDestructive
+                        ? AppColors.error.withOpacity(0.12)
+                        : AppColors.creamHighlight,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    color: isDestructive
+                        ? AppColors.error
+                        : AppColors.primaryNavy,
+                    size: 28,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: NaseebakTypography.fontFamily,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: NaseebakTypography.fontFamily,
+                fontSize: 13.5,
+                color: AppColors.textSecondary,
+                height: 1.6,
+              ),
+            ),
+            const SizedBox(height: 22),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      side: const BorderSide(color: AppColors.subtleBorder),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      onCancel?.call();
+                    },
+                    child: Text(
+                      cancelText,
+                      style: const TextStyle(
+                        fontFamily: NaseebakTypography.fontFamily,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDestructive
+                          ? AppColors.error
+                          : AppColors.primaryNavy,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      onConfirm();
+                    },
+                    child: Text(
+                      confirmText,
+                      style: const TextStyle(
+                        fontFamily: NaseebakTypography.fontFamily,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

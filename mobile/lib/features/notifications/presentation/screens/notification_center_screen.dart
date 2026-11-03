@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/design_system/naseebak_design_system.dart';
 import '../../data/models/notification_model.dart';
 import '../../data/services/notification_navigation_service.dart';
 import '../providers/notification_provider.dart';
 import 'notification_preferences_screen.dart';
 
+/// Screen 09 (Batch 2B) — Notification Center Screen (`مركز الإشعارات`)
+/// شاشة عرض الإشعارات والتنبيهات المعتمدة بتصميم نَصِيبُكَ الفاخر (Astra Design System)
 class NotificationCenterScreen extends ConsumerStatefulWidget {
   const NotificationCenterScreen({super.key});
 
@@ -50,76 +52,82 @@ class _NotificationCenterScreenState
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.backgroundSecondary,
-        appBar: AppBar(
-          title: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('الإشعارات'),
-              if (state.unreadCount > 0) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.accentYellow,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${state.unreadCount}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.darkBlue,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          actions: [
-            if (state.unreadCount > 0)
-              TextButton.icon(
-                key: const ValueKey('btn_mark_all_read'),
-                onPressed: state.isMarkingAllRead
-                    ? null
-                    : () {
-                        ref
-                            .read(notificationProvider.notifier)
-                            .markAllNotificationsAsRead();
-                      },
-                icon: const Icon(
-                  Icons.done_all_rounded,
-                  size: 18,
-                  color: AppColors.primaryBlue,
-                ),
-                label: const Text(
-                  'تحديد الكل كمقروء',
-                  style: TextStyle(
-                    color: AppColors.primaryBlue,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            IconButton(
-              key: const ValueKey('btn_open_notification_preferences'),
-              tooltip: 'إعدادات الإشعارات',
-              icon: const Icon(Icons.settings_outlined),
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const NotificationPreferencesScreen(),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
+        backgroundColor: NaseebakColors.backgroundBeige,
         body: Column(
           children: [
+            NaseebakCurvedHeader(
+              title: 'الإشعارات',
+              subtitle: 'تنبيهات طلبات التعارف والمحادثات وحالة العضوية',
+              leading: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              trailing: [
+                if (state.unreadCount > 0) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: NaseebakColors.accentGold,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${state.unreadCount}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: NaseebakColors.primaryNavyDark,
+                      ),
+                    ),
+                  ),
+                  TextButton.icon(
+                    key: const ValueKey('btn_mark_all_read'),
+                    onPressed: state.isMarkingAllRead
+                        ? null
+                        : () {
+                            ref
+                                .read(notificationProvider.notifier)
+                                .markAllNotificationsAsRead();
+                          },
+                    icon: const Icon(
+                      Icons.done_all_rounded,
+                      size: 16,
+                      color: NaseebakColors.accentGoldLight,
+                    ),
+                    label: const Text(
+                      'تحديد الكل كمقروء',
+                      style: TextStyle(
+                        color: NaseebakColors.accentGoldLight,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+                IconButton(
+                  key: const ValueKey('btn_open_notification_preferences'),
+                  tooltip: 'إعدادات الإشعارات',
+                  icon: const Icon(
+                    Icons.tune_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const NotificationPreferencesScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
             if (!state.isSystemPermissionGranted)
               _buildPermissionPromptBanner(context, ref),
             Expanded(
@@ -136,24 +144,32 @@ class _NotificationCenterScreenState
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFAEB),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFFEC84B)),
+        color: NaseebakColors.accentGoldMuted.withOpacity(0.35),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: NaseebakColors.accentGold.withOpacity(0.4)),
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.notifications_active_outlined,
-            color: Color(0xFFB54708),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(
+              color: NaseebakColors.cardBackground,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.notifications_active_outlined,
+              color: NaseebakColors.accentGoldDark,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 12),
           const Expanded(
             child: Text(
               'فعّل الإشعارات لتصلك طلبات التعارف والرسائل الجديدة.',
               style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF93370D),
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: NaseebakColors.primaryNavyDark,
               ),
             ),
           ),
@@ -166,7 +182,7 @@ class _NotificationCenterScreenState
                   .requestNotificationPermission();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryBlue,
+              backgroundColor: NaseebakColors.primaryNavy,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               shape: RoundedRectangleBorder(
@@ -174,7 +190,7 @@ class _NotificationCenterScreenState
               ),
             ),
             child: const Text(
-              'تفعيل الإشعارات',
+              'تفعيل',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ),
@@ -189,8 +205,15 @@ class _NotificationCenterScreenState
     NotificationCenterState state,
   ) {
     if (state.isLoading && state.notifications.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.primaryBlue),
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: const [
+          NaseebakLoadingSkeleton(height: 80),
+          SizedBox(height: 12),
+          NaseebakLoadingSkeleton(height: 80),
+          SizedBox(height: 12),
+          NaseebakLoadingSkeleton(height: 80),
+        ],
       );
     }
 
@@ -201,29 +224,46 @@ class _NotificationCenterScreenState
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.error_outline_rounded,
-                size: 52,
-                color: Colors.redAccent,
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: NaseebakColors.cardBackground,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: NaseebakColors.errorBorder),
+                ),
+                child: const Icon(
+                  Icons.error_outline_rounded,
+                  size: 32,
+                  color: NaseebakColors.error,
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               Text(
                 state.errorMessage!,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 15,
-                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: NaseebakColors.textDarkNavy,
                 ),
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 key: const ValueKey('btn_retry_notifications'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: NaseebakColors.primaryNavy,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 onPressed: () {
                   ref
                       .read(notificationProvider.notifier)
                       .fetchNotifications(refresh: true);
                 },
-                icon: const Icon(Icons.refresh_rounded),
+                icon: const Icon(Icons.refresh_rounded, size: 18),
                 label: const Text('إعادة المحاولة'),
               ),
             ],
@@ -234,55 +274,19 @@ class _NotificationCenterScreenState
 
     if (state.notifications.isEmpty) {
       return RefreshIndicator(
+        color: NaseebakColors.accentGold,
         onRefresh: () => ref
             .read(notificationProvider.notifier)
             .fetchNotifications(refresh: true),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          children: [
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.65,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryBlue.withOpacity(0.08),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.notifications_none_rounded,
-                        size: 42,
-                        color: AppColors.primaryBlue,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'لا توجد إشعارات حاليًا',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.darkBlue,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 36),
-                      child: Text(
-                        'ستظهر هنا إشعارات طلبات التعارف والرسائل الجديدة وتحديثات الاشتراك.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13.5,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+          children: const [
+            SizedBox(height: 60),
+            NaseebakEmptyState(
+              icon: Icons.notifications_none_rounded,
+              title: 'لا توجد إشعارات حاليًا',
+              subtitle:
+                  'ستظهر هنا إشعارات طلبات التعارف والرسائل الخاصة وتحديثات اشتراكك أولاً بأول.',
             ),
           ],
         ),
@@ -290,13 +294,14 @@ class _NotificationCenterScreenState
     }
 
     return RefreshIndicator(
+      color: NaseebakColors.accentGold,
       onRefresh: () => ref
           .read(notificationProvider.notifier)
           .fetchNotifications(refresh: true),
       child: ListView.separated(
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         itemCount:
             state.notifications.length + (state.isLoadingMore ? 1 : 0),
         separatorBuilder: (_, __) => const SizedBox(height: 10),
@@ -305,9 +310,13 @@ class _NotificationCenterScreenState
             return const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: AppColors.primaryBlue,
+                child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: NaseebakColors.accentGold,
+                  ),
                 ),
               ),
             );
@@ -330,23 +339,28 @@ class _NotificationCenterScreenState
     return Container(
       key: ValueKey('notification_item_${item.id}'),
       decoration: BoxDecoration(
-        color: isUnread ? const Color(0xFFF0F7FF) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        color: isUnread
+            ? NaseebakColors.accentGoldMuted.withOpacity(0.18)
+            : NaseebakColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isUnread
-              ? AppColors.primaryBlue.withOpacity(0.35)
-              : Colors.grey.shade200,
+              ? NaseebakColors.accentGold.withOpacity(0.5)
+              : NaseebakColors.borderLight,
+          width: isUnread ? 1.4 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: isUnread
+                ? NaseebakColors.accentGold.withOpacity(0.06)
+                : NaseebakColors.shadowColor,
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         onTap: () async {
           if (!item.isRead) {
             await ref
@@ -378,7 +392,7 @@ class _NotificationCenterScreenState
                             width: 8,
                             height: 8,
                             decoration: const BoxDecoration(
-                              color: AppColors.primaryBlue,
+                              color: NaseebakColors.accentGold,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -390,16 +404,21 @@ class _NotificationCenterScreenState
                             style: TextStyle(
                               fontSize: 14.5,
                               fontWeight:
-                                  isUnread ? FontWeight.bold : FontWeight.w600,
-                              color: AppColors.darkBlue,
+                                  isUnread ? FontWeight.w800 : FontWeight.w700,
+                              color: NaseebakColors.textDarkNavy,
                             ),
                           ),
                         ),
                         Text(
                           _formatRelativeTimestamp(item.createdAtDateTime),
-                          style: const TextStyle(
-                            fontSize: 11.5,
-                            color: AppColors.textSecondary,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: isUnread
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: isUnread
+                                ? NaseebakColors.accentGoldDark
+                                : NaseebakColors.textMuted,
                           ),
                         ),
                       ],
@@ -408,11 +427,11 @@ class _NotificationCenterScreenState
                     Text(
                       item.bodyAr,
                       style: TextStyle(
-                        fontSize: 13.5,
+                        fontSize: 13,
                         color: isUnread
-                            ? AppColors.textPrimary
-                            : AppColors.textSecondary,
-                        height: 1.4,
+                            ? NaseebakColors.textDarkNavy
+                            : NaseebakColors.textWarmGray,
+                        height: 1.45,
                       ),
                     ),
                   ],
@@ -421,10 +440,10 @@ class _NotificationCenterScreenState
               IconButton(
                 key: ValueKey('btn_delete_notification_${item.id}'),
                 tooltip: 'حذف الإشعار',
-                icon: Icon(
+                icon: const Icon(
                   Icons.close_rounded,
                   size: 18,
-                  color: Colors.grey.shade500,
+                  color: NaseebakColors.textMuted,
                 ),
                 onPressed: () {
                   ref
@@ -454,20 +473,20 @@ class _NotificationCenterScreenState
         break;
       case 'new_message_received':
         icon = Icons.chat_bubble_rounded;
-        bgColor = const Color(0xFFEFF8FF);
-        iconColor = AppColors.primaryBlue;
+        bgColor = NaseebakColors.accentGoldMuted.withOpacity(0.3);
+        iconColor = NaseebakColors.primaryNavy;
         break;
       case 'subscription_activated':
       case 'subscription_expiring_soon':
       case 'subscription_expired':
         icon = Icons.workspace_premium_rounded;
-        bgColor = const Color(0xFFFFFAEB);
-        iconColor = const Color(0xFFD97706);
+        bgColor = NaseebakColors.accentGoldMuted.withOpacity(0.4);
+        iconColor = NaseebakColors.accentGoldDark;
         break;
       default:
         icon = Icons.campaign_rounded;
-        bgColor = const Color(0xFFF4F3FF);
-        iconColor = AppColors.darkBlue;
+        bgColor = NaseebakColors.primaryNavy.withOpacity(0.08);
+        iconColor = NaseebakColors.primaryNavy;
         break;
     }
 

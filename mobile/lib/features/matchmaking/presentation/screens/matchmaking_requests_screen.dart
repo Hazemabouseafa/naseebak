@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/design_system/naseebak_design_system.dart';
 import '../../../discovery/presentation/screens/member_profile_screen.dart';
-import '../../../discovery/presentation/widgets/authorized_photo_avatar.dart';
 import '../../../messaging/presentation/screens/chat_screen.dart';
 import '../../data/models/matchmaking_request_model.dart';
 import '../providers/matchmaking_provider.dart';
 
-/// Screen 13 — Matchmaking Requests Screen (`طلبات التعارف`)
-/// تعرض طلبات التعارف الواردة والمرسلة والمقبولة مع إجراءات القبول والرفض والإلغاء وفتح المحادثة.
+/// Screen 04 (Batch 2A) — Matchmaking Requests Screen (`طلبات التعارف`)
+/// تصميم Astra الفاخر لإدارة طلبات التعارف الواردة والمرسلة والمقبولة
+/// مع دعم التبويبات الثلاثية والقبول والرفض والإلغاء وفتح المحادثة الفورية.
 class MatchmakingRequestsScreen extends ConsumerStatefulWidget {
   final int initialTabIndex;
 
@@ -49,7 +49,7 @@ class _MatchmakingRequestsScreenState
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        backgroundColor: AppColors.primaryBlue,
+        backgroundColor: AppColors.primaryNavy,
         content: Text('تم قبول طلب التعارف وفتح المحادثة الخاصة بنجاح.'),
       ),
     );
@@ -78,7 +78,7 @@ class _MatchmakingRequestsScreenState
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: AppColors.primaryBlue,
+          backgroundColor: AppColors.primaryNavy,
           content: Text('تم الاعتذار عن طلب التعارف.'),
         ),
       );
@@ -97,7 +97,7 @@ class _MatchmakingRequestsScreenState
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: AppColors.primaryBlue,
+          backgroundColor: AppColors.primaryNavy,
           content: Text('تم إلغاء طلب التعارف المرسل.'),
         ),
       );
@@ -131,106 +131,210 @@ class _MatchmakingRequestsScreenState
       textDirection: TextDirection.rtl,
       child: DefaultTabController(
         length: 3,
-        initialIndex: widget.initialTabIndex.clamp(0, 2),
+        initialIndex: widget.initialTabIndex,
         child: Scaffold(
-          backgroundColor: AppColors.backgroundPrimary,
-          appBar: AppBar(
-            title: const Text('طلبات التعارف'),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.refresh_rounded, size: 20),
-                tooltip: 'تحديث الطلبات',
-                onPressed: () =>
-                    ref.read(matchmakingProvider.notifier).loadRequests(),
-              ),
-            ],
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(49),
-              child: Column(
-                children: [
-                  const TabBar(
-                    labelColor: AppColors.primaryBlue,
-                    unselectedLabelColor: AppColors.textSecondary,
-                    indicatorColor: AppColors.primaryBlue,
-                    labelStyle: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w800,
+          backgroundColor: AppColors.softBackground,
+          body: Column(
+            children: [
+              // Premium Royal Navy Curved Header with Tabs
+              NaseebakCurvedHeader(
+                title: 'طلبات التعارف',
+                subtitle: 'متابعة وإدارة طلبات التعارف الواردة والمرسلة',
+                actions: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.refresh_rounded,
+                      color: Colors.white,
+                      size: 21,
                     ),
-                    tabs: [
-                      Tab(key: Key('tab_incoming_requests'), text: 'الواردة'),
-                      Tab(key: Key('tab_sent_requests'), text: 'المرسلة'),
-                      Tab(key: Key('tab_accepted_requests'), text: 'المقبولة'),
+                    tooltip: 'تحديث الطلبات',
+                    onPressed: state.isLoading
+                        ? null
+                        : () => ref
+                            .read(matchmakingProvider.notifier)
+                            .loadRequests(),
+                  ),
+                ],
+                bottom: Container(
+                  height: 44,
+                  margin: const EdgeInsets.only(top: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  child: TabBar(
+                    indicator: BoxDecoration(
+                      color: AppColors.cardWhite,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.12),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    labelColor: AppColors.primaryNavy,
+                    unselectedLabelColor: Colors.white.withOpacity(0.85),
+                    labelStyle: const TextStyle(
+                      fontFamily: NaseebakTypography.fontFamily,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    unselectedLabelStyle: const TextStyle(
+                      fontFamily: NaseebakTypography.fontFamily,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    tabs: const [
+                      Tab(
+                        key: Key('tab_incoming_requests'),
+                        text: 'الواردة',
+                      ),
+                      Tab(
+                        key: Key('tab_sent_requests'),
+                        text: 'المرسلة',
+                      ),
+                      Tab(
+                        key: Key('tab_accepted_requests'),
+                        text: 'المقبولة',
+                      ),
                     ],
                   ),
-                  Container(height: 1, color: AppColors.borderLight),
-                ],
+                ),
               ),
-            ),
-          ),
-          body: SafeArea(
-            child: Builder(
-              builder: (context) {
-                if (state.isLoading &&
-                    state.incoming.isEmpty &&
-                    state.sent.isEmpty &&
-                    state.accepted.isEmpty) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primaryBlue,
-                    ),
-                  );
-                }
 
-                return TabBarView(
-                  children: [
-                    // 1. Incoming Tab (الواردة)
-                    _RequestsListTab(
-                      items: state.incoming,
-                      emptyMessage: 'لا توجد طلبات تعارف واردة حاليًا',
-                      emptyIcon: Icons.move_to_inbox_rounded,
-                      isMutating: state.isMutating,
-                      onRefresh: () =>
-                          ref.read(matchmakingProvider.notifier).loadRequests(),
-                      onViewProfile: _openMemberProfile,
-                      onAccept: _handleAccept,
-                      onReject: _handleReject,
-                      onCancel: _handleCancel,
-                      onOpenChat: _openConversation,
-                    ),
+              Expanded(
+                child: Builder(
+                  builder: (context) {
+                    if (state.isLoading &&
+                        state.incoming.isEmpty &&
+                        state.sent.isEmpty &&
+                        state.accepted.isEmpty) {
+                      return ListView.builder(
+                        padding: const EdgeInsets.all(20),
+                        itemCount: 3,
+                        itemBuilder: (_, __) => const Padding(
+                          padding: EdgeInsets.only(bottom: 12),
+                          child: NaseebakLoadingSkeleton(
+                            height: 120,
+                            radius: 20,
+                          ),
+                        ),
+                      );
+                    }
 
-                    // 2. Sent Tab (المرسلة)
-                    _RequestsListTab(
-                      items: state.sent,
-                      emptyMessage: 'لم تقم بإرسال طلبات تعارف بعد',
-                      emptyIcon: Icons.outbox_rounded,
-                      isMutating: state.isMutating,
-                      onRefresh: () =>
-                          ref.read(matchmakingProvider.notifier).loadRequests(),
-                      onViewProfile: _openMemberProfile,
-                      onAccept: _handleAccept,
-                      onReject: _handleReject,
-                      onCancel: _handleCancel,
-                      onOpenChat: _openConversation,
-                    ),
+                    if (state.errorMessage != null &&
+                        state.incoming.isEmpty &&
+                        state.sent.isEmpty &&
+                        state.accepted.isEmpty) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: NaseebakCard(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.cloud_off_rounded,
+                                  size: 42,
+                                  color: AppColors.error,
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  state.errorMessage!,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontFamily: NaseebakTypography.fontFamily,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 18),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primaryNavy,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                  ),
+                                  onPressed: () => ref
+                                      .read(matchmakingProvider.notifier)
+                                      .loadRequests(),
+                                  child: const Text('إعادة المحاولة'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }
 
-                    // 3. Accepted Tab (المقبولة)
-                    _RequestsListTab(
-                      items: state.accepted,
-                      emptyMessage: 'لا توجد طلبات تعارف مقبولة بعد',
-                      emptyIcon: Icons.handshake_outlined,
-                      isMutating: state.isMutating,
-                      onRefresh: () =>
-                          ref.read(matchmakingProvider.notifier).loadRequests(),
-                      onViewProfile: _openMemberProfile,
-                      onAccept: _handleAccept,
-                      onReject: _handleReject,
-                      onCancel: _handleCancel,
-                      onOpenChat: _openConversation,
-                    ),
-                  ],
-                );
-              },
-            ),
+                    return TabBarView(
+                      children: [
+                        // 1. Incoming Tab (الواردة)
+                        _RequestsListTab(
+                          items: state.incoming,
+                          emptyMessage: 'لا توجد طلبات تعارف واردة حتى الآن',
+                          emptyDescription:
+                              'عندما يُرسل لك أحد الأعضاء طلب تعارف جديد، سيظهر هنا للقبول أو الرفض.',
+                          emptyIcon: Icons.mark_email_unread_outlined,
+                          isMutating: state.isMutating,
+                          onRefresh: () => ref
+                              .read(matchmakingProvider.notifier)
+                              .loadRequests(),
+                          onViewProfile: _openMemberProfile,
+                          onAccept: _handleAccept,
+                          onReject: _handleReject,
+                          onCancel: _handleCancel,
+                          onOpenChat: _openConversation,
+                        ),
+
+                        // 2. Sent Tab (المرسلة)
+                        _RequestsListTab(
+                          items: state.sent,
+                          emptyMessage: 'لم تقم بإرسال أي طلبات تعارف بعد',
+                          emptyDescription:
+                              'يمكنك تصفح الأعضاء وإرسال طلبات التعارف للشخص المناسب لبدء التواصل.',
+                          emptyIcon: Icons.outbox_rounded,
+                          isMutating: state.isMutating,
+                          onRefresh: () => ref
+                              .read(matchmakingProvider.notifier)
+                              .loadRequests(),
+                          onViewProfile: _openMemberProfile,
+                          onAccept: _handleAccept,
+                          onReject: _handleReject,
+                          onCancel: _handleCancel,
+                          onOpenChat: _openConversation,
+                        ),
+
+                        // 3. Accepted Tab (المقبولة)
+                        _RequestsListTab(
+                          items: state.accepted,
+                          emptyMessage: 'لا توجد طلبات تعارف مقبولة بعد',
+                          emptyDescription:
+                              'تظهر هنا الطلبات المقبولة بنجاح للبدء في المحادثات الخاصة الفورية.',
+                          emptyIcon: Icons.handshake_outlined,
+                          isMutating: state.isMutating,
+                          onRefresh: () => ref
+                              .read(matchmakingProvider.notifier)
+                              .loadRequests(),
+                          onViewProfile: _openMemberProfile,
+                          onAccept: _handleAccept,
+                          onReject: _handleReject,
+                          onCancel: _handleCancel,
+                          onOpenChat: _openConversation,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -241,6 +345,7 @@ class _MatchmakingRequestsScreenState
 class _RequestsListTab extends StatelessWidget {
   final List<MatchmakingRequestItemModel> items;
   final String emptyMessage;
+  final String emptyDescription;
   final IconData emptyIcon;
   final bool isMutating;
   final Future<void> Function() onRefresh;
@@ -253,6 +358,7 @@ class _RequestsListTab extends StatelessWidget {
   const _RequestsListTab({
     required this.items,
     required this.emptyMessage,
+    required this.emptyDescription,
     required this.emptyIcon,
     required this.isMutating,
     required this.onRefresh,
@@ -267,43 +373,17 @@ class _RequestsListTab extends StatelessWidget {
   Widget build(BuildContext context) {
     if (items.isEmpty) {
       return RefreshIndicator(
-        color: AppColors.primaryBlue,
+        color: AppColors.primaryNavy,
         onRefresh: onRefresh,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
           children: [
-            const SizedBox(height: 110),
             Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 28),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 66,
-                      height: 66,
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceSubtleBlue,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Icon(
-                        emptyIcon,
-                        size: 30,
-                        color: AppColors.primaryBlue,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      emptyMessage,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
+              child: NaseebakEmptyState(
+                icon: emptyIcon,
+                title: emptyMessage,
+                description: emptyDescription,
               ),
             ),
           ],
@@ -312,11 +392,11 @@ class _RequestsListTab extends StatelessWidget {
     }
 
     return RefreshIndicator(
-      color: AppColors.primaryBlue,
+      color: AppColors.primaryNavy,
       onRefresh: onRefresh,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         itemCount: items.length,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
@@ -361,163 +441,198 @@ class _MatchmakingRequestCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final member = item.member;
 
-    return Container(
-      key: Key('matchmaking_request_card_${item.id}'),
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundPrimary,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight),
-      ),
+    return NaseebakCard(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              AuthorizedPhotoAvatar(
-                photoId: member.primaryPhotoId,
-                photoAuthorized: member.photoAuthorized,
-                fallbackName: member.fullName,
-                radius: 26,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '${member.fullName} • ${member.ageYears} سنة',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
+          InkWell(
+            onTap: onViewProfile,
+            borderRadius: BorderRadius.circular(12),
+            child: Row(
+              children: [
+                AuthorizedPhotoAvatar(
+                  photoId: member.primaryPhotoId,
+                  photoAuthorized: member.photoAuthorized,
+                  fallbackName: member.fullName,
+                  radius: 28,
+                  showGoldBorder: true,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        member.fullName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontFamily: NaseebakTypography.fontFamily,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryNavy,
                         ),
-                        _StatusBadge(
-                          status: item.status,
-                          label: item.statusLabelAr,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${member.ageYears} سنة • ${member.region.isNotEmpty ? member.region : member.countryOfResidence}',
+                        style: const TextStyle(
+                          fontFamily: NaseebakTypography.fontFamily,
+                          fontSize: 12.5,
+                          color: AppColors.textSecondary,
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: item.status == 'accepted'
+                        ? AppColors.creamHighlight
+                        : AppColors.softBackground,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: item.status == 'accepted'
+                          ? AppColors.goldAccent
+                          : AppColors.subtleBorder,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${member.maritalStatusLabelAr} • ${member.region}، ${member.countryOfResidence}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
+                  ),
+                  child: Text(
+                    item.statusLabelAr,
+                    style: TextStyle(
+                      fontFamily: NaseebakTypography.fontFamily,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: item.status == 'accepted'
+                          ? AppColors.primaryNavy
+                          : AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Action Buttons
+          if (item.canAccept ||
+              item.canReject ||
+              item.canCancel ||
+              onOpenChat != null) ...[
+            const SizedBox(height: 14),
+            const Divider(height: 1, color: AppColors.subtleBorder),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                if (item.canAccept)
+                  Expanded(
+                    child: ElevatedButton(
+                      key: Key('request_accept_btn_${item.id}'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryNavy,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                      onPressed: isMutating ? null : onAccept,
+                      child: const Text(
+                        'قبول الطلب',
+                        style: TextStyle(
+                          fontFamily: NaseebakTypography.fontFamily,
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              OutlinedButton.icon(
-                key: Key('request_view_profile_${item.id}'),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(110, 40),
-                ),
-                onPressed: onViewProfile,
-                icon: const Icon(Icons.person_outline_rounded, size: 17),
-                label: const Text('عرض الملف'),
-              ),
-              if (item.canAccept)
-                ElevatedButton.icon(
-                  key: Key('request_accept_btn_${item.id}'),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(105, 40),
-                    backgroundColor: AppColors.primaryBlue,
                   ),
-                  onPressed: isMutating ? null : onAccept,
-                  icon: const Icon(Icons.check_rounded, size: 17),
-                  label: const Text('قبول'),
-                ),
-              if (item.canReject)
-                OutlinedButton.icon(
-                  key: Key('request_reject_btn_${item.id}'),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(95, 40),
-                    foregroundColor: AppColors.error,
-                    side: const BorderSide(color: AppColors.error),
+                if (item.canAccept && item.canReject)
+                  const SizedBox(width: 10),
+                if (item.canReject)
+                  Expanded(
+                    child: OutlinedButton(
+                      key: Key('request_reject_btn_${item.id}'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.error,
+                        side: const BorderSide(color: AppColors.subtleBorder),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                      onPressed: isMutating ? null : onReject,
+                      child: const Text(
+                        'رفض الطلب',
+                        style: TextStyle(
+                          fontFamily: NaseebakTypography.fontFamily,
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ),
-                  onPressed: isMutating ? null : onReject,
-                  icon: const Icon(Icons.close_rounded, size: 17),
-                  label: const Text('رفض'),
-                ),
-              if (item.canCancel)
-                OutlinedButton.icon(
-                  key: Key('request_cancel_btn_${item.id}'),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(115, 40),
-                    foregroundColor: AppColors.error,
+                if (item.canCancel)
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      key: Key('request_cancel_btn_${item.id}'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textSecondary,
+                        side: const BorderSide(color: AppColors.subtleBorder),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                      onPressed: isMutating ? null : onCancel,
+                      icon: const Icon(Icons.close_rounded, size: 16),
+                      label: const Text(
+                        'إلغاء الطلب',
+                        style: TextStyle(
+                          fontFamily: NaseebakTypography.fontFamily,
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ),
-                  onPressed: isMutating ? null : onCancel,
-                  icon: const Icon(Icons.cancel_outlined, size: 17),
-                  label: const Text('إلغاء الطلب'),
-                ),
-              if (item.status == 'accepted' && onOpenChat != null)
-                ElevatedButton.icon(
-                  key: Key('request_open_chat_btn_${item.id}'),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(130, 40),
-                    backgroundColor: AppColors.primaryBlue,
+                if (onOpenChat != null)
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryNavy,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                      onPressed: onOpenChat,
+                      icon: const Icon(
+                        Icons.chat_bubble_outline_rounded,
+                        size: 16,
+                        color: AppColors.goldAccent,
+                      ),
+                      label: const Text(
+                        'فتح المحادثة',
+                        style: TextStyle(
+                          fontFamily: NaseebakTypography.fontFamily,
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
                   ),
-                  onPressed: onOpenChat,
-                  icon: const Icon(Icons.chat_bubble_outline_rounded, size: 17),
-                  label: const Text('فتح المحادثة'),
-                ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ],
-      ),
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  final String status;
-  final String label;
-
-  const _StatusBadge({
-    required this.status,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final bgColor = switch (status) {
-      'accepted' => const Color(0xFFE8F7EE),
-      'rejected' || 'cancelled' => const Color(0xFFFDECEC),
-      _ => AppColors.surfaceSubtleYellow,
-    };
-    final textColor = switch (status) {
-      'accepted' => const Color(0xFF157F3B),
-      'rejected' || 'cancelled' => AppColors.error,
-      _ => AppColors.primaryBlueDark,
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 10.5,
-          fontWeight: FontWeight.w800,
-          color: textColor,
-        ),
       ),
     );
   }
