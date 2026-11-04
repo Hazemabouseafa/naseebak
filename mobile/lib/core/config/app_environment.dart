@@ -30,6 +30,7 @@ class AppEnvironmentConfig {
   final String apiBaseUrl;
   final String reverbWsUrl;
   final String googleServerClientId;
+  final String googleAndroidClientId;
   final String androidPackageName;
 
   const AppEnvironmentConfig({
@@ -37,23 +38,31 @@ class AppEnvironmentConfig {
     required this.apiBaseUrl,
     required this.reverbWsUrl,
     required this.googleServerClientId,
+    this.googleAndroidClientId = '',
     this.androidPackageName = 'com.naseebak.app',
   });
 
   /// Resolves build-time `--dart-define` configuration without hardcoding
   /// localhost or private development IPs in staging/production builds.
   factory AppEnvironmentConfig.fromBuildDefines() {
-    const rawEnv = String.fromEnvironment('APP_ENV', defaultValue: 'production');
+    const rawEnv = String.fromEnvironment('APP_ENV', defaultValue: 'staging');
     final env = NaseebakEnvironment.fromName(rawEnv);
 
     const definedApiUrl = String.fromEnvironment('API_BASE_URL', defaultValue: '');
     const definedWsUrl = String.fromEnvironment('REVERB_WS_URL', defaultValue: '');
+    const definedWsHost = String.fromEnvironment('REVERB_WS_HOST', defaultValue: '');
+    const definedWsScheme = String.fromEnvironment('REVERB_WS_SCHEME', defaultValue: 'wss');
+    const definedWsPort = String.fromEnvironment('REVERB_WS_PORT', defaultValue: '443');
     const definedReverbKey = String.fromEnvironment(
       'REVERB_APP_KEY',
-      defaultValue: 'naseebak-reverb-key',
+      defaultValue: 'nsb_stg_key_sandbox',
     );
-    const definedGoogleClientId = String.fromEnvironment(
+    const definedGoogleServerClientId = String.fromEnvironment(
       'GOOGLE_SERVER_CLIENT_ID',
+      defaultValue: '',
+    );
+    const definedGoogleAndroidClientId = String.fromEnvironment(
+      'GOOGLE_ANDROID_CLIENT_ID',
       defaultValue: '',
     );
     const definedPackage = String.fromEnvironment(
@@ -65,26 +74,49 @@ class AppEnvironmentConfig {
         ? definedApiUrl
         : switch (env) {
             NaseebakEnvironment.development => 'https://dev-api.example.com/api/v1',
-            NaseebakEnvironment.staging => 'https://staging-api.example.com/api/v1',
-            NaseebakEnvironment.production => 'https://api.example.com/api/v1',
+            NaseebakEnvironment.staging => 'https://naseebak-api.hazem.my/api/v1',
+            NaseebakEnvironment.production => 'https://naseebak-api.hazem.my/api/v1',
           };
 
     final resolvedWsUrl = definedWsUrl.isNotEmpty
         ? definedWsUrl
+        : (definedWsHost.isNotEmpty
+            ? '$definedWsScheme://$definedWsHost${definedWsPort != '443' && definedWsPort != '80' ? ':$definedWsPort' : ''}/app/$definedReverbKey?protocol=7&client=flutter&version=1.0'
+            : switch (env) {
+                NaseebakEnvironment.development =>
+                  'wss://dev-api.example.com/app/$definedReverbKey?protocol=7&client=flutter&version=1.0',
+                NaseebakEnvironment.staging =>
+                  'wss://naseebak-ws.hazem.my/app/$definedReverbKey?protocol=7&client=flutter&version=1.0',
+                NaseebakEnvironment.production =>
+                  'wss://naseebak-ws.hazem.my/app/$definedReverbKey?protocol=7&client=flutter&version=1.0',
+              });
+
+    final resolvedServerClientId = definedGoogleServerClientId.isNotEmpty
+        ? definedGoogleServerClientId
         : switch (env) {
-            NaseebakEnvironment.development =>
-              'wss://dev-api.example.com/app/$definedReverbKey?protocol=7&client=flutter&version=1.0',
+            NaseebakEnvironment.development => '',
             NaseebakEnvironment.staging =>
-              'wss://staging-api.example.com/app/$definedReverbKey?protocol=7&client=flutter&version=1.0',
+              '520721691788-4ngp8rrm7g4foja1f3ql24bv2apdgcoo.apps.googleusercontent.com',
             NaseebakEnvironment.production =>
-              'wss://api.example.com/app/$definedReverbKey?protocol=7&client=flutter&version=1.0',
+              '520721691788-4ngp8rrm7g4foja1f3ql24bv2apdgcoo.apps.googleusercontent.com',
+          };
+
+    final resolvedAndroidClientId = definedGoogleAndroidClientId.isNotEmpty
+        ? definedGoogleAndroidClientId
+        : switch (env) {
+            NaseebakEnvironment.development => '',
+            NaseebakEnvironment.staging =>
+              '520721691788-0fki6oqjcsjtk6g9qbo2ean3fj3cpeq2.apps.googleusercontent.com',
+            NaseebakEnvironment.production =>
+              '520721691788-0fki6oqjcsjtk6g9qbo2ean3fj3cpeq2.apps.googleusercontent.com',
           };
 
     return AppEnvironmentConfig(
       environment: env,
       apiBaseUrl: resolvedApiUrl,
       reverbWsUrl: resolvedWsUrl,
-      googleServerClientId: definedGoogleClientId,
+      googleServerClientId: resolvedServerClientId,
+      googleAndroidClientId: resolvedAndroidClientId,
       androidPackageName: definedPackage,
     );
   }

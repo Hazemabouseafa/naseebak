@@ -326,28 +326,6 @@ class GoogleSignInScreen extends ConsumerWidget {
 
                         const Spacer(flex: 2),
 
-                        TextButton(
-                          key: const Key('preview_profile_flow_btn'),
-                          onPressed: authState.isLoading
-                              ? null
-                              : () {
-                                  ref
-                                      .read(authControllerProvider.notifier)
-                                      .enterProfileRegistrationPreview();
-                                },
-                          child: const Text(
-                            'معاينة خطوات استكمال الملف الشخصي (وضع الفحص المحلي)',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: NaseebakTypography.fontFamily,
-                              fontSize: 12.5,
-                              color: AppColors.primaryBlue,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-
                         // Privacy Policy & Terms of Service Notice
                         RichText(
                           textAlign: TextAlign.center,

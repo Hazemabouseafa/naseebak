@@ -87,7 +87,7 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                       onCompleteProfile: () {
                         ref
                             .read(authControllerProvider.notifier)
-                            .enterProfileRegistrationPreview();
+                            .navigateToCompleteProfile();
                       },
                     );
                   }

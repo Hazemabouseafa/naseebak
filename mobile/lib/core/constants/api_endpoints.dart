@@ -14,10 +14,12 @@ class ApiEndpoints {
   static String get reverbWsUrl => environmentConfig.reverbWsUrl;
 
   /// Server Web Client ID used by GoogleSignIn to issue verifiable ID tokens
-  static const String googleServerClientId = String.fromEnvironment(
-    'GOOGLE_SERVER_CLIENT_ID',
-    defaultValue: '',
-  );
+  static String get googleServerClientId =>
+      environmentConfig.googleServerClientId;
+
+  /// Android OAuth Client ID
+  static String get googleAndroidClientId =>
+      environmentConfig.googleAndroidClientId;
 
   /// Health check endpoint
   static const String health = '/health';

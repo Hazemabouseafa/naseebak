@@ -52,11 +52,12 @@ services:
     environment:
       CONTAINER_ROLE: app
       PHP_FPM_MAX_CHILDREN: "3"
-      APP_NAME: "نصيبك (Staging)"
+      APP_NAME: "${STAGING_APP_NAME:-Naseebak}"
       APP_ENV: staging
-      APP_DEBUG: "false"
+      APP_DEBUG: "${STAGING_APP_DEBUG:-false}"
       APP_KEY: ${STAGING_APP_KEY:?STAGING_APP_KEY must be set}
-      APP_URL: ${STAGING_APP_URL:?STAGING_APP_URL must be set}
+      APP_URL: ${STAGING_APP_URL:-https://naseebak-api.hazem.my}
+      ADMIN_URL: ${STAGING_ADMIN_URL:-https://naseebak-api.hazem.my/admin}
       APP_TIMEZONE: UTC
       APP_LOCALE: ar
       LOG_CHANNEL: daily
@@ -66,7 +67,7 @@ services:
       DB_PORT: "5432"
       DB_DATABASE: ${STAGING_DB_DATABASE:-naseebak_staging}
       DB_USERNAME: ${STAGING_DB_USERNAME:-naseebak_staging_user}
-      DB_PASSWORD: ${STAGING_DB_PASSWORD}
+      DB_PASSWORD: ${STAGING_DB_PASSWORD:?STAGING_DB_PASSWORD must be set}
       FILESYSTEM_DISK: private
       PRIVATE_STORAGE_ROOT: /var/www/html/storage/app/private
       QUEUE_CONNECTION: database
@@ -83,6 +84,10 @@ services:
       REVERB_HOST: naseebak-staging-reverb
       REVERB_PORT: "8081"
       REVERB_SCHEME: http
+      GOOGLE_ANDROID_CLIENT_ID: ${STAGING_GOOGLE_ANDROID_CLIENT_ID:-520721691788-0fki6oqjcsjtk6g9qbo2ean3fj3cpeq2.apps.googleusercontent.com}
+      GOOGLE_WEB_CLIENT_ID: ${STAGING_GOOGLE_WEB_CLIENT_ID:-520721691788-4ngp8rrm7g4foja1f3ql24bv2apdgcoo.apps.googleusercontent.com}
+      GOOGLE_PLAY_PACKAGE_NAME: ${STAGING_GOOGLE_PLAY_PACKAGE_NAME:-com.naseebak.app}
+      GOOGLE_PLAY_MONTHLY_SUBSCRIPTION_ID: ${STAGING_GOOGLE_PLAY_MONTHLY_SUBSCRIPTION_ID:-naseebak_monthly_membership}
     volumes:
       - naseebak_staging_private_photos:/var/www/html/storage/app/private
     networks:
@@ -90,6 +95,14 @@ services:
       - coolify
     expose:
       - "8080"
+    labels:
+      - "coolify.managed=true"
+      - "traefik.enable=true"
+      - "traefik.http.routers.naseebak-staging-api.rule=Host(`naseebak-api.hazem.my`)"
+      - "traefik.http.routers.naseebak-staging-api.entrypoints=https"
+      - "traefik.http.routers.naseebak-staging-api.tls=true"
+      - "traefik.http.routers.naseebak-staging-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.naseebak-staging-api.loadbalancer.server.port=8080"
     deploy:
       resources:
         limits:
@@ -107,9 +120,9 @@ services:
       CONTAINER_ROLE: worker
       WORKER_MEMORY: "96"
       APP_ENV: staging
-      APP_DEBUG: "false"
+      APP_DEBUG: "${STAGING_APP_DEBUG:-false}"
       APP_KEY: ${STAGING_APP_KEY}
-      APP_URL: ${STAGING_APP_URL}
+      APP_URL: ${STAGING_APP_URL:-https://naseebak-api.hazem.my}
       DB_CONNECTION: pgsql
       DB_HOST: naseebak-staging-postgres
       DB_PORT: "5432"
@@ -127,6 +140,8 @@ services:
       REVERB_HOST: naseebak-staging-reverb
       REVERB_PORT: "8081"
       REVERB_SCHEME: http
+      GOOGLE_PLAY_PACKAGE_NAME: ${STAGING_GOOGLE_PLAY_PACKAGE_NAME:-com.naseebak.app}
+      GOOGLE_PLAY_MONTHLY_SUBSCRIPTION_ID: ${STAGING_GOOGLE_PLAY_MONTHLY_SUBSCRIPTION_ID:-naseebak_monthly_membership}
     volumes:
       - naseebak_staging_private_photos:/var/www/html/storage/app/private
     networks:
@@ -147,9 +162,9 @@ services:
     environment:
       CONTAINER_ROLE: reverb
       APP_ENV: staging
-      APP_DEBUG: "false"
+      APP_DEBUG: "${STAGING_APP_DEBUG:-false}"
       APP_KEY: ${STAGING_APP_KEY}
-      APP_URL: ${STAGING_APP_URL}
+      APP_URL: ${STAGING_APP_URL:-https://naseebak-api.hazem.my}
       DB_CONNECTION: pgsql
       DB_HOST: naseebak-staging-postgres
       DB_PORT: "5432"
@@ -162,14 +177,22 @@ services:
       REVERB_APP_SECRET: ${STAGING_REVERB_APP_SECRET}
       REVERB_SERVER_HOST: 0.0.0.0
       REVERB_SERVER_PORT: "8081"
-      REVERB_HOST: ${STAGING_REVERB_PUBLIC_HOST}
+      REVERB_HOST: ${STAGING_REVERB_PUBLIC_HOST:-naseebak-ws.hazem.my}
       REVERB_PORT: "443"
-      REVERB_SCHEME: https
+      REVERB_SCHEME: ${STAGING_REVERB_PUBLIC_SCHEME:-https}
     networks:
       - naseebak_staging_internal
       - coolify
     expose:
       - "8081"
+    labels:
+      - "coolify.managed=true"
+      - "traefik.enable=true"
+      - "traefik.http.routers.naseebak-staging-reverb.rule=Host(`naseebak-ws.hazem.my`)"
+      - "traefik.http.routers.naseebak-staging-reverb.entrypoints=https"
+      - "traefik.http.routers.naseebak-staging-reverb.tls=true"
+      - "traefik.http.routers.naseebak-staging-reverb.tls.certresolver=letsencrypt"
+      - "traefik.http.services.naseebak-staging-reverb.loadbalancer.server.port=8081"
     deploy:
       resources:
         limits:
@@ -186,9 +209,9 @@ services:
     environment:
       CONTAINER_ROLE: scheduler
       APP_ENV: staging
-      APP_DEBUG: "false"
+      APP_DEBUG: "${STAGING_APP_DEBUG:-false}"
       APP_KEY: ${STAGING_APP_KEY}
-      APP_URL: ${STAGING_APP_URL}
+      APP_URL: ${STAGING_APP_URL:-https://naseebak-api.hazem.my}
       DB_CONNECTION: pgsql
       DB_HOST: naseebak-staging-postgres
       DB_PORT: "5432"

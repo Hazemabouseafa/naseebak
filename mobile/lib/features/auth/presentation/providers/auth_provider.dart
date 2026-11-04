@@ -110,14 +110,16 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
-  /// Allows moving to Profile Registration Flow in local preview/testing mode
-  /// when Google OAuth credentials are not yet provisioned, while clearly labeling it.
-  void enterProfileRegistrationPreview() {
+  /// Navigates authenticated users with incomplete profiles to the profile completion flow.
+  void navigateToCompleteProfile() {
     state = state.copyWith(
       destination: AuthDestination.completeProfile,
       clearError: true,
     );
   }
+
+  @Deprecated('Use navigateToCompleteProfile instead')
+  void enterProfileRegistrationPreview() => navigateToCompleteProfile();
 
   void markProfileCompleted() {
     state = state.copyWith(
