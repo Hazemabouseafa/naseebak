@@ -12,17 +12,19 @@
 | **GitHub Target Repository** | [`https://github.com/Hazemabouseafa/naseebak`](https://github.com/Hazemabouseafa/naseebak) |
 | **Repository Visibility** | **PRIVATE** (Verified via GitHub API) |
 | **GitHub Authenticated User** | `Hazemabouseafa` (CLI Token Scopes: `repo`, `read:org`, `gist`) |
-| **Deployment Target Branch** | `staging` |
+| **Deployed Staging Branch** | `staging` |
+| **Remote Staging Commit Hash** | `dc5e52506c2e14e0c030ef7a6d8cc325f227cbb5` |
+| **Milestone Checkpoint Tag** | `checkpoint-phase-13b-ready` (Pushed to origin) |
 | **Security Audit Status** | **PASSED (100% Clean)** — Zero active secrets, zero private keys, zero live tokens in tracked files or Git history |
 | **Docker Compose Validation** | **PASSED (Valid YAML & Contexts)** — Exactly 800 MB hard memory cap across 5 isolated containers |
-| **Remote Push Status** | **AWAITING OWNER APPROVAL** (Local repo configured; remote created; push held per safety protocol) |
-| **VPS Deployment Status** | **STOPPED (Preflight Completed)** — Zero containers deployed to VPS |
+| **GitHub Upload Status** | **COMPLETED SUCCESSFULLY** (Pushed following explicit owner approval) |
+| **VPS Deployment Status** | **STOPPED (Preparation & Runbook Ready)** — Zero containers deployed to VPS |
 
 ---
 
 ## 1. Project Component Verification
 
-All components developed across Phases 1–13A have been preserved, verified, and integrated into the dedicated deployment branch `staging`:
+All components developed across Phases 1–13A have been preserved, verified, and pushed to the remote repository on branch `staging`:
 
 | Component | Path / Manifest | Verification Status |
 | :--- | :--- | :--- |
@@ -39,10 +41,12 @@ All components developed across Phases 1–13A have been preserved, verified, an
 
 ## 2. Git Repository & Staging Branch Status
 
-### Branch Topology
-- **Active Working Branch:** `staging`
-- **Source Checkpoint Branch:** `phase-13a-vps-preflight-staging` (Tag: `checkpoint-phase-13a-complete`, Commit: `c947621`)
-- **Staging Initial Commit:** `8fef6b3` (`feat(phase-13b): prepare staging branch, Coolify stack environment template, and deployment manifests`)
+### Branch & Remote Details
+- **Local Branch:** `staging`
+- **Tracking Remote:** `origin/staging` (`https://github.com/Hazemabouseafa/naseebak.git`)
+- **Pushed Commit Hash:** `dc5e52506c2e14e0c030ef7a6d8cc325f227cbb5`
+- **Milestone Tag:** `checkpoint-phase-13b-ready`
+- **Working Tree:** Clean (`nothing to commit, working tree clean`)
 
 ### Strict `.gitignore` Verification
 The repository `.gitignore` has been audited and guarantees strict exclusion of:
@@ -54,7 +58,7 @@ The repository `.gitignore` has been audited and guarantees strict exclusion of:
 
 ---
 
-## 3. Comprehensive Pre-Upload Security Audit
+## 3. Comprehensive Pre-Upload Security Audit Results
 
 A deep automated security scan was performed across all tracked files (`git ls-files`) and full commit history (`git log -p`):
 
@@ -62,40 +66,36 @@ A deep automated security scan was performed across all tracked files (`git ls-f
 | :--- | :--- | :--- | :--- |
 | **Tracked File Names** | `\.env$`, `\.key$`, `\.pem$`, `\.keystore$`, `service-account`, `google-services\.json` | **PASSED** | Only placeholder example files tracked (`google-services.json.example`, `.env.staging.example`). |
 | **Tracked File Contents** | RSA/EC/SSH private keys, Google API keys (`AIza...`), GitHub tokens (`ghp_...`), Live `APP_KEY`, Live passwords | **PASSED** | Zero leaked credentials. Reports contain only documentation placeholders (`GENERATE_NEW_SECURE_PASSWORD`). |
-| **Git Commit History** | `git log -p -G` scanning all 23 historical commits for secrets, certificates, and credentials | **PASSED** | Zero secret values ever committed in any past commit. |
+| **Git Commit History** | `git log -p -G` scanning all historical commits for secrets, certificates, and credentials | **PASSED** | Zero secret values ever committed in any past commit. |
 | **Database Passwords** | `DB_PASSWORD=...` | **PASSED** | Empty or placeholder strings only. |
 | **Payment Secrets** | `PAYMOB_API_KEY=`, `PAYMOB_SECRET_KEY=`, `PAYMOB_HMAC_SECRET=` | **PASSED** | Unset placeholder values only. |
 | **Firebase / Google Keys** | `GOOGLE_ANDROID_CLIENT_ID=`, `FCM_PROJECT_ID=` | **PASSED** | Unset placeholder values only. |
 
 > [!NOTE]
-> No production credentials or secrets exist in the repository. Credential rotation is **NOT required** because no real secrets were ever committed to Git.
+> Credential rotation is **NOT required** because zero actual secrets were ever present in Git history or tracked files.
 
 ---
 
-## 4. Private GitHub Repository Creation & Verification
+## 4. Private GitHub Repository Verification
 
-Using the authenticated GitHub CLI (`gh`) under account **Hazemabouseafa**:
-
-1. **Existence Check:** Verified `Hazemabouseafa/naseebak` did not previously exist (no overwrite risk).
-2. **Repository Creation:** Created the private repository via GitHub API:
+1. **Repository Creation:** Created the private repository via authenticated GitHub CLI (`Hazemabouseafa`):
    - **Repository URL:** `https://github.com/Hazemabouseafa/naseebak`
-   - **SSH URL:** `git@github.com:Hazemabouseafa/naseebak.git`
-   - **Visibility:** `PRIVATE` (Confirmed: `{"isPrivate": true, "visibility": "PRIVATE"}`)
+   - **Visibility:** **PRIVATE** (Confirmed via GitHub API: `{"isPrivate": true, "visibility": "PRIVATE"}`)
    - **Description:** `نَصِيبُكَ (Naseebak) — Arabic matrimonial platform (Flutter + Laravel 12 + Filament 3 + Reverb + PostgreSQL)`
-3. **Local Remote Configuration:**
-   - Configured `origin` remote:
+2. **Owner Approval & Push Execution:**
+   - Interactive owner approval requested and granted.
+   - Initial push completed:
      ```bash
-     git remote add origin https://github.com/Hazemabouseafa/naseebak.git
+     git push -u origin staging
+     git push origin checkpoint-phase-13b-ready
      ```
-4. **Push Protocol Enforcement:**
-   - Per Phase 13B instructions, **no code has been pushed to the remote repository yet**.
-   - The initial remote push is waiting for explicit user approval.
+   - Verified remote HEAD on GitHub: `dc5e52506c2e14e0c030ef7a6d8cc325f227cbb5`.
 
 ---
 
 ## 5. Staging Docker Compose Validation
 
-The staging Docker stack at `infrastructure/coolify/docker-compose.staging.yml` was parsed and verified using Symfony YAML:
+The staging Docker stack at `infrastructure/coolify/docker-compose.staging.yml` was parsed and verified:
 
 ```
 SUCCESS: Valid YAML syntax!
@@ -120,7 +120,7 @@ Networks count: 2 (naseebak_staging_internal, coolify)
   ```
   - When Coolify executes Docker Compose inside `infrastructure/coolify`, `context: ../..` resolves to the repository root (`/`).
   - `backend/Dockerfile` is located at `<root>/backend/Dockerfile`.
-  - All referenced files (`backend/composer.json`, `infrastructure/docker/php-production.ini`, `infrastructure/nginx/naseebak-container.conf`, `infrastructure/docker/entrypoint.sh`) exist and are tracked in the Git repository.
+  - All referenced files (`backend/composer.json`, `infrastructure/docker/php-production.ini`, `infrastructure/nginx/naseebak-container.conf`, `infrastructure/docker/entrypoint.sh`) exist and are tracked in the remote Git repository.
 
 ---
 
@@ -194,14 +194,21 @@ STAGING_REVERB_PUBLIC_HOST=staging-api.YOUR_DOMAIN
 
 ## 8. Remaining Blockers & Next Actions
 
-1. **Awaiting User Push Approval:**
-   - The private repository is ready at `https://github.com/Hazemabouseafa/naseebak`.
-   - The push command to execute upon approval:
+1. **Pre-Deployment VPS Capacity Audit (By Server Owner):**
+   - Execute read-only capacity checks on the Ubuntu VPS:
      ```bash
-     git push -u origin staging
+     free -h
+     df -h
+     docker ps
+     docker stats --no-stream
      ```
-2. **Subsequent Phase (Phase 14 / Deployment):**
-   - Server owner runs read-only VPS capacity preflight (`free -h`, `df -h`, `docker ps`).
-   - Configure Coolify GitHub App and Staging Environment Variables.
-   - Trigger initial manual build in Coolify.
-   - Run staging database migrations and seeders inside container.
+   - Confirm at least **1.2 GB of available RAM** and **15 GB of free disk space** before running the first build.
+2. **First Controlled Staging Deployment (Phase 14):**
+   - Configure Coolify GitHub App repository access for `Hazemabouseafa/naseebak`.
+   - Create `Naseebak-Staging` application in Coolify with parameters specified above.
+   - Fill in sandbox staging environment variables.
+   - Trigger manual deployment.
+   - Run initial migrations inside the container:
+     ```bash
+     php artisan migrate --force
+     ```
