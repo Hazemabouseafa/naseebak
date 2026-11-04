@@ -11,8 +11,8 @@ RUN composer install \
     --no-interaction \
     --no-scripts \
     --prefer-dist \
-    --optimize-autoloader \
-    --classmap-authoritative
+    --no-autoloader \
+    --ignore-platform-reqs
 
 FROM php:8.3-fpm-bookworm AS runtime
 
@@ -67,10 +67,18 @@ WORKDIR /var/www/html
 # Copy application source and locked production vendor dependencies
 COPY --chown=www-data:www-data backend/ /var/www/html/
 COPY --from=vendor --chown=www-data:www-data /app/vendor /var/www/html/vendor
+COPY --from=vendor /usr/bin/composer /usr/bin/composer
+
+# Generate optimized, authoritative classmap now that full source and runtime extensions exist
+RUN composer dump-autoload --optimize --classmap-authoritative --no-dev --no-scripts --ignore-platform-reqs \
+    && rm -f /usr/bin/composer \
+    && chown -R www-data:www-data /var/www/html/vendor
+
 COPY --chown=www-data:www-data infrastructure/docker/entrypoint.sh /usr/local/bin/naseebak-entrypoint.sh
 
 RUN chmod +x /usr/local/bin/naseebak-entrypoint.sh \
     && rm -f /var/www/html/.env \
+    && rm -f /var/www/html/bootstrap/cache/*.php \
     && mkdir -p \
         /var/www/html/storage/app/private/member-photos \
         /var/www/html/storage/app/backups \

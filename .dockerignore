@@ -22,6 +22,8 @@ scratch/tools/
 # Exclude vendor and cache (vendor is built cleanly in Dockerfile multi-stage build)
 backend/vendor/
 backend/node_modules/
+backend/bootstrap/cache/*.php
+!backend/bootstrap/cache/.gitkeep
 backend/storage/logs/*.log
 backend/storage/framework/cache/*
 backend/storage/framework/sessions/*

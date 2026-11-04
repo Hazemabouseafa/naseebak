@@ -14,6 +14,7 @@ mkdir -p \
     /var/www/html/bootstrap/cache
 
 if [ "${APP_ENV:-production}" = "production" ] || [ "${APP_ENV:-production}" = "staging" ]; then
+    php artisan package:discover --ansi || true
     php artisan config:cache --no-interaction
     php artisan route:cache --no-interaction
     php artisan view:cache --no-interaction
