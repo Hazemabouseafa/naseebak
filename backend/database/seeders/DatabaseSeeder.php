@@ -77,5 +77,17 @@ class DatabaseSeeder extends Seeder
                 array_merge($setting, ['created_at' => now(), 'updated_at' => now()])
             );
         }
+
+        // 4. Seed initial super administrator
+        \App\Models\Administrator::updateOrCreate(
+            ['email' => env('INITIAL_SUPER_ADMIN_EMAIL', 'admin@hazem.my')],
+            [
+                'name' => env('INITIAL_SUPER_ADMIN_NAME', 'Hazem'),
+                'password' => env('INITIAL_SUPER_ADMIN_PASSWORD', 'Naseebak@2026Admin!'),
+                'role' => \App\Models\Administrator::ROLE_SUPER_ADMIN,
+                'is_active' => true,
+                'mfa_enabled' => false,
+            ]
+        );
     }
 }
