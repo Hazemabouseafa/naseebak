@@ -13,7 +13,8 @@ class ProvisionSuperAdminCommand extends Command
 {
     protected $signature = 'naseebak:make-super-admin
                             {--name= : الاسم الكامل للمدير العام}
-                            {--email= : البريد الإلكتروني للمدير العام}';
+                            {--email= : البريد الإلكتروني للمدير العام}
+                            {--password= : كلمة مرور المدير العام (12 حرفاً على الأقل وتتضمن حروف كبيرة وصغيرة وأرقام ورموز)}';
 
     protected $description = 'إنشاء حساب المدير العام الأول (Super Administrator) للوحة تحكم نصيبك بشكل آمن عبر الطرفية دون كلمات مرور ثابتة في الكود';
 
@@ -23,8 +24,8 @@ class ProvisionSuperAdminCommand extends Command
 
         $name = $this->option('name') ?: $this->ask('أدخل الاسم الكامل للمدير العام');
         $email = $this->option('email') ?: $this->ask('أدخل البريد الإلكتروني للمدير العام');
-        $password = $this->secret('أدخل كلمة مرور قوية (12 حرفاً على الأقل وتحتوي على حروف كبيرة وصغيرة وأرقام ورموز)');
-        $passwordConfirmation = $this->secret('أعد إدخال كلمة المرور للتأكيد');
+        $password = $this->option('password') ?: $this->secret('أدخل كلمة مرور قوية (12 حرفاً على الأقل وتحتوي على حروف كبيرة وصغيرة وأرقام ورموز)');
+        $passwordConfirmation = $this->option('password') ?: $this->secret('أعد إدخال كلمة المرور للتأكيد');
 
         $validator = Validator::make([
             'name' => $name,

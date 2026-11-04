@@ -109,6 +109,9 @@ services:
       MAIL_ENCRYPTION: ${STAGING_MAIL_ENCRYPTION:-tls}
       MAIL_FROM_ADDRESS: ${STAGING_MAIL_FROM_ADDRESS:-noreply@hazem.my}
       MAIL_FROM_NAME: "${STAGING_MAIL_FROM_NAME:-نَصِيبُكَ}"
+      STAGING_SUPER_ADMIN_NAME: ${STAGING_SUPER_ADMIN_NAME:-Admin}
+      STAGING_SUPER_ADMIN_EMAIL: ${STAGING_SUPER_ADMIN_EMAIL:-}
+      STAGING_SUPER_ADMIN_PASSWORD: ${STAGING_SUPER_ADMIN_PASSWORD:-}
     volumes:
       - naseebak_staging_private_photos:/var/www/html/storage/app/private
     networks:

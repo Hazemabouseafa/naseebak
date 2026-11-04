@@ -26,6 +26,19 @@ fi
 
 case "$ROLE" in
     app)
+        echo "[Naseebak] Running database migrations..."
+        php artisan migrate --force --no-interaction || true
+        php artisan db:seed --force --no-interaction || true
+
+        if [ -n "${STAGING_SUPER_ADMIN_EMAIL:-}" ] && [ -n "${STAGING_SUPER_ADMIN_PASSWORD:-}" ]; then
+            echo "[Naseebak] Provisioning initial Super Administrator..."
+            php artisan naseebak:make-super-admin \
+                --name="${STAGING_SUPER_ADMIN_NAME:-Admin}" \
+                --email="${STAGING_SUPER_ADMIN_EMAIL}" \
+                --password="${STAGING_SUPER_ADMIN_PASSWORD}" \
+                --no-interaction || true
+        fi
+
         echo "[Naseebak] Starting HTTP Application role (PHP-FPM + Nginx on :8080)..."
         if [ -n "${PHP_FPM_MAX_CHILDREN:-}" ]; then
             sed -i "s/^pm.max_children = .*/pm.max_children = ${PHP_FPM_MAX_CHILDREN}/" /usr/local/etc/php-fpm.d/www.conf
