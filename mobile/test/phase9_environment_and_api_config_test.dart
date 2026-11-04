@@ -81,5 +81,20 @@ void main() {
       expect(validProduction.isSecureForRelease, isTrue);
       expect(validProduction.validateSecurityRequirements(), isNull);
     });
+
+    test('4. Production environment rejects staging domains and enforces isolation', () {
+      const prodPointingToStaging = AppEnvironmentConfig(
+        environment: NaseebakEnvironment.production,
+        apiBaseUrl: 'https://naseebak-api.hazem.my/api/v1',
+        reverbWsUrl: 'wss://naseebak-ws.hazem.my/app/key',
+        googleServerClientId: 'prod-client.apps.googleusercontent.com',
+        androidPackageName: 'com.naseebak.app',
+      );
+      expect(prodPointingToStaging.isSecureForRelease, isFalse);
+      expect(
+        prodPointingToStaging.validateSecurityRequirements(),
+        contains('Production builds cannot point to staging domains (hazem.my)'),
+      );
+    });
   });
 }

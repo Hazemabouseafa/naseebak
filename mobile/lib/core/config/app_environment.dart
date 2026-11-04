@@ -44,6 +44,10 @@ class AppEnvironmentConfig {
 
   /// Resolves build-time `--dart-define` configuration without hardcoding
   /// localhost or private development IPs in staging/production builds.
+  ///
+  /// Debug builds safely use staging by default.
+  /// Production builds strictly require explicit production configuration via `--dart-define`
+  /// and fail immediately if required endpoints are missing or point to staging.
   factory AppEnvironmentConfig.fromBuildDefines() {
     const rawEnv = String.fromEnvironment('APP_ENV', defaultValue: 'staging');
     final env = NaseebakEnvironment.fromName(rawEnv);
@@ -70,12 +74,48 @@ class AppEnvironmentConfig {
       defaultValue: 'com.naseebak.app',
     );
 
+    // Production security assertion:
+    // Production builds require explicit production configuration and CANNOT
+    // silently fall back to staging or missing endpoints.
+    if (env.isProduction) {
+      if (definedApiUrl.isEmpty) {
+        throw StateError(
+          'Missing production API URL. Production builds require an explicit '
+          'API_BASE_URL via --dart-define=API_BASE_URL=https://<prod-domain>/api/v1. '
+          'Production builds cannot silently fall back to staging or default URLs.',
+        );
+      }
+      if (definedApiUrl.contains('hazem.my') || definedApiUrl.contains('staging')) {
+        throw StateError(
+          'Production configuration error: API_BASE_URL ($definedApiUrl) points to staging. '
+          'Production builds cannot use staging endpoints.',
+        );
+      }
+      if (definedWsUrl.isEmpty && definedWsHost.isEmpty) {
+        throw StateError(
+          'Missing production WebSocket configuration. Production builds require an explicit '
+          'REVERB_WS_URL or REVERB_WS_HOST via --dart-define. '
+          'Production builds cannot silently fall back to staging.',
+        );
+      }
+      if ((definedWsUrl.isNotEmpty && (definedWsUrl.contains('hazem.my') || definedWsUrl.contains('staging'))) ||
+          (definedWsHost.isNotEmpty && (definedWsHost.contains('hazem.my') || definedWsHost.contains('staging')))) {
+        throw StateError(
+          'Production configuration error: WebSocket configuration points to staging. '
+          'Production builds cannot use staging endpoints.',
+        );
+      }
+    }
+
     final resolvedApiUrl = definedApiUrl.isNotEmpty
         ? definedApiUrl
         : switch (env) {
             NaseebakEnvironment.development => 'https://dev-api.example.com/api/v1',
             NaseebakEnvironment.staging => 'https://naseebak-api.hazem.my/api/v1',
-            NaseebakEnvironment.production => 'https://naseebak-api.hazem.my/api/v1',
+            NaseebakEnvironment.production => throw StateError(
+                'Missing production API URL. Production builds require explicit '
+                'API_BASE_URL via --dart-define.',
+              ),
           };
 
     final resolvedWsUrl = definedWsUrl.isNotEmpty
@@ -87,8 +127,10 @@ class AppEnvironmentConfig {
                   'wss://dev-api.example.com/app/$definedReverbKey?protocol=7&client=flutter&version=1.0',
                 NaseebakEnvironment.staging =>
                   'wss://naseebak-ws.hazem.my/app/$definedReverbKey?protocol=7&client=flutter&version=1.0',
-                NaseebakEnvironment.production =>
-                  'wss://naseebak-ws.hazem.my/app/$definedReverbKey?protocol=7&client=flutter&version=1.0',
+                NaseebakEnvironment.production => throw StateError(
+                    'Missing production WebSocket configuration. Production builds require explicit '
+                    'REVERB_WS_URL or REVERB_WS_HOST via --dart-define.',
+                  ),
               });
 
     final resolvedServerClientId = definedGoogleServerClientId.isNotEmpty
@@ -111,7 +153,7 @@ class AppEnvironmentConfig {
               '520721691788-0fki6oqjcsjtk6g9qbo2ean3fj3cpeq2.apps.googleusercontent.com',
           };
 
-    return AppEnvironmentConfig(
+    final config = AppEnvironmentConfig(
       environment: env,
       apiBaseUrl: resolvedApiUrl,
       reverbWsUrl: resolvedWsUrl,
@@ -119,6 +161,15 @@ class AppEnvironmentConfig {
       googleAndroidClientId: resolvedAndroidClientId,
       androidPackageName: definedPackage,
     );
+
+    final validationError = config.validateSecurityRequirements();
+    if (validationError != null) {
+      throw StateError(
+        'Environment configuration security validation failed: $validationError',
+      );
+    }
+
+    return config;
   }
 
   /// Validates that Staging and Production configurations strictly use HTTPS and WSS
@@ -150,6 +201,10 @@ class AppEnvironmentConfig {
       }
       if (_isLocalOrPrivateHost(wsUri.host)) {
         return 'Localhost or private IP addresses are forbidden in Staging/Production REVERB_WS_URL (${wsUri.host}).';
+      }
+      if (environment.isProduction &&
+          (apiUri.host.contains('hazem.my') || wsUri.host.contains('hazem.my'))) {
+        return 'Production builds cannot point to staging domains (hazem.my).';
       }
     }
 

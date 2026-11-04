@@ -2,6 +2,15 @@
 # Naseebak (نصيبك) — Isolated Coolify Staging Docker Compose Stack
 # Restricted Staging Environment (Separate Database, Separate Volumes, Sandbox Keys)
 # Hard Memory Cap: Exactly 800 MB cumulative across all 5 containers
+#
+# ROUTING & COOLIFY INTEGRATION:
+# - API & Filament Admin: https://naseebak-api.hazem.my (Container Port 8080)
+# - Reverb WebSockets:   wss://naseebak-ws.hazem.my (Container Port 8081)
+#
+# Consistent Routing Configuration:
+# Explicit Traefik labels below route external traffic through the host's
+# Traefik reverse proxy on the 'coolify' network directly to ports 8080 and 8081.
+# If configuring domains via Coolify UI, ensure the mapped ports are 8080 and 8081.
 # ==============================================================================
 
 services:
@@ -88,6 +97,14 @@ services:
       GOOGLE_WEB_CLIENT_ID: ${STAGING_GOOGLE_WEB_CLIENT_ID:-520721691788-4ngp8rrm7g4foja1f3ql24bv2apdgcoo.apps.googleusercontent.com}
       GOOGLE_PLAY_PACKAGE_NAME: ${STAGING_GOOGLE_PLAY_PACKAGE_NAME:-com.naseebak.app}
       GOOGLE_PLAY_MONTHLY_SUBSCRIPTION_ID: ${STAGING_GOOGLE_PLAY_MONTHLY_SUBSCRIPTION_ID:-naseebak_monthly_membership}
+      MAIL_MAILER: ${STAGING_MAIL_MAILER:-log}
+      MAIL_HOST: ${STAGING_MAIL_HOST:-127.0.0.1}
+      MAIL_PORT: "${STAGING_MAIL_PORT:-587}"
+      MAIL_USERNAME: ${STAGING_MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${STAGING_MAIL_PASSWORD:-}
+      MAIL_ENCRYPTION: ${STAGING_MAIL_ENCRYPTION:-tls}
+      MAIL_FROM_ADDRESS: ${STAGING_MAIL_FROM_ADDRESS:-noreply@hazem.my}
+      MAIL_FROM_NAME: "${STAGING_MAIL_FROM_NAME:-نَصِيبُكَ}"
     volumes:
       - naseebak_staging_private_photos:/var/www/html/storage/app/private
     networks:
@@ -98,7 +115,7 @@ services:
     labels:
       - "coolify.managed=true"
       - "traefik.enable=true"
-      - "traefik.http.routers.naseebak-staging-api.rule=Host(`naseebak-api.hazem.my`)"
+      - "traefik.http.routers.naseebak-staging-api.rule=Host(`${STAGING_API_DOMAIN:-naseebak-api.hazem.my}`)"
       - "traefik.http.routers.naseebak-staging-api.entrypoints=https"
       - "traefik.http.routers.naseebak-staging-api.tls=true"
       - "traefik.http.routers.naseebak-staging-api.tls.certresolver=letsencrypt"
@@ -110,12 +127,17 @@ services:
           cpus: "0.50"
 
   naseebak-staging-worker:
+    build:
+      context: ../..
+      dockerfile: backend/Dockerfile
     image: naseebak/backend:${STAGING_IMAGE_TAG:-v1.0.0-rc1}
     container_name: naseebak-staging-worker
     restart: unless-stopped
     depends_on:
       naseebak-staging-postgres:
         condition: service_healthy
+      naseebak-staging-api:
+        condition: service_started
     environment:
       CONTAINER_ROLE: worker
       WORKER_MEMORY: "96"
@@ -142,6 +164,14 @@ services:
       REVERB_SCHEME: http
       GOOGLE_PLAY_PACKAGE_NAME: ${STAGING_GOOGLE_PLAY_PACKAGE_NAME:-com.naseebak.app}
       GOOGLE_PLAY_MONTHLY_SUBSCRIPTION_ID: ${STAGING_GOOGLE_PLAY_MONTHLY_SUBSCRIPTION_ID:-naseebak_monthly_membership}
+      MAIL_MAILER: ${STAGING_MAIL_MAILER:-log}
+      MAIL_HOST: ${STAGING_MAIL_HOST:-127.0.0.1}
+      MAIL_PORT: "${STAGING_MAIL_PORT:-587}"
+      MAIL_USERNAME: ${STAGING_MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${STAGING_MAIL_PASSWORD:-}
+      MAIL_ENCRYPTION: ${STAGING_MAIL_ENCRYPTION:-tls}
+      MAIL_FROM_ADDRESS: ${STAGING_MAIL_FROM_ADDRESS:-noreply@hazem.my}
+      MAIL_FROM_NAME: "${STAGING_MAIL_FROM_NAME:-نَصِيبُكَ}"
     volumes:
       - naseebak_staging_private_photos:/var/www/html/storage/app/private
     networks:
@@ -153,12 +183,17 @@ services:
           cpus: "0.20"
 
   naseebak-staging-reverb:
+    build:
+      context: ../..
+      dockerfile: backend/Dockerfile
     image: naseebak/backend:${STAGING_IMAGE_TAG:-v1.0.0-rc1}
     container_name: naseebak-staging-reverb
     restart: unless-stopped
     depends_on:
       naseebak-staging-postgres:
         condition: service_healthy
+      naseebak-staging-api:
+        condition: service_started
     environment:
       CONTAINER_ROLE: reverb
       APP_ENV: staging
@@ -188,7 +223,7 @@ services:
     labels:
       - "coolify.managed=true"
       - "traefik.enable=true"
-      - "traefik.http.routers.naseebak-staging-reverb.rule=Host(`naseebak-ws.hazem.my`)"
+      - "traefik.http.routers.naseebak-staging-reverb.rule=Host(`${STAGING_WS_DOMAIN:-naseebak-ws.hazem.my}`)"
       - "traefik.http.routers.naseebak-staging-reverb.entrypoints=https"
       - "traefik.http.routers.naseebak-staging-reverb.tls=true"
       - "traefik.http.routers.naseebak-staging-reverb.tls.certresolver=letsencrypt"
@@ -200,12 +235,17 @@ services:
           cpus: "0.15"
 
   naseebak-staging-scheduler:
+    build:
+      context: ../..
+      dockerfile: backend/Dockerfile
     image: naseebak/backend:${STAGING_IMAGE_TAG:-v1.0.0-rc1}
     container_name: naseebak-staging-scheduler
     restart: unless-stopped
     depends_on:
       naseebak-staging-postgres:
         condition: service_healthy
+      naseebak-staging-api:
+        condition: service_started
     environment:
       CONTAINER_ROLE: scheduler
       APP_ENV: staging
