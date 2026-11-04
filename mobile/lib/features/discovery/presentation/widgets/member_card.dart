@@ -197,13 +197,13 @@ class MemberCard extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          Icons.verified_user_outlined,
+                          Icons.check_circle_outline_rounded,
                           size: 14,
                           color: AppColors.primaryBlue,
                         ),
                         SizedBox(width: 4),
                         Text(
-                          'ملف شخصي موثق',
+                          'ملف معتمد',
                           style: TextStyle(
                             fontFamily: NaseebakTypography.fontFamily,
                             fontSize: 11.5,

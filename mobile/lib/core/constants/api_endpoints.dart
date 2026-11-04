@@ -26,6 +26,7 @@ class ApiEndpoints {
   static const String authGoogle = '/auth/google';
   static const String authMe = '/auth/me';
   static const String authLogout = '/auth/logout';
+  static const String authDeleteAccount = '/auth/account';
 
   // Phase 1 & Phase 2: Profile Management & Privacy
   static const String profile = '/profile';
@@ -40,10 +41,12 @@ class ApiEndpoints {
   static const String membersSearch = '/members/search';
   static const String searchPreferences = '/search/preferences';
   static const String favorites = '/favorites';
+  static const String blockedMembers = '/blocked-members';
 
   static String memberProfile(int userId) => '/members/$userId/profile';
   static String favoriteMember(int userId) => '/favorites/$userId';
   static String blockMember(int userId) => '/members/$userId/block';
+  static String unblockMember(int userId) => '/members/$userId/block';
   static String reportMember(int userId) => '/members/$userId/report';
 
   // Phase 5: Monthly Subscriptions & Google Play Purchase Verification

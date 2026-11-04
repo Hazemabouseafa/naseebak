@@ -96,19 +96,33 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
     setState(() => _isProcessing = true);
 
     try {
-      // Disconnect services and sign out
+      // Disconnect services
       await ref.read(notificationProvider.notifier).cleanupOnLogout();
       ref.read(realtimeMessagingServiceProvider).disconnect();
-      await ref.read(authControllerProvider.notifier).signOut();
+
+      // Execute authoritative backend account deletion API (DELETE /api/v1/auth/account)
+      await ref.read(authControllerProvider.notifier).deleteAccount(
+        confirmation: _confirmationController.text.trim(),
+        reason: _selectedReason,
+        notes: _notesController.text.trim(),
+      );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           backgroundColor: NaseebakColors.primaryNavy,
-          content: Text('تم استلام طلب حذف الحساب وجاري معالجة إزالة البيانات.'),
+          content: Text('تم حذف حسابك بنجاح وكافة بياناتك الشخصية والصور.'),
         ),
       );
       Navigator.of(context).popUntil((route) => route.isFirst);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: NaseebakColors.error,
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isProcessing = false);
     }
@@ -166,12 +180,14 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                                 size: 24,
                               ),
                               SizedBox(width: 8),
-                              Text(
-                                'تنبيهات هامة قبل المتابعة',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
-                                  color: NaseebakColors.error,
+                              Expanded(
+                                child: Text(
+                                  'تنبيهات هامة قبل المتابعة',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                    color: NaseebakColors.error,
+                                  ),
                                 ),
                               ),
                             ],
@@ -281,6 +297,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                           const SizedBox(height: 10),
                           DropdownButtonFormField<String>(
                             value: _selectedReason,
+                            isExpanded: true,
                             decoration: InputDecoration(
                               filled: true,
                               fillColor: NaseebakColors.backgroundBeige,

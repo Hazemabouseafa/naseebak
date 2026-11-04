@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/api_client.dart';
+import '../models/blocked_member_model.dart';
 import '../models/member_profile_model.dart';
 import '../models/search_preferences_model.dart';
 
@@ -208,6 +209,41 @@ class DiscoveryRepository {
       throw Exception(_mapDioError(
         e,
         fallback: 'تعذر تنفيذ حظر العضو حالياً.',
+      ));
+    }
+  }
+
+  /// GET /api/v1/blocked-members
+  Future<List<BlockedMemberModel>> fetchBlockedMembers({int page = 1}) async {
+    try {
+      final response = await _apiClient.dio.get<Map<String, dynamic>>(
+        ApiEndpoints.blockedMembers,
+        queryParameters: {'page': page},
+      );
+      final data = (response.data?['data'] as Map<String, dynamic>?) ?? {};
+      final list = (data['blocked_members'] as List<dynamic>?) ?? const [];
+      return list
+          .whereType<Map<String, dynamic>>()
+          .map(BlockedMemberModel.fromJson)
+          .toList();
+    } on DioException catch (e) {
+      throw Exception(_mapDioError(
+        e,
+        fallback: 'تعذر استرجاع قائمة الأعضاء المحظورين.',
+      ));
+    }
+  }
+
+  /// DELETE /api/v1/members/{member}/block
+  Future<void> unblockMember(int memberUserId) async {
+    try {
+      await _apiClient.dio.delete<Map<String, dynamic>>(
+        ApiEndpoints.unblockMember(memberUserId),
+      );
+    } on DioException catch (e) {
+      throw Exception(_mapDioError(
+        e,
+        fallback: 'تعذر إلغاء حظر هذا العضو حالياً.',
       ));
     }
   }

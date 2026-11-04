@@ -146,4 +146,35 @@ class GoogleAuthRepository {
       } catch (_) {}
     }
   }
+
+  /// Sends DELETE /api/v1/auth/account to purge all personal data, photos, and revoke session
+  Future<Map<String, dynamic>> deleteAccount({
+    required String confirmation,
+    String? reason,
+    String? notes,
+  }) async {
+    try {
+      final response = await _apiClient.dio.delete<Map<String, dynamic>>(
+        ApiEndpoints.authDeleteAccount,
+        data: {
+          'confirmation': confirmation,
+          if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+          if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+        },
+      );
+      final body = response.data ?? {};
+      return (body['data'] as Map<String, dynamic>?) ?? {};
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      if (data is Map<String, dynamic> && data['message'] != null) {
+        throw Exception(data['message'].toString());
+      }
+      throw Exception('تعذر إتمام طلب حذف الحساب حالياً. يرجى المحاولة مرة أخرى.');
+    } finally {
+      await _sessionStorage.clearToken();
+      try {
+        await _googleSignIn.signOut();
+      } catch (_) {}
+    }
+  }
 }

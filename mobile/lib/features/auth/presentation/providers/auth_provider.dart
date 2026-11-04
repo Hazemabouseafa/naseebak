@@ -137,6 +137,32 @@ class AuthController extends StateNotifier<AuthState> {
       );
     }
   }
+
+  Future<Map<String, dynamic>> deleteAccount({
+    required String confirmation,
+    String? reason,
+    String? notes,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final data = await _repository.deleteAccount(
+        confirmation: confirmation,
+        reason: reason,
+        notes: notes,
+      );
+      state = const AuthState(
+        isLoading: false,
+        destination: AuthDestination.welcome,
+      );
+      return data;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      );
+      rethrow;
+    }
+  }
 }
 
 final authControllerProvider =

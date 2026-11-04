@@ -44,6 +44,8 @@ Route::prefix('v1')->group(function () {
         // Session & Identity
         Route::get('/auth/me', [AuthController::class, 'me']);
         Route::post('/auth/logout', [AuthController::class, 'logout']);
+        Route::delete('/auth/account', [AuthController::class, 'deleteAccount'])
+            ->middleware('throttle:5,1');
 
         // Phase 1 & Phase 2: Complete Profile Management API
         Route::get('/profile', [ProfileController::class, 'showOwnProfile']);
@@ -84,7 +86,12 @@ Route::prefix('v1')->group(function () {
             ->middleware('throttle:30,1');
 
         // Safety Actions on Member Profile & Chat (Block & Report — Rate-limited)
+        Route::get('/blocked-members', [FavoriteController::class, 'blockedMembers'])
+            ->middleware('throttle:30,1');
         Route::post('/members/{member}/block', [FavoriteController::class, 'blockMember'])
+            ->whereNumber('member')
+            ->middleware('throttle:20,1');
+        Route::delete('/members/{member}/block', [FavoriteController::class, 'unblockMember'])
             ->whereNumber('member')
             ->middleware('throttle:20,1');
         Route::post('/members/{member}/report', [FavoriteController::class, 'reportMember'])

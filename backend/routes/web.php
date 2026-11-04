@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdminOperationsController;
 use App\Http\Controllers\Api\V1\HealthCheckController;
+use App\Http\Controllers\Web\AccountDeletionWebController;
 use App\Http\Controllers\Web\WebSubscriptionPortalController;
 use Illuminate\Support\Facades\Route;
 
@@ -17,7 +18,17 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', fn () => response()->json([
     'app' => 'نصيبك — Naseebak Platform',
     'admin_dashboard' => url('/admin'),
+    'legal_delete_account' => url('/legal/delete-account'),
 ]));
+
+// Google Play Compliance: Public Web Account Deletion Information & Request Page
+Route::prefix('legal')->group(function () {
+    Route::get('/delete-account', [AccountDeletionWebController::class, 'showDeleteAccountPage'])
+        ->name('legal.delete_account');
+    Route::post('/delete-account', [AccountDeletionWebController::class, 'submitDeletionRequest'])
+        ->middleware('throttle:5,1')
+        ->name('legal.delete_account.submit');
+});
 
 // Separate Web Customer Subscription Portal (Paymob / Sha7nawy Web Checkout)
 Route::prefix('membership')->group(function () {

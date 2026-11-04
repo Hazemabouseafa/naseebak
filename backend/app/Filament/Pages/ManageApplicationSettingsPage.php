@@ -56,7 +56,7 @@ class ManageApplicationSettingsPage extends Page implements HasForms
             'support_whatsapp' => $general['support_whatsapp'] ?? '',
             'privacy_policy_url' => $urls['privacy_policy_url'] ?? 'https://api.example.com/legal/privacy-policy',
             'terms_of_service_url' => $urls['terms_of_service_url'] ?? 'https://api.example.com/legal/terms',
-            'account_deletion_url' => $urls['account_deletion_url'] ?? 'https://api.example.com/legal/delete-account',
+            'account_deletion_url' => $urls['account_deletion_url'] ?? url('/legal/delete-account'),
             'minimum_registration_age' => 18,
         ]);
     }

@@ -38,12 +38,12 @@ class Conversation extends Model
 
     public function userOne(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_one_id');
+        return $this->belongsTo(User::class, 'user_one_id')->withTrashed();
     }
 
     public function userTwo(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_two_id');
+        return $this->belongsTo(User::class, 'user_two_id')->withTrashed();
     }
 
     public function participants(): HasMany

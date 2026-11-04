@@ -594,12 +594,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 4),
-                              const Icon(
-                                Icons.verified_rounded,
-                                size: 14,
-                                color: NaseebakColors.accentGold,
-                              ),
                             ],
                           ),
                           if (otherMember != null && otherMember.region.isNotEmpty)

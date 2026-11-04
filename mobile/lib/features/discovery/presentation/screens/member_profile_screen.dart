@@ -705,7 +705,7 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                                         children: [
                                           Icon(
                                             member.photoAuthorized
-                                                ? Icons.verified_user_outlined
+                                                ? Icons.check_circle_outline_rounded
                                                 : Icons.lock_outline_rounded,
                                             size: 13,
                                             color: AppColors.primaryNavy,
@@ -713,7 +713,7 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                                           const SizedBox(width: 4),
                                           Text(
                                             member.photoAuthorized
-                                                ? 'ملف موثق'
+                                                ? 'ملف معتمد'
                                                 : 'صورة بإذن صاحب الملف',
                                             style: const TextStyle(
                                               fontFamily:

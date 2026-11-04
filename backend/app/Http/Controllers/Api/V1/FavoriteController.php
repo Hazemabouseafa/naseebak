@@ -230,6 +230,96 @@ class FavoriteController extends Controller
     }
 
     /**
+     * GET /api/v1/blocked-members
+     *
+     * Returns paginated list of members blocked by the authenticated user.
+     */
+    public function blockedMembers(Request $request): JsonResponse
+    {
+        /** @var User $viewer */
+        $viewer = $request->user();
+
+        $perPage = min(50, max(1, (int) $request->query('per_page', 20)));
+
+        $paginator = BlockedUser::where('blocker_id', $viewer->id)
+            ->with(['blocked.profile', 'blocked.photos'])
+            ->orderByDesc('created_at')
+            ->paginate($perPage);
+
+        $items = collect($paginator->items())->map(function (BlockedUser $block) {
+            $blockedUser = $block->blocked;
+            $profile = $blockedUser?->profile;
+
+            return [
+                'id' => $block->id,
+                'blocked_user_id' => $block->blocked_id,
+                'full_name' => $profile?->full_name ?? 'عضو نصيبك',
+                'gender' => $profile?->gender ?? 'female',
+                'age_years' => $profile ? UserProfile::calculateAgeYears($profile->date_of_birth) : 18,
+                'region' => $profile?->region ?? '',
+                'country_of_residence' => $profile?->country_of_residence ?? '',
+                'reason' => $block->reason ?? 'تم الحظر بواسطة المستخدم',
+                'blocked_at' => $block->created_at?->toIso8601String(),
+                'unblock_allowed' => true,
+            ];
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'blocked_members' => $items,
+                'pagination' => [
+                    'current_page' => $paginator->currentPage(),
+                    'last_page' => $paginator->lastPage(),
+                    'per_page' => $paginator->perPage(),
+                    'total' => $paginator->total(),
+                    'has_more_pages' => $paginator->hasMorePages(),
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * DELETE /api/v1/members/{member}/block
+     *
+     * Unblocks a previously blocked member.
+     */
+    public function unblockMember(Request $request, User $member): JsonResponse
+    {
+        /** @var User $viewer */
+        $viewer = $request->user();
+
+        $deletedCount = BlockedUser::where('blocker_id', $viewer->id)
+            ->where('blocked_id', $member->id)
+            ->delete();
+
+        // Check if mutual block still exists from other user
+        $stillBlockedByOther = BlockedUser::where('blocker_id', $member->id)
+            ->where('blocked_id', $viewer->id)
+            ->exists();
+
+        if (!$stillBlockedByOther) {
+            $lowId = min((int) $viewer->id, (int) $member->id);
+            $highId = max((int) $viewer->id, (int) $member->id);
+
+            Conversation::where(function ($q) use ($lowId, $highId) {
+                $q->where('user_one_id', $lowId)->where('user_two_id', $highId);
+            })->where('status', Conversation::STATUS_BLOCKED)
+                ->update(['status' => Conversation::STATUS_ACTIVE]);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'تم إلغاء حظر العضو بنجاح.',
+            'data' => [
+                'blocked_user_id' => $member->id,
+                'is_blocked' => false,
+                'was_unblocked' => $deletedCount > 0,
+            ],
+        ]);
+    }
+
+    /**
      * POST /api/v1/members/{member}/report
      * Safety Action: Report a member to administrators.
      */
