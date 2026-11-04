@@ -21,13 +21,25 @@ Route::get('/', fn () => response()->json([
     'legal_delete_account' => url('/legal/delete-account'),
 ]));
 
-// Google Play Compliance: Public Web Account Deletion Information & Request Page
+// Google Play Compliance & Legal Documentation
 Route::prefix('legal')->group(function () {
     Route::get('/delete-account', [AccountDeletionWebController::class, 'showDeleteAccountPage'])
         ->name('legal.delete_account');
     Route::post('/delete-account', [AccountDeletionWebController::class, 'submitDeletionRequest'])
         ->middleware('throttle:5,1')
         ->name('legal.delete_account.submit');
+    Route::get('/confirm-delete-account/{id}/{hash}', [AccountDeletionWebController::class, 'showConfirmDeletionPage'])
+        ->name('legal.confirm_delete_account');
+    Route::post('/confirm-delete-account/{id}/{hash}', [AccountDeletionWebController::class, 'executeConfirmedDeletion'])
+        ->middleware('throttle:5,1')
+        ->name('legal.execute_confirmed_deletion');
+
+    Route::view('/privacy-policy', 'legal.privacy_policy')
+        ->name('legal.privacy_policy');
+    Route::view('/terms-of-service', 'legal.terms_of_service')
+        ->name('legal.terms_of_service');
+    Route::view('/child-safety', 'legal.child_safety')
+        ->name('legal.child_safety');
 });
 
 // Separate Web Customer Subscription Portal (Paymob / Sha7nawy Web Checkout)

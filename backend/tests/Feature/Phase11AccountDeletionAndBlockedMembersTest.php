@@ -378,7 +378,7 @@ class Phase11AccountDeletionAndBlockedMembersTest extends TestCase
         $targetUser = $this->createActiveMember('web.delete.target@example.com', 'طارق');
         $this->assertEquals('active', $targetUser->account_status);
 
-        $submitResponse = $this->post('/legal/delete-account', [
+        $submitResponse = $this->actingAs($targetUser, 'web')->post('/legal/delete-account', [
             'email' => 'web.delete.target@example.com',
             'confirmation' => 'حذف',
             'acknowledge_play_store' => '1',

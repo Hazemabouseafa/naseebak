@@ -62,8 +62,9 @@ class DatabaseSeeder extends Seeder
             [
                 'setting_key' => 'privacy_and_terms_urls',
                 'setting_value' => json_encode([
-                    'privacy_policy_url' => 'https://api.example.com/legal/privacy-policy',
-                    'terms_of_service_url' => 'https://api.example.com/legal/terms',
+                    'privacy_policy_url' => url('/legal/privacy-policy'),
+                    'terms_of_service_url' => url('/legal/terms-of-service'),
+                    'child_safety_url' => url('/legal/child-safety'),
                     'account_deletion_url' => url('/legal/delete-account'),
                 ]),
                 'description_ar' => 'روابط سياسة الخصوصية وشروط الاستخدام وحذف الحساب عبر الويب',

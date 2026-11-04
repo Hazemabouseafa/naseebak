@@ -11,6 +11,7 @@ use App\Models\NotificationRecord;
 use App\Models\User;
 use App\Models\UserPhoto;
 use App\Models\UserPreference;
+use App\Services\Auth\AccountDeletionService;
 use App\Services\Auth\GoogleIdTokenVerifierService;
 use App\Services\Subscription\SubscriptionEntitlementService;
 use Illuminate\Auth\AuthenticationException;
@@ -26,6 +27,7 @@ class AuthController extends Controller
     public function __construct(
         private readonly GoogleIdTokenVerifierService $googleVerifier,
         private readonly SubscriptionEntitlementService $entitlementService,
+        private readonly AccountDeletionService $deletionService,
     ) {}
 
     /**
@@ -229,79 +231,11 @@ class AuthController extends Controller
             ], 422);
         }
 
-        DB::transaction(function () use ($user) {
-            // 1. Purge all uploaded photos from private disk and database
-            $photos = UserPhoto::where('user_id', $user->id)->get();
-            foreach ($photos as $photo) {
-                $disk = Storage::disk($photo->storage_disk ?: 'private');
-                if ($photo->file_path && $disk->exists($photo->file_path)) {
-                    $disk->delete($photo->file_path);
-                }
-                $photo->delete();
-            }
-            Storage::disk('private')->deleteDirectory("member-photos/{$user->id}");
-
-            // 2. Delete device tokens and notification records
-            DeviceToken::where('user_id', $user->id)->delete();
-            NotificationRecord::where('user_id', $user->id)->delete();
-            $user->notificationPreference()?->delete();
-
-            // 3. Delete user preferences
-            $user->preferences()?->delete();
-
-            // 4. Delete mutual favorites
-            Favorite::where('user_id', $user->id)
-                ->orWhere('favorited_user_id', $user->id)
-                ->delete();
-
-            // 5. Cancel pending matchmaking requests in either direction
-            $now = now();
-            MatchmakingRequest::where('status', MatchmakingRequest::STATUS_PENDING)
-                ->where(function ($q) use ($user) {
-                    $q->where('sender_id', $user->id)
-                        ->orWhere('recipient_id', $user->id);
-                })
-                ->update([
-                    'status' => MatchmakingRequest::STATUS_CANCELLED,
-                    'cancelled_at' => $now,
-                    'responded_at' => $now,
-                ]);
-
-            // 6. Close active conversations involving the user
-            Conversation::where(function ($q) use ($user) {
-                $q->where('user_one_id', $user->id)
-                    ->orWhere('user_two_id', $user->id)
-                    ->orWhereHas('participants', fn ($p) => $p->where('user_id', $user->id));
-            })->where('status', '!=', Conversation::STATUS_CLOSED)
-                ->update(['status' => Conversation::STATUS_CLOSED]);
-
-            // 7. De-identify and update user profile
-            if ($user->profile) {
-                $user->profile->update([
-                    'full_name' => 'عضو محذوف',
-                    'bio' => null,
-                    'occupation' => 'غير محدد',
-                    'hobbies' => null,
-                    'is_visible' => false,
-                    'photo_privacy' => 'public',
-                    'moderation_status' => 'rejected',
-                ]);
-            }
-
-            // 8. Anonymize user record, mark deleted
-            $user->update([
-                'email' => 'deleted_' . $user->id . '_' . Str::random(8) . '@deleted.local',
-                'account_status' => 'deleted',
-                'deletion_requested_at' => $now,
-                'profile_completed' => false,
-            ]);
-
-            // 9. Soft delete the user
-            $user->delete();
-
-            // 10. Revoke all Sanctum tokens
-            $user->tokens()->delete();
-        });
+        $this->deletionService->executeUserDeletion(
+            user: $user,
+            reason: $validated['reason'] ?? null,
+            actor: 'api_authenticated_user'
+        );
 
         return response()->json([
             'status' => 'success',

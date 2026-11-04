@@ -195,7 +195,10 @@ class SubscriptionEntitlementService
                 }
             }
 
-            $user = User::where('id', $lockedTx->user_id)->lockForUpdate()->firstOrFail();
+            $user = User::withTrashed()->where('id', $lockedTx->user_id)->lockForUpdate()->firstOrFail();
+            if ($user->trashed() || $user->account_status === 'deleted') {
+                throw new DomainException('لا يمكن تفعيل أو تجديد اشتراك لحساب تم حذفه نهائياً.');
+            }
             $plan = SubscriptionPlan::findOrFail($lockedTx->subscription_plan_id);
 
             $now = now();
@@ -307,7 +310,14 @@ class SubscriptionEntitlementService
         }
 
         return DB::transaction(function () use ($user, $plan, $purchaseToken, $tokenHash, $verifiedGooglePlayState) {
-            $lockedUser = User::where('id', $user->id)->lockForUpdate()->firstOrFail();
+            $lockedUser = User::withTrashed()->where('id', $user->id)->lockForUpdate()->firstOrFail();
+
+            if ($lockedUser->trashed() || $lockedUser->account_status === 'deleted') {
+                $mappedStatus = $verifiedGooglePlayState['mapped_status'] ?? Subscription::STATUS_PENDING;
+                if (in_array($mappedStatus, [Subscription::STATUS_ACTIVE, Subscription::STATUS_IN_GRACE_PERIOD], true)) {
+                    throw new DomainException('لا يمكن إعادة تفعيل أو تجديد اشتراك لحساب تم حذفه مسبقاً.');
+                }
+            }
 
             $existingByToken = Subscription::where('google_play_purchase_token_hash', $tokenHash)
                 ->orWhere('google_play_purchase_token', $purchaseToken)
@@ -405,6 +415,9 @@ class SubscriptionEntitlementService
             );
 
             DB::afterCommit(function () use ($subscription, $lockedUser) {
+                if ($lockedUser->trashed() || $lockedUser->account_status === 'deleted') {
+                    return;
+                }
                 $notifService = app(\App\Services\Notification\NotificationService::class);
                 if ($subscription->isCurrentlyEntitled()) {
                     $notifService->notifySubscriptionActivated($subscription);

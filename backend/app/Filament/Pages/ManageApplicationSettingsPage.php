@@ -54,8 +54,8 @@ class ManageApplicationSettingsPage extends Page implements HasForms
             'maintenance_mode' => (bool) ($general['maintenance_mode'] ?? false),
             'support_email' => $general['support_email'] ?? 'support@naseebak.app',
             'support_whatsapp' => $general['support_whatsapp'] ?? '',
-            'privacy_policy_url' => $urls['privacy_policy_url'] ?? 'https://api.example.com/legal/privacy-policy',
-            'terms_of_service_url' => $urls['terms_of_service_url'] ?? 'https://api.example.com/legal/terms',
+            'privacy_policy_url' => $urls['privacy_policy_url'] ?? url('/legal/privacy-policy'),
+            'terms_of_service_url' => $urls['terms_of_service_url'] ?? url('/legal/terms-of-service'),
             'account_deletion_url' => $urls['account_deletion_url'] ?? url('/legal/delete-account'),
             'minimum_registration_age' => 18,
         ]);
