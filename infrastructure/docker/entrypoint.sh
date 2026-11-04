@@ -23,6 +23,9 @@ fi
 case "$ROLE" in
     app)
         echo "[Naseebak] Starting HTTP Application role (PHP-FPM + Nginx on :8080)..."
+        if [ -n "${PHP_FPM_MAX_CHILDREN:-}" ]; then
+            sed -i "s/^pm.max_children = .*/pm.max_children = ${PHP_FPM_MAX_CHILDREN}/" /usr/local/etc/php-fpm.d/www.conf
+        fi
         php-fpm -D
         exec nginx -g "daemon off;"
         ;;
@@ -32,7 +35,7 @@ case "$ROLE" in
             --sleep=3 \
             --tries=3 \
             --timeout=90 \
-            --memory=192 \
+            --memory="${WORKER_MEMORY:-128}" \
             --max-jobs=500 \
             --max-time=3600 \
             --no-interaction

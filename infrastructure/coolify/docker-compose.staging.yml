@@ -1,6 +1,7 @@
 # ==============================================================================
 # Naseebak (نصيبك) — Isolated Coolify Staging Docker Compose Stack
 # Restricted Staging Environment (Separate Database, Separate Volumes, Sandbox Keys)
+# Hard Memory Cap: Exactly 800 MB cumulative across all 5 containers
 # ==============================================================================
 
 services:
@@ -16,10 +17,10 @@ services:
       PGTZ: UTC
     command: >
       postgres
-      -c shared_buffers=64MB
-      -c effective_cache_size=128MB
+      -c shared_buffers=48MB
+      -c effective_cache_size=96MB
       -c work_mem=4MB
-      -c max_connections=40
+      -c max_connections=30
       -c timezone=UTC
     volumes:
       - naseebak_staging_pgdata:/var/lib/postgresql/data
@@ -35,8 +36,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256M
-          cpus: "0.50"
+          memory: 224M
+          cpus: "0.40"
 
   naseebak-staging-api:
     build:
@@ -50,6 +51,7 @@ services:
         condition: service_healthy
     environment:
       CONTAINER_ROLE: app
+      PHP_FPM_MAX_CHILDREN: "3"
       APP_NAME: "نصيبك (Staging)"
       APP_ENV: staging
       APP_DEBUG: "false"
@@ -103,6 +105,7 @@ services:
         condition: service_healthy
     environment:
       CONTAINER_ROLE: worker
+      WORKER_MEMORY: "96"
       APP_ENV: staging
       APP_DEBUG: "false"
       APP_KEY: ${STAGING_APP_KEY}
@@ -131,8 +134,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 160M
-          cpus: "0.25"
+          memory: 128M
+          cpus: "0.20"
 
   naseebak-staging-reverb:
     image: naseebak/backend:${STAGING_IMAGE_TAG:-v1.0.0-rc1}
@@ -170,8 +173,40 @@ services:
     deploy:
       resources:
         limits:
-          memory: 128M
-          cpus: "0.25"
+          memory: 96M
+          cpus: "0.15"
+
+  naseebak-staging-scheduler:
+    image: naseebak/backend:${STAGING_IMAGE_TAG:-v1.0.0-rc1}
+    container_name: naseebak-staging-scheduler
+    restart: unless-stopped
+    depends_on:
+      naseebak-staging-postgres:
+        condition: service_healthy
+    environment:
+      CONTAINER_ROLE: scheduler
+      APP_ENV: staging
+      APP_DEBUG: "false"
+      APP_KEY: ${STAGING_APP_KEY}
+      APP_URL: ${STAGING_APP_URL}
+      DB_CONNECTION: pgsql
+      DB_HOST: naseebak-staging-postgres
+      DB_PORT: "5432"
+      DB_DATABASE: ${STAGING_DB_DATABASE:-naseebak_staging}
+      DB_USERNAME: ${STAGING_DB_USERNAME:-naseebak_staging_user}
+      DB_PASSWORD: ${STAGING_DB_PASSWORD}
+      FILESYSTEM_DISK: private
+      PRIVATE_STORAGE_ROOT: /var/www/html/storage/app/private
+      CACHE_STORE: database
+    volumes:
+      - naseebak_staging_private_photos:/var/www/html/storage/app/private
+    networks:
+      - naseebak_staging_internal
+    deploy:
+      resources:
+        limits:
+          memory: 96M
+          cpus: "0.15"
 
 volumes:
   naseebak_staging_pgdata:
