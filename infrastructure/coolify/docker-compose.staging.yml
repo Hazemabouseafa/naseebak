@@ -3,14 +3,18 @@
 # Restricted Staging Environment (Separate Database, Separate Volumes, Sandbox Keys)
 # Hard Memory Cap: Exactly 800 MB cumulative across all 5 containers
 #
-# ROUTING & COOLIFY INTEGRATION:
-# - API & Filament Admin: https://naseebak-api.hazem.my (Container Port 8080)
-# - Reverb WebSockets:   wss://naseebak-ws.hazem.my (Container Port 8081)
+# COOLIFY-MANAGED DOMAIN ROUTING:
+# External HTTPS/WSS routing is managed natively by Coolify's reverse proxy:
+# - Laravel API:    naseebak-api.hazem.my  → naseebak-staging-api (Port 8080)
+# - Laravel Reverb: naseebak-ws.hazem.my   → naseebak-staging-reverb (Port 8081)
 #
-# Consistent Routing Configuration:
-# Explicit Traefik labels below route external traffic through the host's
-# Traefik reverse proxy on the 'coolify' network directly to ports 8080 and 8081.
-# If configuring domains via Coolify UI, ensure the mapped ports are 8080 and 8081.
+# In the Coolify UI (under Application > Domains / FQDN):
+# - Set API domain:    https://naseebak-api.hazem.my (Container Port 8080)
+# - Set Reverb domain: https://naseebak-ws.hazem.my (Container Port 8081)
+#
+# Both services connect to the external 'coolify' network and expose their
+# respective ports (8080 and 8081) without conflicting manual Traefik labels.
+# PostgreSQL is strictly internal on 'naseebak_staging_internal' (Port 5432).
 # ==============================================================================
 
 services:
@@ -114,12 +118,6 @@ services:
       - "8080"
     labels:
       - "coolify.managed=true"
-      - "traefik.enable=true"
-      - "traefik.http.routers.naseebak-staging-api.rule=Host(`${STAGING_API_DOMAIN:-naseebak-api.hazem.my}`)"
-      - "traefik.http.routers.naseebak-staging-api.entrypoints=https"
-      - "traefik.http.routers.naseebak-staging-api.tls=true"
-      - "traefik.http.routers.naseebak-staging-api.tls.certresolver=letsencrypt"
-      - "traefik.http.services.naseebak-staging-api.loadbalancer.server.port=8080"
     deploy:
       resources:
         limits:
@@ -222,12 +220,6 @@ services:
       - "8081"
     labels:
       - "coolify.managed=true"
-      - "traefik.enable=true"
-      - "traefik.http.routers.naseebak-staging-reverb.rule=Host(`${STAGING_WS_DOMAIN:-naseebak-ws.hazem.my}`)"
-      - "traefik.http.routers.naseebak-staging-reverb.entrypoints=https"
-      - "traefik.http.routers.naseebak-staging-reverb.tls=true"
-      - "traefik.http.routers.naseebak-staging-reverb.tls.certresolver=letsencrypt"
-      - "traefik.http.services.naseebak-staging-reverb.loadbalancer.server.port=8081"
     deploy:
       resources:
         limits:
