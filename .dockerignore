@@ -1,0 +1,37 @@
+# ==============================================================================
+# Naseebak (نصيبك) — Root Docker Build Context Ignore (.dockerignore)
+# Minimizes Docker build context transfer when context is repository root (.)
+# ==============================================================================
+
+# Version control & tooling
+.git
+.gitignore
+.github
+
+# Exclude Flutter mobile application (not needed in Laravel backend container)
+mobile/
+
+# Exclude local Brain, documentation & reports
+brain/
+documentation/
+*.md
+
+# Exclude local scratch tools
+scratch/tools/
+
+# Exclude vendor and cache (vendor is built cleanly in Dockerfile multi-stage build)
+backend/vendor/
+backend/node_modules/
+backend/storage/logs/*.log
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/storage/app/private/member-photos/*
+backend/storage/app/backups/*
+backend/tests/
+
+# Sensitive environment files (NEVER send to Docker context)
+backend/.env
+backend/.env.*
+!.env.staging.example
+!backend/.env.staging.example

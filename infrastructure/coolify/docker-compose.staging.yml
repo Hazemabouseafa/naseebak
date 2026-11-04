@@ -54,7 +54,7 @@ services:
 
   naseebak-staging-api:
     build:
-      context: ../..
+      context: .
       dockerfile: backend/Dockerfile
     image: naseebak/backend:${STAGING_IMAGE_TAG:-v1.0.0-rc1}
     container_name: naseebak-staging-api
@@ -126,7 +126,7 @@ services:
 
   naseebak-staging-worker:
     build:
-      context: ../..
+      context: .
       dockerfile: backend/Dockerfile
     image: naseebak/backend:${STAGING_IMAGE_TAG:-v1.0.0-rc1}
     container_name: naseebak-staging-worker
@@ -182,7 +182,7 @@ services:
 
   naseebak-staging-reverb:
     build:
-      context: ../..
+      context: .
       dockerfile: backend/Dockerfile
     image: naseebak/backend:${STAGING_IMAGE_TAG:-v1.0.0-rc1}
     container_name: naseebak-staging-reverb
@@ -228,7 +228,7 @@ services:
 
   naseebak-staging-scheduler:
     build:
-      context: ../..
+      context: .
       dockerfile: backend/Dockerfile
     image: naseebak/backend:${STAGING_IMAGE_TAG:-v1.0.0-rc1}
     container_name: naseebak-staging-scheduler
