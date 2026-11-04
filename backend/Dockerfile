@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     nginx \
     curl \
     ca-certificates \
+    procps \
     libpq-dev \
     libicu-dev \
     libzip-dev \
@@ -75,8 +76,9 @@ RUN composer dump-autoload --optimize --classmap-authoritative --no-dev --no-scr
     && chown -R www-data:www-data /var/www/html/vendor
 
 COPY --chown=www-data:www-data infrastructure/docker/entrypoint.sh /usr/local/bin/naseebak-entrypoint.sh
+COPY --chown=www-data:www-data infrastructure/docker/healthcheck.sh /usr/local/bin/naseebak-healthcheck.sh
 
-RUN chmod +x /usr/local/bin/naseebak-entrypoint.sh \
+RUN chmod +x /usr/local/bin/naseebak-entrypoint.sh /usr/local/bin/naseebak-healthcheck.sh \
     && rm -f /var/www/html/.env \
     && rm -f /var/www/html/bootstrap/cache/*.php \
     && mkdir -p \
@@ -92,7 +94,7 @@ RUN chmod +x /usr/local/bin/naseebak-entrypoint.sh \
 
 EXPOSE 8080 8081
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD if [ "${CONTAINER_ROLE:-app}" = "app" ]; then curl -fsS http://127.0.0.1:8080/api/v1/health || exit 1; else pgrep -f "artisan" >/dev/null || exit 1; fi
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD /usr/local/bin/naseebak-healthcheck.sh
 
 ENTRYPOINT ["/usr/local/bin/naseebak-entrypoint.sh"]

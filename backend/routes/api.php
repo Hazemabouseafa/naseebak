@@ -24,8 +24,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
     // Public Health & Version check (safe readiness probe for Coolify & uptime monitors)
-    Route::get('/health', [HealthCheckController::class, 'publicHealth'])
-        ->middleware('throttle:60,1');
+    Route::get('/health', [HealthCheckController::class, 'publicHealth']);
 
     // 1. Google OAuth / OpenID Connect Sign-In (Rate-limited)
     Route::post('/auth/google', [AuthController::class, 'loginWithGoogle'])

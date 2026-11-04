@@ -13,12 +13,15 @@ mkdir -p \
     /var/www/html/storage/logs \
     /var/www/html/bootstrap/cache
 
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
+
 if [ "${APP_ENV:-production}" = "production" ] || [ "${APP_ENV:-production}" = "staging" ]; then
     php artisan package:discover --ansi || true
-    php artisan config:cache --no-interaction
-    php artisan route:cache --no-interaction
-    php artisan view:cache --no-interaction
-    php artisan event:cache --no-interaction
+    php artisan config:cache --no-interaction || true
+    php artisan route:cache --no-interaction || true
+    php artisan view:cache --no-interaction || true
+    php artisan event:cache --no-interaction || true
 fi
 
 case "$ROLE" in
@@ -51,7 +54,7 @@ case "$ROLE" in
     scheduler)
         echo "[Naseebak] Starting Single Laravel Scheduler role (60s interval)..."
         while true; do
-            php artisan schedule:run --verbose --no-interaction
+            php artisan schedule:run --verbose --no-interaction || true
             sleep 60
         done
         ;;
