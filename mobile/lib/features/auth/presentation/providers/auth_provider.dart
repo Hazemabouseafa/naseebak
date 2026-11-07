@@ -66,7 +66,58 @@ final googleAuthRepositoryProvider = Provider<GoogleAuthRepository>((ref) {
 class AuthController extends StateNotifier<AuthState> {
   final GoogleAuthRepository _repository;
 
-  AuthController(this._repository) : super(const AuthState());
+  AuthController(this._repository) : super(const AuthState()) {
+    restoreExistingSession();
+  }
+
+  /// Automatically restores the persisted Sanctum session on app startup
+  /// so the user never has to sign in again after closing and reopening the app.
+  Future<void> restoreExistingSession() async {
+    try {
+      final cachedUser = await _repository.readCachedSessionUser();
+      if (!mounted) return;
+
+      if (cachedUser != null) {
+        state = state.copyWith(
+          user: cachedUser,
+          destination: cachedUser.profileCompleted
+              ? AuthDestination.home
+              : AuthDestination.completeProfile,
+          clearError: true,
+        );
+      }
+
+      final freshUser = await _repository.restoreSession();
+      if (!mounted) return;
+
+      if (freshUser != null) {
+        state = state.copyWith(
+          isLoading: false,
+          user: freshUser,
+          destination: freshUser.profileCompleted
+              ? AuthDestination.home
+              : AuthDestination.completeProfile,
+          clearError: true,
+        );
+      } else if (cachedUser != null) {
+        // Server explicitly invalidated the token (401)
+        state = const AuthState(
+          isLoading: false,
+          destination: AuthDestination.welcome,
+        );
+      }
+    } on SuspendedAccountException catch (e) {
+      if (!mounted) return;
+      state = state.copyWith(
+        isLoading: false,
+        destination: AuthDestination.suspended,
+        errorMessage: e.message,
+        suspensionReason: e.reason,
+      );
+    } catch (_) {
+      // Preserve current state if storage is unavailable (e.g. in unit tests)
+    }
+  }
 
   void navigateToGoogleSignIn() {
     state = state.copyWith(
@@ -86,9 +137,10 @@ class AuthController extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final result = await _repository.signInWithGoogle();
-      final nextDest = result.user.profileCompleted
-          ? AuthDestination.home
-          : AuthDestination.completeProfile;
+      final nextDest =
+          (result.user.profileCompleted || result.nextRoute == 'home')
+              ? AuthDestination.home
+              : AuthDestination.completeProfile;
 
       state = state.copyWith(
         isLoading: false,
@@ -122,7 +174,12 @@ class AuthController extends StateNotifier<AuthState> {
   void enterProfileRegistrationPreview() => navigateToCompleteProfile();
 
   void markProfileCompleted() {
+    final updatedUser = state.user?.copyWith(profileCompleted: true);
+    if (updatedUser != null) {
+      _repository.cacheUser(updatedUser);
+    }
     state = state.copyWith(
+      user: updatedUser,
       destination: AuthDestination.home,
       clearError: true,
     );

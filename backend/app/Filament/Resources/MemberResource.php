@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\UserProfile;
 use App\Providers\Filament\AdminPanelProvider;
 use App\Services\Admin\AdminModerationService;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
@@ -239,6 +240,74 @@ class MemberResource extends Resource
                             ->send();
                     }),
 
+                Tables\Actions\Action::make('activate_manual_subscription')
+                    ->label(fn (User $record): string => $record->hasActiveSubscription()
+                        ? 'تمديد الاشتراك يدوياً'
+                        : 'تفعيل اشتراك يدوي')
+                    ->icon('heroicon-o-sparkles')
+                    ->color('warning')
+                    ->modalHeading(fn (User $record): string => $record->hasActiveSubscription()
+                        ? 'تمديد اشتراك العضو يدوياً'
+                        : 'تفعيل اشتراك يدوي للعضو')
+                    ->modalDescription('يتيح هذا الإجراء منح العضو صلاحيات العضوية المميزة (إرسال طلبات التعارف والمحادثة الخاصة) فوراً.')
+                    ->form([
+                        Select::make('duration_days')
+                            ->label('مدة الاشتراك')
+                            ->options([
+                                30 => 'شهر واحد (30 يوم)',
+                                90 => '3 أشهر (90 يوم)',
+                                180 => '6 أشهر (180 يوم)',
+                                365 => 'سنة كاملة (365 يوم)',
+                            ])
+                            ->default(30)
+                            ->required(),
+                        Textarea::make('notes')
+                            ->label('ملاحظات التفعيل الإداري (اختياري)')
+                            ->placeholder('مثال: تفعيل اشتراك يدوي بعد التحويل أو كمنحة إدارية')
+                            ->maxLength(500),
+                    ])
+                    ->action(function (User $record, array $data, AdminModerationService $service) {
+                        /** @var Administrator $actor */
+                        $actor = Auth::guard('admin')->user();
+                        $sub = $service->activateManualSubscription(
+                            actor: $actor,
+                            member: $record,
+                            durationDays: (int) ($data['duration_days'] ?? 30),
+                            notes: $data['notes'] ?? null,
+                        );
+
+                        Notification::make()
+                            ->title('تم تفعيل الاشتراك اليدوي للعضو بنجاح حتى ' . $sub->ends_at?->format('Y-m-d'))
+                            ->success()
+                            ->send();
+                    }),
+
+                Tables\Actions\Action::make('revoke_subscription')
+                    ->label('إلغاء الاشتراك')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('إلغاء الاشتراك الفعال للعضو')
+                    ->modalDescription('سيتم إيقاف الاشتراك الفعال للعضو فوراً.')
+                    ->visible(fn (User $record): bool => $record->hasActiveSubscription())
+                    ->form([
+                        Textarea::make('reason')
+                            ->label('سبب إلغاء الاشتراك')
+                            ->default('إلغاء الاشتراك يدوياً بواسطة الإدارة')
+                            ->required()
+                            ->maxLength(500),
+                    ])
+                    ->action(function (User $record, array $data, AdminModerationService $service) {
+                        /** @var Administrator $actor */
+                        $actor = Auth::guard('admin')->user();
+                        $service->revokeMemberSubscriptions($actor, $record, $data['reason']);
+
+                        Notification::make()
+                            ->title('تم إلغاء اشتراك العضو بنجاح')
+                            ->success()
+                            ->send();
+                    }),
+
                 Tables\Actions\Action::make('suspend')
                     ->label('إيقاف الحساب')
                     ->icon('heroicon-o-no-symbol')
@@ -307,6 +376,48 @@ class MemberResource extends Resource
 
                         Notification::make()
                             ->title("تم اعتماد {$approvedCount} ملف شخصي بنجاح")
+                            ->success()
+                            ->send();
+                    }),
+
+                Tables\Actions\BulkAction::make('activate_manual_subscription_bulk')
+                    ->label('تفعيل اشتراك يدوي للأعضاء المحددين')
+                    ->icon('heroicon-o-sparkles')
+                    ->color('warning')
+                    ->form([
+                        Select::make('duration_days')
+                            ->label('مدة الاشتراك')
+                            ->options([
+                                30 => 'شهر واحد (30 يوم)',
+                                90 => '3 أشهر (90 يوم)',
+                                180 => '6 أشهر (180 يوم)',
+                                365 => 'سنة كاملة (365 يوم)',
+                            ])
+                            ->default(30)
+                            ->required(),
+                        Textarea::make('notes')
+                            ->label('ملاحظات التفعيل الإداري (اختياري)')
+                            ->maxLength(500),
+                    ])
+                    ->action(function (Collection $records, array $data, AdminModerationService $service) {
+                        /** @var Administrator $actor */
+                        $actor = Auth::guard('admin')->user();
+                        $activatedCount = 0;
+
+                        foreach ($records as $member) {
+                            if ($member instanceof User) {
+                                $service->activateManualSubscription(
+                                    actor: $actor,
+                                    member: $member,
+                                    durationDays: (int) ($data['duration_days'] ?? 30),
+                                    notes: $data['notes'] ?? null,
+                                );
+                                $activatedCount++;
+                            }
+                        }
+
+                        Notification::make()
+                            ->title("تم تفعيل الاشتراك اليدوي لـ {$activatedCount} عضو بنجاح")
                             ->success()
                             ->send();
                     }),

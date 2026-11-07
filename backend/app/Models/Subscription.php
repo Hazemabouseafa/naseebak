@@ -15,16 +15,19 @@ class Subscription extends Model
     public const CHANNEL_GOOGLE_PLAY = 'google_play';
     public const CHANNEL_PAYMOB = 'paymob';
     public const CHANNEL_SHA7NAWY = 'sha7nawy';
+    public const CHANNEL_ADMIN_MANUAL = 'admin_manual';
 
     // Backward-compatible provider constant aliases
     public const PROVIDER_GOOGLE_PLAY = self::CHANNEL_GOOGLE_PLAY;
     public const PROVIDER_PAYMOB = self::CHANNEL_PAYMOB;
     public const PROVIDER_SHA7NAWY = self::CHANNEL_SHA7NAWY;
+    public const PROVIDER_ADMIN_MANUAL = self::CHANNEL_ADMIN_MANUAL;
 
     public const ALLOWED_CHANNELS = [
         self::CHANNEL_GOOGLE_PLAY,
         self::CHANNEL_PAYMOB,
         self::CHANNEL_SHA7NAWY,
+        self::CHANNEL_ADMIN_MANUAL,
     ];
 
     // Canonical lifecycle states

@@ -15,9 +15,7 @@ import 'favorites_screen.dart';
 import 'member_profile_screen.dart';
 import 'search_results_screen.dart';
 
-/// Screen 03 — Home & Discovery (تصميم Screen 03 من UX Pilot)
-/// خلفية بيضاء نقية مع الهيدر الشخصي المعاصر، صورة المستخدم، جرس الإشعارات،
-/// شريط البحث السريع وزر التصفية #184A8C، شرائح التصفية، بطاقات الاكتشاف الكبيرة، وبنر نصيبك بلس.
+/// Screen 03 — Home & Discovery (واجهة الاكتشاف الرئيسية المطورة بتجربة عصرية نابضة بالحياة)
 class DiscoveryHomeScreen extends ConsumerStatefulWidget {
   final VoidCallback onOpenMyProfileTab;
 
@@ -33,7 +31,29 @@ class DiscoveryHomeScreen extends ConsumerStatefulWidget {
 
 class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
   int _selectedFilterIndex = 0;
+  String _selectedQuickCountry = '';
+
   final List<String> _filters = const ['الكل', 'قريب مني', 'جديد', 'متوافق'];
+
+  static const List<({String label, String country, String flag})>
+      _quickCountries = [
+    (label: 'كل الدول', country: '', flag: '🌍'),
+    (label: 'مصر', country: 'مصر', flag: '🇪🇬'),
+    (
+      label: 'السعودية',
+      country: 'المملكة العربية السعودية',
+      flag: '🇸🇦'
+    ),
+    (
+      label: 'الإمارات',
+      country: 'الإمارات العربية المتحدة',
+      flag: '🇦🇪'
+    ),
+    (label: 'الكويت', country: 'الكويت', flag: '🇰🇼'),
+    (label: 'الأردن', country: 'الأردن', flag: '🇯🇴'),
+    (label: 'قطر', country: 'قطر', flag: '🇶🇦'),
+    (label: 'المغرب', country: 'المغرب', flag: '🇲🇦'),
+  ];
 
   @override
   void initState() {
@@ -64,6 +84,9 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
             gender: targetGender,
             minAge: 18,
             maxAge: 65,
+            countryOfResidence: _selectedQuickCountry.isNotEmpty
+                ? _selectedQuickCountry
+                : null,
           ),
         );
     await ref.read(discoveryProvider.notifier).executeSearch(
@@ -81,17 +104,37 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
     List<MemberCardModel> members,
     ProfileModel? viewerProfile,
   ) {
-    if (members.length <= 1 || _selectedFilterIndex == 0 || _selectedFilterIndex == 2) {
-      return members;
+    Iterable<MemberCardModel> filtered = members;
+
+    if (_selectedQuickCountry.isNotEmpty) {
+      filtered = filtered.where((m) {
+        final c = m.countryOfResidence.trim();
+        if (_selectedQuickCountry == 'المملكة العربية السعودية') {
+          return c == 'المملكة العربية السعودية' || c == 'السعودية';
+        }
+        if (_selectedQuickCountry == 'الإمارات العربية المتحدة') {
+          return c == 'الإمارات العربية المتحدة' || c == 'الإمارات';
+        }
+        return c == _selectedQuickCountry;
+      });
     }
 
-    final copy = List<MemberCardModel>.from(members);
+    final copy = filtered.toList();
+    if (copy.length <= 1 ||
+        _selectedFilterIndex == 0 ||
+        _selectedFilterIndex == 2) {
+      return copy;
+    }
+
     if (_selectedFilterIndex == 1 && viewerProfile != null) {
-      // 'قريب مني' — prioritize same region and country of residence
       copy.sort((a, b) {
-        final aRegionMatch = a.region.trim() == viewerProfile.region.trim() ? 0 : 1;
-        final bRegionMatch = b.region.trim() == viewerProfile.region.trim() ? 0 : 1;
-        if (aRegionMatch != bRegionMatch) return aRegionMatch.compareTo(bRegionMatch);
+        final aRegionMatch =
+            a.region.trim() == viewerProfile.region.trim() ? 0 : 1;
+        final bRegionMatch =
+            b.region.trim() == viewerProfile.region.trim() ? 0 : 1;
+        if (aRegionMatch != bRegionMatch) {
+          return aRegionMatch.compareTo(bRegionMatch);
+        }
 
         final aCountryMatch = a.countryOfResidence.trim() ==
                 viewerProfile.countryOfResidence.trim()
@@ -107,7 +150,6 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
     }
 
     if (_selectedFilterIndex == 3 && viewerProfile != null) {
-      // 'متوافق' — prioritize closest age and matching marital/education criteria
       copy.sort((a, b) {
         final aAgeDiff = (a.ageYears - viewerProfile.ageYears).abs();
         final bAgeDiff = (b.ageYears - viewerProfile.ageYears).abs();
@@ -166,25 +208,45 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
               ref.read(discoveryProvider.notifier).loadDiscoveryFeed(),
           child: CustomScrollView(
             slivers: [
-              // 1. Personalized Header (Avatar + Greeting + Notifications & Favorites)
+              // 1. Personalized Header (Avatar with Gold Ring + Greeting + Favorites & Notifications)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 14),
                   child: Row(
                     children: [
-                      // User Avatar
                       GestureDetector(
                         onTap: widget.onOpenMyProfileTab,
-                        child: CircleAvatar(
-                          radius: 23,
-                          backgroundColor: AppColors.surfaceSubtleBlue,
-                          child: Text(
-                            displayName.isNotEmpty ? displayName.substring(0, 1) : 'ن',
-                            style: const TextStyle(
-                              fontFamily: NaseebakTypography.fontFamily,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primaryBlue,
+                        child: Container(
+                          padding: const EdgeInsets.all(2.2),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: const LinearGradient(
+                              colors: [
+                                AppColors.goldAccent,
+                                AppColors.primaryBlue,
+                              ],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primaryBlue.withOpacity(0.14),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: CircleAvatar(
+                            radius: 22,
+                            backgroundColor: AppColors.cardWhite,
+                            child: Text(
+                              displayName.isNotEmpty
+                                  ? displayName.substring(0, 1)
+                                  : 'ن',
+                              style: const TextStyle(
+                                fontFamily: NaseebakTypography.fontFamily,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primaryBlue,
+                              ),
                             ),
                           ),
                         ),
@@ -199,16 +261,16 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
                             const Row(
                               children: [
                                 Text(
-                                  'صباح الخير',
+                                  'أهلاً بك في نَصِيبُكَ',
                                   style: TextStyle(
                                     fontFamily: NaseebakTypography.fontFamily,
-                                    fontSize: 13,
-                                    color: AppColors.textSecondary,
-                                    fontWeight: FontWeight.w500,
+                                    fontSize: 12.5,
+                                    color: AppColors.primaryBlue,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                                 SizedBox(width: 4),
-                                Text('👋', style: TextStyle(fontSize: 12)),
+                                Text('✨', style: TextStyle(fontSize: 12)),
                               ],
                             ),
                             Text(
@@ -217,13 +279,13 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontFamily: NaseebakTypography.fontFamily,
-                                fontSize: 16.5,
+                                fontSize: 17,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.textPrimary,
                               ),
                             ),
                             const Text(
-                              'يمكن النهارده تلاقي نصيبك',
+                              'اكتشف شريك حياتك بخصوصية وأمان',
                               style: TextStyle(
                                 fontFamily: NaseebakTypography.fontFamily,
                                 fontSize: 12,
@@ -252,14 +314,16 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
                             notificationProvider.select((s) => s.unreadCount),
                           );
                           return NaseebakCircleButton(
-                            buttonKey: const Key('home_open_notifications_btn'),
+                            buttonKey:
+                                const Key('home_open_notifications_btn'),
                             icon: Icons.notifications_none_rounded,
                             size: 42,
                             iconSize: 21,
                             onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute<void>(
-                                  builder: (_) => const NotificationCenterScreen(),
+                                  builder: (_) =>
+                                      const NotificationCenterScreen(),
                                 ),
                               );
                             },
@@ -282,24 +346,25 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
                 ),
               ),
 
-              // 2. Search Field & Filter Button
+              // 2. Search Bar & Advanced Filter Button
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                   child: Row(
                     children: [
-                      // Search Input Field
                       Expanded(
                         child: InkWell(
                           key: const Key('home_start_search_btn'),
                           onTap: _openAdvancedSearch,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(18),
                           child: Container(
-                            height: 48,
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            height: 50,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 16),
                             decoration: BoxDecoration(
                               color: AppColors.softBackground,
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(18),
                               border: Border.all(
                                 color: AppColors.subtleBorder,
                                 width: 1.2,
@@ -307,23 +372,24 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
                             ),
                             child: const Row(
                               children: [
+                                Icon(
+                                  Icons.search_rounded,
+                                  color: AppColors.primaryBlue,
+                                  size: 21,
+                                ),
+                                SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
-                                    'ابحث عن شريك حياتك...',
+                                    'ابحث بالدولة، المحافظة، العمر أو المؤهل...',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontFamily: NaseebakTypography.fontFamily,
                                       fontSize: 13.5,
-                                      fontWeight: FontWeight.w400,
+                                      fontWeight: FontWeight.w500,
                                       color: AppColors.textSecondary,
                                     ),
                                   ),
-                                ),
-                                Icon(
-                                  Icons.search_rounded,
-                                  color: AppColors.textSecondary,
-                                  size: 20,
                                 ),
                               ],
                             ),
@@ -336,13 +402,27 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
                       InkWell(
                         key: const Key('home_open_advanced_search_btn'),
                         onTap: _openAdvancedSearch,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                         child: Container(
-                          width: 48,
-                          height: 48,
+                          width: 50,
+                          height: 50,
                           decoration: BoxDecoration(
-                            color: AppColors.primaryBlue,
-                            borderRadius: BorderRadius.circular(14),
+                            gradient: const LinearGradient(
+                              begin: Alignment.topRight,
+                              end: Alignment.bottomLeft,
+                              colors: [
+                                AppColors.primaryBlue,
+                                AppColors.primaryNavy,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primaryBlue.withOpacity(0.24),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
                           child: const Icon(
                             Icons.tune_rounded,
@@ -356,10 +436,10 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
                 ),
               ),
 
-              // 3. Filter Chips Row
+              // 3. Smart Filter Chips Row (الكل، قريب مني، جديد، متوافق)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 14, bottom: 8),
+                  padding: const EdgeInsets.only(top: 12, bottom: 4),
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -379,7 +459,78 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
                 ),
               ),
 
-              // 4. Section Header: "أشخاص ممكن يناسبوك" + "عرض الكل"
+              // 4. Quick Country Discovery Strip (تصفح سريع حسب الدولة بلمسة واحدة)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 6, bottom: 6),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      children: _quickCountries.map((item) {
+                        final isSelected =
+                            _selectedQuickCountry == item.country;
+                        return Padding(
+                          padding: const EdgeInsetsDirectional.only(end: 8),
+                          child: InkWell(
+                            onTap: () {
+                              setState(() {
+                                _selectedQuickCountry = item.country;
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 180),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 7,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.surfaceSubtleBlue
+                                    : AppColors.cardWhite,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppColors.primaryBlue
+                                      : AppColors.subtleBorder,
+                                  width: isSelected ? 1.5 : 1.0,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    item.flag,
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    item.label,
+                                    style: TextStyle(
+                                      fontFamily:
+                                          NaseebakTypography.fontFamily,
+                                      fontSize: 12.5,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                      color: isSelected
+                                          ? AppColors.primaryBlue
+                                          : AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ),
+
+              // 5. Section Header: "أشخاص ممكن يناسبوك" + "عرض الكل"
               SliverToBoxAdapter(
                 child: Column(
                   children: [
@@ -408,7 +559,7 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
                 ),
               ),
 
-              // 5. Member Feed List with Discovery Cards
+              // 6. Member Feed List with Discovery Cards
               if (discoveryState.isLoadingDiscovery && displayedMembers.isEmpty)
                 const SliverToBoxAdapter(
                   child: Padding(
@@ -466,15 +617,30 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
               else if (displayedMembers.isEmpty)
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-                    child: Center(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 36),
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: AppColors.softBackground,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: AppColors.subtleBorder),
+                      ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            Icons.person_search_rounded,
-                            size: 56,
-                            color: AppColors.textSecondary.withOpacity(0.5),
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: const BoxDecoration(
+                              color: AppColors.surfaceSubtleBlue,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.person_search_rounded,
+                              size: 34,
+                              color: AppColors.primaryBlue,
+                            ),
                           ),
                           const SizedBox(height: 14),
                           const Text(
@@ -482,19 +648,37 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
                             style: TextStyle(
                               fontFamily: NaseebakTypography.fontFamily,
                               fontSize: 16,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w800,
                               color: AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 6),
                           const Text(
-                            'جرّب تعديل معايير البحث أو تحديث القائمة.',
+                            'جرّب اختيار "كل الدول" أو فتح البحث المتقدم لتوسيع نطاق الاكتشاف.',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
                               fontFamily: NaseebakTypography.fontFamily,
                               fontSize: 13,
                               color: AppColors.textSecondary,
+                              height: 1.5,
                             ),
                           ),
+                          const SizedBox(height: 14),
+                          if (_selectedQuickCountry.isNotEmpty)
+                            OutlinedButton.icon(
+                              onPressed: () =>
+                                  setState(() => _selectedQuickCountry = ''),
+                              icon: const Icon(Icons.public_rounded, size: 18),
+                              label: const Text('عرض جميع الدول'),
+                            )
+                          else
+                            OutlinedButton.icon(
+                              onPressed: () => ref
+                                  .read(discoveryProvider.notifier)
+                                  .loadDiscoveryFeed(),
+                              icon: const Icon(Icons.refresh_rounded, size: 18),
+                              label: const Text('تحديث القائمة'),
+                            ),
                         ],
                       ),
                     ),
@@ -504,7 +688,6 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
-                      // Insert Premium Membership Banner after the first member card
                       if (index == 1) {
                         return Column(
                           mainAxisSize: MainAxisSize.min,
@@ -526,7 +709,8 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
                       final member = displayedMembers[index];
                       return MemberCard(
                         member: member,
-                        onTapViewProfile: () => _openMemberProfile(member.userId),
+                        onTapViewProfile: () =>
+                            _openMemberProfile(member.userId),
                         onToggleFavorite: () => ref
                             .read(discoveryProvider.notifier)
                             .toggleFavorite(member),

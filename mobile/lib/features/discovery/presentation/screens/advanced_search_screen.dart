@@ -467,7 +467,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Group 3: Location & Nationality Card
+                    // Group 3: Location & Nationality Card (Dropdown Pickers)
                     NaseebakInfoCard(
                       title: 'الجنسية والإقامة',
                       icon: Icons.location_on_outlined,
@@ -477,63 +477,94 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                           Row(
                             children: [
                               Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const _SearchLabel('الجنسية · اختياري'),
-                                    TextField(
-                                      key: const Key(
-                                          'search_nationality_input'),
-                                      controller: _nationalityController,
-                                      decoration: const InputDecoration(
-                                        hintText: 'الكل (مثال: مصري)',
-                                      ),
-                                      onChanged: (val) => setState(() {
-                                        _draftFilters =
-                                            _draftFilters.copyWith(
-                                          nationality: val,
-                                        );
-                                      }),
-                                    ),
-                                  ],
+                                child: NaseebakLocationDropdownField(
+                                  fieldKey: const Key(
+                                      'search_nationality_input'),
+                                  label: 'الجنسية · اختياري',
+                                  value: _draftFilters.nationality ?? '',
+                                  options: ArabicLocationsData
+                                      .nationalitiesForGender(effectiveGender),
+                                  allowAllOption: true,
+                                  allOptionLabel: 'الكل (جميع الجنسيات)',
+                                  placeholder: 'الكل',
+                                  leadingIcon: Icons.flag_outlined,
+                                  onChanged: (val) => setState(() {
+                                    _nationalityController.text = val;
+                                    if (val.isEmpty) {
+                                      _draftFilters = _draftFilters.copyWith(
+                                        clearNationality: true,
+                                      );
+                                    } else {
+                                      _draftFilters = _draftFilters.copyWith(
+                                        nationality: val,
+                                      );
+                                    }
+                                  }),
                                 ),
                               ),
                               const SizedBox(width: 10),
                               Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const _SearchLabel('بلد الإقامة · اختياري'),
-                                    TextField(
-                                      key: const Key('search_country_input'),
-                                      controller: _countryController,
-                                      decoration: const InputDecoration(
-                                        hintText: 'الكل (مثال: مصر)',
-                                      ),
-                                      onChanged: (val) => setState(() {
-                                        _draftFilters =
-                                            _draftFilters.copyWith(
-                                          countryOfResidence: val,
-                                        );
-                                      }),
-                                    ),
-                                  ],
+                                child: NaseebakLocationDropdownField(
+                                  fieldKey: const Key('search_country_input'),
+                                  label: 'بلد الإقامة · اختياري',
+                                  value:
+                                      _draftFilters.countryOfResidence ?? '',
+                                  options: ArabicLocationsData.allCountries,
+                                  allowAllOption: true,
+                                  allOptionLabel: 'الكل (جميع الدول)',
+                                  placeholder: 'الكل',
+                                  leadingIcon: Icons.public_rounded,
+                                  onChanged: (val) => setState(() {
+                                    _countryController.text = val;
+                                    if (val.isEmpty) {
+                                      _regionController.clear();
+                                      _draftFilters = _draftFilters.copyWith(
+                                        clearCountry: true,
+                                        clearRegion: true,
+                                      );
+                                    } else {
+                                      final cities = ArabicLocationsData
+                                          .citiesForCountry(val);
+                                      final currentRegion =
+                                          _draftFilters.region ?? '';
+                                      final keepRegion = currentRegion
+                                              .isNotEmpty &&
+                                          cities.contains(currentRegion);
+                                      if (!keepRegion) {
+                                        _regionController.clear();
+                                      }
+                                      _draftFilters = _draftFilters.copyWith(
+                                        countryOfResidence: val,
+                                        clearRegion: !keepRegion,
+                                      );
+                                    }
+                                  }),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 14),
-                          const _SearchLabel('المحافظة / المنطقة · اختياري'),
-                          TextField(
-                            key: const Key('search_region_input'),
-                            controller: _regionController,
-                            decoration: const InputDecoration(
-                              hintText:
-                                  'الكل (مثال: القاهرة، الجيزة، الإسكندرية...)',
-                            ),
+                          NaseebakLocationDropdownField(
+                            fieldKey: const Key('search_region_input'),
+                            label: 'المحافظة / المدينة · اختياري',
+                            value: _draftFilters.region ?? '',
+                            options: ArabicLocationsData.citiesForCountry(
+                                _draftFilters.countryOfResidence),
+                            allowAllOption: true,
+                            allOptionLabel: 'الكل (جميع المحافظات والمدن)',
+                            placeholder: 'الكل',
+                            leadingIcon: Icons.location_city_rounded,
                             onChanged: (val) => setState(() {
-                              _draftFilters =
-                                  _draftFilters.copyWith(region: val);
+                              _regionController.text = val;
+                              if (val.isEmpty) {
+                                _draftFilters = _draftFilters.copyWith(
+                                  clearRegion: true,
+                                );
+                              } else {
+                                _draftFilters = _draftFilters.copyWith(
+                                  region: val,
+                                );
+                              }
                             }),
                           ),
                         ],

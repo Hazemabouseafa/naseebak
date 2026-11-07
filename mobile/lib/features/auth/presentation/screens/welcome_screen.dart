@@ -85,6 +85,29 @@ class WelcomeScreen extends ConsumerWidget {
                       ),
                     ),
 
+                    const SizedBox(height: 16),
+
+                    // Modern Trust Feature Pills
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildTrustPill(
+                          icon: Icons.verified_user_rounded,
+                          label: 'خصوصية وأمان',
+                        ),
+                        _buildTrustPill(
+                          icon: Icons.favorite_rounded,
+                          label: 'زواج شرعي جاد',
+                        ),
+                        _buildTrustPill(
+                          icon: Icons.check_circle_rounded,
+                          label: 'حسابات موثقة',
+                        ),
+                      ],
+                    ),
+
                     const Spacer(),
                     const SizedBox(height: 24),
 
@@ -219,6 +242,42 @@ class WelcomeScreen extends ConsumerWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTrustPill({
+    required IconData icon,
+    required String label,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceSubtleBlue,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.primaryBlue.withOpacity(0.18),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 15,
+            color: AppColors.primaryBlue,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontFamily: NaseebakTypography.fontFamily,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primaryNavy,
+            ),
+          ),
+        ],
       ),
     );
   }

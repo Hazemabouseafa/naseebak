@@ -832,4 +832,45 @@ class AdminDashboardPhase4Test extends TestCase
         $this->assertEquals(250.00, $metrics['verified_payments_total']);
         $this->assertEquals(1, $metrics['open_reports']);
     }
+
+    /** 25. Admin can manually activate, extend, and revoke member subscriptions from Filament Dashboard */
+    public function test_admin_can_manually_activate_extend_and_revoke_member_subscription(): void
+    {
+        $this->seedDefaultPaymentAndSubscriptionPlan();
+        $superAdmin = $this->createAdmin(Administrator::ROLE_SUPER_ADMIN);
+        $member = $this->createMember([], ['gender' => 'male']);
+
+        $this->assertFalse($member->hasActiveSubscription());
+
+        $service = app(\App\Services\Admin\AdminModerationService::class);
+        $sub = $service->activateManualSubscription(
+            actor: $superAdmin,
+            member: $member,
+            durationDays: 30,
+            notes: 'تفعيل اشتراك يدوي من لوحة التحكم'
+        );
+
+        $this->assertEquals(Subscription::STATUS_ACTIVE, $sub->status);
+        $this->assertEquals(Subscription::CHANNEL_ADMIN_MANUAL, $sub->channel);
+        $this->assertTrue($member->fresh()->hasActiveSubscription());
+
+        // Extend by another 60 days
+        $extended = $service->activateManualSubscription(
+            actor: $superAdmin,
+            member: $member->fresh(),
+            durationDays: 60,
+            notes: 'تمديد إضافي'
+        );
+        $this->assertEquals($sub->id, $extended->id);
+        $this->assertTrue($extended->ends_at->greaterThan(now()->addDays(85)));
+
+        // Revoke subscription
+        $revokedCount = $service->revokeMemberSubscriptions(
+            actor: $superAdmin,
+            member: $member->fresh(),
+            reason: 'إلغاء الاشتراك يدوياً'
+        );
+        $this->assertEquals(1, $revokedCount);
+        $this->assertFalse($member->fresh()->hasActiveSubscription());
+    }
 }

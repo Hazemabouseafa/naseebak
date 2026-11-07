@@ -4,6 +4,7 @@ import '../constants/app_colors.dart';
 import '../theme/app_theme.dart';
 
 export '../constants/app_colors.dart' show AppColors, NaseebakColors;
+export '../constants/arabic_locations_data.dart' show ArabicLocationsData, NaseebakLocationDropdownField, CountryLocationEntry;
 export '../theme/app_theme.dart' show AppTheme, NaseebakTheme;
 export '../../features/discovery/presentation/widgets/authorized_photo_avatar.dart'
     show AuthorizedPhotoAvatar, NaseebakAvatar;

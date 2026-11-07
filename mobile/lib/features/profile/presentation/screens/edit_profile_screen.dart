@@ -604,57 +604,71 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             ),
                             const SizedBox(height: 14),
 
-                            // Location Card
+                            // Location Card (Dropdown Pickers)
                             _FormSectionContainer(
                               title: 'الإقامة والجنسية',
                               children: [
                                 Row(
                                   children: [
                                     Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const _FieldLabel('الجنسية'),
-                                          TextField(
-                                            controller: _nationalityController,
-                                            onChanged: (val) => setState(() {
-                                              _workingDraft =
-                                                  _workingDraft.copyWith(
-                                                nationality: val,
-                                              );
-                                            }),
-                                          ),
-                                        ],
+                                      child: NaseebakLocationDropdownField(
+                                        label: 'الجنسية',
+                                        value: _workingDraft.nationality,
+                                        options: ArabicLocationsData
+                                            .nationalitiesForGender(
+                                                _workingDraft.gender),
+                                        placeholder: 'اختر الجنسية',
+                                        leadingIcon: Icons.flag_outlined,
+                                        onChanged: (val) => setState(() {
+                                          _nationalityController.text = val;
+                                          _workingDraft =
+                                              _workingDraft.copyWith(
+                                            nationality: val,
+                                          );
+                                        }),
                                       ),
                                     ),
                                     const SizedBox(width: 10),
                                     Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const _FieldLabel('بلد الإقامة'),
-                                          TextField(
-                                            controller: _countryController,
-                                            onChanged: (val) => setState(() {
-                                              _workingDraft =
-                                                  _workingDraft.copyWith(
-                                                countryOfResidence: val,
-                                              );
-                                            }),
-                                          ),
-                                        ],
+                                      child: NaseebakLocationDropdownField(
+                                        label: 'بلد الإقامة',
+                                        value: _workingDraft.countryOfResidence,
+                                        options:
+                                            ArabicLocationsData.allCountries,
+                                        placeholder: 'اختر الدولة',
+                                        leadingIcon: Icons.public_rounded,
+                                        onChanged: (newCountry) => setState(() {
+                                          _countryController.text = newCountry;
+                                          final cities = ArabicLocationsData
+                                              .citiesForCountry(newCountry);
+                                          final updatedRegion = cities.contains(
+                                                  _workingDraft.region)
+                                              ? _workingDraft.region
+                                              : (cities.isNotEmpty
+                                                  ? cities.first
+                                                  : '');
+                                          _regionController.text =
+                                              updatedRegion;
+                                          _workingDraft =
+                                              _workingDraft.copyWith(
+                                            countryOfResidence: newCountry,
+                                            region: updatedRegion,
+                                          );
+                                        }),
                                       ),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 14),
-
-                                const _FieldLabel('المحافظة / المنطقة'),
-                                TextField(
-                                  controller: _regionController,
+                                NaseebakLocationDropdownField(
+                                  label: 'المحافظة / المدينة',
+                                  value: _workingDraft.region,
+                                  options: ArabicLocationsData.citiesForCountry(
+                                      _workingDraft.countryOfResidence),
+                                  placeholder: 'اختر المحافظة أو المدينة',
+                                  leadingIcon: Icons.location_city_rounded,
                                   onChanged: (val) => setState(() {
+                                    _regionController.text = val;
                                     _workingDraft =
                                         _workingDraft.copyWith(region: val);
                                   }),

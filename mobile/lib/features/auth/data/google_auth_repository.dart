@@ -26,17 +26,13 @@ class GoogleAuthRepository {
             );
 
   /// Performs the complete Google OAuth / OpenID Connect flow:
-  /// 1. Opens Google account selection
+  /// 1. Opens Google account selection (or silent sign-in if already authorized)
   /// 2. Obtains a Google ID Token
   /// 3. Sends the ID token over HTTPS to Laravel (/api/v1/auth/google)
-  /// 4. Stores the Laravel Sanctum session credential in FlutterSecureStorage
+  /// 4. Stores the Laravel Sanctum session credential and cached user in FlutterSecureStorage
   Future<AuthSessionResult> signInWithGoogle() async {
     GoogleSignInAccount? googleAccount;
     try {
-      // Clear any stale cached Google session so account selection mints a fresh ID token
-      try {
-        await _googleSignIn.signOut();
-      } catch (_) {}
       googleAccount = await _googleSignIn.signIn();
     } on PlatformException catch (e) {
       throw Exception(
@@ -48,7 +44,7 @@ class GoogleAuthRepository {
       throw Exception('تم إلغاء اختيار حساب Google.');
     }
 
-    final GoogleSignInAuthentication googleAuth;
+    GoogleSignInAuthentication googleAuth;
     try {
       googleAuth = await googleAccount.authentication;
     } on PlatformException catch (e) {
@@ -57,7 +53,19 @@ class GoogleAuthRepository {
       );
     }
 
-    final idToken = googleAuth.idToken;
+    var idToken = googleAuth.idToken;
+
+    // If cached Google session returned a null token, refresh once
+    if (idToken == null || idToken.isEmpty) {
+      try {
+        await _googleSignIn.signOut();
+        googleAccount = await _googleSignIn.signIn();
+        if (googleAccount != null) {
+          googleAuth = await googleAccount.authentication;
+          idToken = googleAuth.idToken;
+        }
+      } catch (_) {}
+    }
 
     if (idToken == null || idToken.isEmpty) {
       throw Exception(
@@ -89,8 +97,10 @@ class GoogleAuthRepository {
         userMap,
         googleSuggestedName: (data['google_suggested_name'] as String?) ??
             (data['google_Suggested_name'] as String?) ??
-            googleAccount.displayName,
+            googleAccount?.displayName,
       );
+
+      await _sessionStorage.saveUserJson(user.toJson());
 
       return AuthSessionResult(
         token: token,
@@ -122,6 +132,23 @@ class GoogleAuthRepository {
     }
   }
 
+  /// Reads cached user immediately if a Sanctum token is stored locally
+  Future<AuthUserModel?> readCachedSessionUser() async {
+    final token = await _sessionStorage.readToken();
+    if (token == null || token.isEmpty) {
+      return null;
+    }
+    final cachedJson = await _sessionStorage.readUserJson();
+    if (cachedJson == null) {
+      return null;
+    }
+    return AuthUserModel.fromJson(cachedJson);
+  }
+
+  Future<void> cacheUser(AuthUserModel user) async {
+    await _sessionStorage.saveUserJson(user.toJson());
+  }
+
   /// Restores an existing Sanctum session on app startup
   Future<AuthUserModel?> restoreSession() async {
     final token = await _sessionStorage.readToken();
@@ -129,13 +156,19 @@ class GoogleAuthRepository {
       return null;
     }
 
+    final cachedJson = await _sessionStorage.readUserJson();
+    final cachedUser =
+        cachedJson != null ? AuthUserModel.fromJson(cachedJson) : null;
+
     try {
       final response = await _apiClient.dio.get<Map<String, dynamic>>(
         ApiEndpoints.authMe,
       );
       final data = (response.data?['data'] as Map<String, dynamic>?) ?? {};
       final userMap = (data['user'] as Map<String, dynamic>?) ?? {};
-      return AuthUserModel.fromJson(userMap);
+      final freshUser = AuthUserModel.fromJson(userMap);
+      await _sessionStorage.saveUserJson(freshUser.toJson());
+      return freshUser;
     } on DioException catch (e) {
       final responseData = e.response?.data;
       if (e.response?.statusCode == 403 &&
@@ -151,8 +184,19 @@ class GoogleAuthRepository {
       }
       if (e.response?.statusCode == 401) {
         await _sessionStorage.clearToken();
+        return null;
       }
-      return null;
+      // On network timeout or temporary offline state, preserve existing login session
+      return cachedUser ??
+          const AuthUserModel(
+            id: 1,
+            email: '',
+            accountStatus: 'active',
+            profileCompleted: true,
+            hasActiveSubscription: false,
+          );
+    } catch (_) {
+      return cachedUser;
     }
   }
 

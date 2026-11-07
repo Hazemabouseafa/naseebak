@@ -4,6 +4,8 @@ namespace App\Services\Admin;
 
 use App\Models\Administrator;
 use App\Models\ModerationHistory;
+use App\Models\Subscription;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Models\UserPhoto;
 use App\Models\UserProfile;
@@ -11,6 +13,7 @@ use App\Models\UserReport;
 use App\Services\Profile\SecurePhotoStorageService;
 use DomainException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 class AdminModerationService
@@ -337,6 +340,174 @@ class AdminModerationService
             );
 
             return $report->refresh();
+        });
+    }
+
+    /**
+     * Manually activates or extends a member's subscription directly from the Filament Admin Dashboard.
+     */
+    public function activateManualSubscription(
+        Administrator $actor,
+        User $member,
+        int $durationDays = 30,
+        ?int $planId = null,
+        ?string $notes = null,
+        ?string $ipAddress = null
+    ): Subscription {
+        $effectiveDays = max(1, min(1825, $durationDays));
+
+        return DB::transaction(function () use ($actor, $member, $effectiveDays, $planId, $notes, $ipAddress) {
+            $plan = $planId ? SubscriptionPlan::find($planId) : null;
+            if (!$plan) {
+                $plan = SubscriptionPlan::where('is_active', true)->orderBy('id')->first();
+            }
+            if (!$plan) {
+                $plan = SubscriptionPlan::updateOrCreate(
+                    ['code' => 'monthly_membership'],
+                    [
+                        'name_ar' => 'العضوية الشهرية — نصيبك بلس',
+                        'description_ar' => 'اشتراك كامل يتيح إرسال طلبات التعارف والمحادثات الخاصة',
+                        'duration_days' => 30,
+                        'google_play_product_id' => 'naseebak_monthly_membership',
+                        'web_price_amount' => 250.00,
+                        'web_price_currency' => 'EGP',
+                        'is_active' => true,
+                        'features_ar' => [
+                            'إرسال واستقبال طلبات التعارف بلا حدود',
+                            'فتح المحادثات الخاصة الفورية مع الأعضاء المتوافقين',
+                            'أولوية الظهور في نتائج البحث والاكتشاف',
+                        ],
+                    ]
+                );
+            }
+
+            $existingActive = $member->subscriptions()
+                ->whereIn('status', Subscription::ENTITLED_STATUSES)
+                ->where('ends_at', '>', now())
+                ->latest('ends_at')
+                ->first();
+
+            $reasonText = trim((string) $notes) !== ''
+                ? trim((string) $notes)
+                : "تفعيل اشتراك يدوي من لوحة التحكم لمدة {$effectiveDays} يوم";
+
+            if ($existingActive) {
+                $previousEndsAt = $existingActive->ends_at?->toIso8601String();
+                $newEndsAt = $existingActive->ends_at->copy()->addDays($effectiveDays);
+                $meta = is_array($existingActive->verification_metadata)
+                    ? $existingActive->verification_metadata
+                    : [];
+                $meta['manual_extension_by_admin_id'] = $actor->id;
+                $meta['manual_extension_by_admin_name'] = $actor->name;
+                $meta['manual_extension_days'] = $effectiveDays;
+                $meta['manual_extension_notes'] = $reasonText;
+                $meta['manual_extension_at'] = now()->toIso8601String();
+
+                $existingActive->update([
+                    'status' => Subscription::STATUS_ACTIVE,
+                    'ends_at' => $newEndsAt,
+                    'last_verified_at' => now(),
+                    'verification_metadata' => $meta,
+                ]);
+
+                $this->auditService->record(
+                    actor: $actor,
+                    action: 'subscription.manual_extended',
+                    target: $existingActive,
+                    previousValues: ['ends_at' => $previousEndsAt],
+                    newValues: [
+                        'status' => Subscription::STATUS_ACTIVE,
+                        'ends_at' => $newEndsAt->toIso8601String(),
+                        'added_days' => $effectiveDays,
+                    ],
+                    reason: $reasonText,
+                    ipAddress: $ipAddress
+                );
+
+                return $existingActive->refresh();
+            }
+
+            $startsAt = now();
+            $endsAt = $startsAt->copy()->addDays($effectiveDays);
+
+            $subscription = Subscription::create([
+                'user_id' => $member->id,
+                'subscription_plan_id' => $plan->id,
+                'channel' => Subscription::CHANNEL_ADMIN_MANUAL,
+                'status' => Subscription::STATUS_ACTIVE,
+                'external_subscription_id' => 'ADM-MAN-' . strtoupper(Str::random(10)),
+                'auto_renewing' => false,
+                'starts_at' => $startsAt,
+                'ends_at' => $endsAt,
+                'last_verified_at' => $startsAt,
+                'verification_metadata' => [
+                    'activated_by_admin_id' => $actor->id,
+                    'activated_by_admin_name' => $actor->name,
+                    'duration_days' => $effectiveDays,
+                    'notes' => $reasonText,
+                    'activated_at' => $startsAt->toIso8601String(),
+                ],
+            ]);
+
+            $this->auditService->record(
+                actor: $actor,
+                action: 'subscription.manual_activated',
+                target: $subscription,
+                previousValues: null,
+                newValues: [
+                    'user_id' => $member->id,
+                    'channel' => Subscription::CHANNEL_ADMIN_MANUAL,
+                    'status' => Subscription::STATUS_ACTIVE,
+                    'duration_days' => $effectiveDays,
+                    'ends_at' => $endsAt->toIso8601String(),
+                ],
+                reason: $reasonText,
+                ipAddress: $ipAddress
+            );
+
+            return $subscription;
+        });
+    }
+
+    /**
+     * Revokes all currently active subscriptions for a member from the Admin Dashboard.
+     */
+    public function revokeMemberSubscriptions(
+        Administrator $actor,
+        User $member,
+        string $reason,
+        ?string $ipAddress = null
+    ): int {
+        $trimmedReason = trim($reason) !== '' ? trim($reason) : 'إلغاء الاشتراك يدوياً من لوحة التحكم';
+
+        return DB::transaction(function () use ($actor, $member, $trimmedReason, $ipAddress) {
+            $activeSubscriptions = $member->subscriptions()
+                ->whereIn('status', Subscription::ENTITLED_STATUSES)
+                ->where('ends_at', '>', now())
+                ->get();
+
+            $revokedCount = 0;
+            foreach ($activeSubscriptions as $sub) {
+                $previousStatus = $sub->status;
+                $sub->update([
+                    'status' => Subscription::STATUS_REVOKED,
+                    'revoked_at' => now(),
+                    'auto_renewing' => false,
+                ]);
+
+                $this->auditService->record(
+                    actor: $actor,
+                    action: 'subscription.manual_revoked',
+                    target: $sub,
+                    previousValues: ['status' => $previousStatus],
+                    newValues: ['status' => Subscription::STATUS_REVOKED],
+                    reason: $trimmedReason,
+                    ipAddress: $ipAddress
+                );
+                $revokedCount++;
+            }
+
+            return $revokedCount;
         });
     }
 }

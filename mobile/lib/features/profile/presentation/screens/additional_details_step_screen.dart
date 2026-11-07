@@ -6,7 +6,7 @@ import '../widgets/step_progress_header.dart';
 
 /// 05. Additional Profile Details and Biography Screen (الخطوة 3 من 4: التفاصيل الإضافية والنبذة — تصميم Astra Screen 06)
 /// تشمل: أيقونة الخطوة الذهبية، الطول بالسنتيمتر، البرج الفلكي المحسوب تلقائياً، التدخين،
-/// الجنسية، بلد الإقامة، المنطقة، الهوايات، والنبذة الشخصية الاختيارية.
+/// الجنسية (قائمة منسدلة)، بلد الإقامة (قائمة منسدلة)، المحافظة/المدينة (قائمة منسدلة)، الهوايات، والنبذة الشخصية الاختيارية.
 class AdditionalDetailsStepScreen extends ConsumerStatefulWidget {
   const AdditionalDetailsStepScreen({super.key});
 
@@ -28,26 +28,17 @@ class _AdditionalDetailsStepScreenState
     'المشي والطبيعة',
   ];
 
-  late final TextEditingController _nationalityController;
-  late final TextEditingController _countryController;
-  late final TextEditingController _regionController;
   late final TextEditingController _bioController;
 
   @override
   void initState() {
     super.initState();
     final draft = ref.read(profileRegistrationProvider).draft;
-    _nationalityController = TextEditingController(text: draft.nationality);
-    _countryController = TextEditingController(text: draft.countryOfResidence);
-    _regionController = TextEditingController(text: draft.region);
     _bioController = TextEditingController(text: draft.bio);
   }
 
   @override
   void dispose() {
-    _nationalityController.dispose();
-    _countryController.dispose();
-    _regionController.dispose();
     _bioController.dispose();
     super.dispose();
   }
@@ -55,6 +46,11 @@ class _AdditionalDetailsStepScreenState
   @override
   Widget build(BuildContext context) {
     final draft = ref.watch(profileRegistrationProvider).draft;
+    final availableNationalities =
+        ArabicLocationsData.nationalitiesForGender(draft.gender);
+    final availableCountries = ArabicLocationsData.allCountries;
+    final availableCities =
+        ArabicLocationsData.citiesForCountry(draft.countryOfResidence);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -68,7 +64,7 @@ class _AdditionalDetailsStepScreenState
                 const NaseebakStepBadge(
                   icon: Icons.description_outlined,
                   title: 'نبذة عنك وتفاصيل إضافية',
-                  subtitle: 'أضف تفاصيلك وموقعك وهواياتك لإكمال ملفك',
+                  subtitle: 'اختر جنسيتك ودولة ومحافظة إقامتك من القائمة وهواياتك لإكمال ملفك',
                 ),
                 const SizedBox(height: 20),
 
@@ -173,13 +169,16 @@ class _AdditionalDetailsStepScreenState
                 ),
                 const SizedBox(height: 18),
 
-                // Location: Nationality & Country of Residence
+                // Location: Nationality & Country of Residence (Dropdown Pickers)
                 Row(
                   children: [
                     Expanded(
-                      child: NaseebakTextField(
+                      child: NaseebakLocationDropdownField(
                         label: 'الجنسية',
-                        controller: _nationalityController,
+                        value: draft.nationality,
+                        options: availableNationalities,
+                        placeholder: 'اختر الجنسية',
+                        leadingIcon: Icons.flag_outlined,
                         onChanged: (val) => ref
                             .read(profileRegistrationProvider.notifier)
                             .updateDraft(draft.copyWith(nationality: val)),
@@ -187,23 +186,38 @@ class _AdditionalDetailsStepScreenState
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: NaseebakTextField(
+                      child: NaseebakLocationDropdownField(
                         label: 'بلد الإقامة',
-                        controller: _countryController,
-                        onChanged: (val) => ref
-                            .read(profileRegistrationProvider.notifier)
-                            .updateDraft(
-                              draft.copyWith(countryOfResidence: val),
-                            ),
+                        value: draft.countryOfResidence,
+                        options: availableCountries,
+                        placeholder: 'اختر الدولة',
+                        leadingIcon: Icons.public_rounded,
+                        onChanged: (newCountry) {
+                          final cities =
+                              ArabicLocationsData.citiesForCountry(newCountry);
+                          final updatedRegion = cities.contains(draft.region)
+                              ? draft.region
+                              : (cities.isNotEmpty ? cities.first : '');
+                          ref
+                              .read(profileRegistrationProvider.notifier)
+                              .updateDraft(
+                                draft.copyWith(
+                                  countryOfResidence: newCountry,
+                                  region: updatedRegion,
+                                ),
+                              );
+                        },
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 14),
-                NaseebakTextField(
-                  label: 'المحافظة / المنطقة',
-                  hintText: 'مثال: القاهرة / الجيزة / الإسكندرية / الرياض',
-                  controller: _regionController,
+                NaseebakLocationDropdownField(
+                  label: 'المحافظة / المدينة',
+                  value: draft.region,
+                  options: availableCities,
+                  placeholder: 'اختر المحافظة أو المدينة',
+                  leadingIcon: Icons.location_city_rounded,
                   onChanged: (val) => ref
                       .read(profileRegistrationProvider.notifier)
                       .updateDraft(draft.copyWith(region: val)),
