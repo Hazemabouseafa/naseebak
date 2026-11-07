@@ -2,28 +2,37 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 
 /// نظام الثيم الموحد لتطبيق نصيبك — Naseebak (UX Pilot Design System)
-/// يعتمد خط IBM Plex Sans Arabic المضمّن محلياً في التطبيق (Regular, Medium, SemiBold, Bold)
-/// مع التدرج اللوني الأزرق الملكي (#184A8C)، الكحلي (#123D6A)، والذهبي المميز (#E8B44D).
+/// يعتمد خط Cairo العربي المتميز للأجهزة المحمولة مع التدرج الاحتياطي IBM Plex Sans Arabic
+/// والألوان الفاخرة: الأزرق الملكي (#184A8C)، الكحلي (#123D6A)، والذهبي (#E8B44D).
 class AppTheme {
   AppTheme._();
 
-  static const String fontFamily = 'IBMPlexSansArabic';
+  static const String fontFamily = 'Cairo';
+  static const List<String> fontFamilyFallback = [
+    'IBMPlexSansArabic',
+    'Cairo',
+    'Arial',
+    'sans-serif',
+  ];
 
   static ThemeData get lightTheme {
     const baseTextStyle = TextStyle(
       fontFamily: fontFamily,
+      fontFamilyFallback: fontFamilyFallback,
       color: AppColors.textPrimary,
-      height: 1.5,
+      height: 1.45,
     );
 
     final textTheme = TextTheme(
       displayLarge: baseTextStyle.copyWith(
         fontSize: 32,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.5,
       ),
       displayMedium: baseTextStyle.copyWith(
         fontSize: 26,
         fontWeight: FontWeight.w700,
+        letterSpacing: -0.3,
       ),
       headlineLarge: baseTextStyle.copyWith(
         fontSize: 24,
@@ -31,7 +40,7 @@ class AppTheme {
       ),
       headlineMedium: baseTextStyle.copyWith(
         fontSize: 19,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
       ),
       titleLarge: baseTextStyle.copyWith(
         fontSize: 18,
@@ -43,24 +52,28 @@ class AppTheme {
       ),
       titleSmall: baseTextStyle.copyWith(
         fontSize: 14.5,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w600,
       ),
       bodyLarge: baseTextStyle.copyWith(
         fontSize: 15,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w500,
+        height: 1.6,
       ),
       bodyMedium: baseTextStyle.copyWith(
         fontSize: 14,
         fontWeight: FontWeight.w400,
+        height: 1.55,
       ),
       bodySmall: baseTextStyle.copyWith(
         fontSize: 13,
         fontWeight: FontWeight.w400,
         color: AppColors.textSecondary,
+        height: 1.5,
       ),
       labelLarge: baseTextStyle.copyWith(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
+        fontSize: 15.5,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.1,
       ),
     );
 
@@ -88,6 +101,7 @@ class AppTheme {
         scrolledUnderElevation: 0,
         titleTextStyle: TextStyle(
           fontFamily: fontFamily,
+          fontFamilyFallback: fontFamilyFallback,
           fontSize: 17,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
@@ -100,15 +114,17 @@ class AppTheme {
           disabledBackgroundColor: AppColors.subtleBorder,
           disabledForegroundColor: AppColors.textSecondary,
           minimumSize: const Size.fromHeight(54),
-          elevation: 0,
+          elevation: 2,
+          shadowColor: AppColors.primaryBlue.withOpacity(0.35),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(18),
           ),
           textStyle: const TextStyle(
             fontFamily: fontFamily,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
+            fontFamilyFallback: fontFamilyFallback,
+            fontSize: 15.5,
+            fontWeight: FontWeight.w700,
             height: 1.35,
           ),
         ),
@@ -118,15 +134,20 @@ class AppTheme {
           foregroundColor: AppColors.primaryBlue,
           backgroundColor: AppColors.cardWhite,
           minimumSize: const Size.fromHeight(52),
+          elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-          side: const BorderSide(color: AppColors.subtleBorder, width: 1.3),
+          side: BorderSide(
+            color: AppColors.primaryBlue.withOpacity(0.28),
+            width: 1.4,
+          ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(18),
           ),
           textStyle: const TextStyle(
             fontFamily: fontFamily,
+            fontFamilyFallback: fontFamilyFallback,
             fontSize: 15,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
             height: 1.35,
           ),
         ),
@@ -134,10 +155,15 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primaryBlue,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
           textStyle: const TextStyle(
             fontFamily: fontFamily,
+            fontFamilyFallback: fontFamilyFallback,
             fontSize: 14,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),

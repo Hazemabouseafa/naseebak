@@ -136,27 +136,53 @@ class NaseebakPrimaryButton extends StatelessWidget {
     this.foregroundColor,
     this.buttonKey,
     this.height = 54,
-    this.borderRadius = 16,
+    this.borderRadius = 18,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bg = backgroundColor ?? AppColors.primaryBlue;
+    final hasCustomBg = backgroundColor != null;
     final fg = foregroundColor ?? Colors.white;
+    final isEnabled = onPressed != null && !isLoading;
 
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadius),
-        boxShadow: onPressed != null && !isLoading
-            ? NaseebakSpacing.elevatedNavyShadow
+        gradient: !isEnabled
+            ? null
+            : (hasCustomBg
+                ? null
+                : const LinearGradient(
+                    begin: Alignment.topRight,
+                    end: Alignment.bottomLeft,
+                    colors: [
+                      Color(0xFF1E5BB0),
+                      Color(0xFF133E72),
+                    ],
+                  )),
+        color: !isEnabled
+            ? AppColors.subtleBorder
+            : (hasCustomBg ? backgroundColor : null),
+        boxShadow: isEnabled
+            ? [
+                BoxShadow(
+                  color: (backgroundColor ?? AppColors.primaryBlue)
+                      .withOpacity(0.26),
+                  blurRadius: 16,
+                  offset: const Offset(0, 5),
+                  spreadRadius: -2,
+                ),
+              ]
             : null,
       ),
       child: ElevatedButton(
         key: buttonKey,
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: bg,
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
           foregroundColor: fg,
+          elevation: 0,
           minimumSize: Size.fromHeight(height),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadius),
@@ -185,7 +211,11 @@ class NaseebakPrimaryButton extends StatelessWidget {
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: NaseebakTypography.buttonText.copyWith(color: fg),
+                style: NaseebakTypography.buttonText.copyWith(
+                  color: fg,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15.5,
+                ),
               ),
             ),
           ],
@@ -195,7 +225,7 @@ class NaseebakPrimaryButton extends StatelessWidget {
   }
 }
 
-/// زر ثانوي أنيق بتصميم UX Pilot (خلفية بيضاء وإطار ناعم #E5EAF0)
+/// زر ثانوي أنيق بتصميم UX Pilot (خلفية بيضاء وإطار ناعم #E5EAF0 وظل خفيف)
 class NaseebakSecondaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -215,47 +245,60 @@ class NaseebakSecondaryButton extends StatelessWidget {
     this.textColor,
     this.buttonKey,
     this.height = 52,
-    this.borderRadius = 16,
+    this.borderRadius = 18,
   });
 
   @override
   Widget build(BuildContext context) {
     final fg = textColor ?? AppColors.primaryBlue;
-    return OutlinedButton(
-      key: buttonKey,
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: fg,
-        backgroundColor: AppColors.cardWhite,
-        minimumSize: Size.fromHeight(height),
-        side: BorderSide(
-          color: borderColor ?? AppColors.subtleBorder,
-          width: 1.4,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(borderRadius),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            icon!,
-            const SizedBox(width: 8),
-          ],
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: NaseebakTypography.buttonText.copyWith(
-                fontSize: 15,
-                color: fg,
-              ),
-            ),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(borderRadius),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryNavy.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
+      ),
+      child: OutlinedButton(
+        key: buttonKey,
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: fg,
+          backgroundColor: AppColors.cardWhite,
+          minimumSize: Size.fromHeight(height),
+          side: BorderSide(
+            color: borderColor ?? AppColors.primaryBlue.withOpacity(0.24),
+            width: 1.4,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              icon!,
+              const SizedBox(width: 8),
+            ],
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: NaseebakTypography.buttonText.copyWith(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: fg,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -471,17 +514,34 @@ class NaseebakCircleButton extends StatelessWidget {
     final bg = backgroundColor ?? AppColors.surfaceSubtleBlue;
     final fg = iconColor ?? AppColors.primaryBlue;
 
-    Widget btn = Material(
-      key: buttonKey,
-      color: bg,
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: SizedBox(
-          width: size,
-          height: size,
-          child: Icon(icon, color: fg, size: iconSize),
+    Widget btn = Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryNavy.withOpacity(0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        key: buttonKey,
+        color: bg,
+        shape: CircleBorder(
+          side: BorderSide(
+            color: AppColors.subtleBorder.withOpacity(0.7),
+            width: 0.9,
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: Icon(icon, color: fg, size: iconSize),
+          ),
         ),
       ),
     );
@@ -840,6 +900,7 @@ class NaseebakSectionHeader extends StatelessWidget {
   final String? actionTitle;
   final VoidCallback? onActionTap;
   final VoidCallback? onAction;
+  final EdgeInsetsGeometry? padding;
 
   const NaseebakSectionHeader({
     super.key,
@@ -848,13 +909,14 @@ class NaseebakSectionHeader extends StatelessWidget {
     this.actionTitle,
     this.onActionTap,
     this.onAction,
+    this.padding,
   });
 
   @override
   Widget build(BuildContext context) {
     final effectiveLabel = actionTitle ?? actionLabel;
     final effectiveAction = onAction ?? onActionTap;
-    return Row(
+    Widget content = Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Flexible(
@@ -883,6 +945,12 @@ class NaseebakSectionHeader extends StatelessWidget {
           ),
       ],
     );
+
+    if (padding != null) {
+      content = Padding(padding: padding!, child: content);
+    }
+
+    return content;
   }
 }
 

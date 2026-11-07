@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/design_system/naseebak_design_system.dart';
+import '../../../subscription/presentation/providers/subscription_provider.dart';
 import '../../../subscription/presentation/screens/subscription_screen.dart';
 import '../../data/models/conversation_model.dart';
 import '../providers/messaging_provider.dart';
@@ -26,6 +27,7 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(messagingProvider.notifier).loadConversations();
+      ref.read(subscriptionProvider.notifier).loadSubscriptionCenter();
     });
   }
 
@@ -58,6 +60,11 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(messagingProvider);
+    final subState = ref.watch(subscriptionProvider);
+    final hasActiveSubscription = subState.entitlement.hasActiveSubscription ||
+        subState.entitlement.canSendMessages ||
+        (subState.currentSubscription != null &&
+            subState.currentSubscription!.status.toLowerCase() == 'active');
 
     final filteredConversations = _searchQuery.trim().isEmpty
         ? state.conversations
@@ -146,69 +153,70 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
               ),
             ),
 
-            // 2. Premium Upgrade Banner Strip (UX Pilot)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-              child: InkWell(
-                onTap: _openSubscription,
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.primaryNavy, Color(0xFF1D4A7A)],
-                      begin: Alignment.centerRight,
-                      end: Alignment.centerLeft,
+            // 2. Premium Upgrade Banner Strip (UX Pilot) - Only visible if subscription is not active
+            if (!hasActiveSubscription)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                child: InkWell(
+                  onTap: _openSubscription,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.primaryNavy, Color(0xFF1D4A7A)],
+                        begin: Alignment.centerRight,
+                        end: Alignment.centerLeft,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(7),
-                        decoration: BoxDecoration(
-                          color: AppColors.goldAccent.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.workspace_premium_rounded,
-                          size: 18,
-                          color: AppColors.goldAccent,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      const Expanded(
-                        child: Text(
-                          'رقّ حسابك لفتح ميزات الدردشة المتقدمة',
-                          style: TextStyle(
-                            fontFamily: NaseebakTypography.fontFamily,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(7),
+                          decoration: BoxDecoration(
+                            color: AppColors.goldAccent.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.workspace_premium_rounded,
+                            size: 18,
+                            color: AppColors.goldAccent,
                           ),
                         ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppColors.goldAccent,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Text(
-                          'ترقية',
-                          style: TextStyle(
-                            fontFamily: NaseebakTypography.fontFamily,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primaryNavy,
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Text(
+                            'رقّ حسابك لفتح ميزات الدردشة المتقدمة',
+                            style: TextStyle(
+                              fontFamily: NaseebakTypography.fontFamily,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.goldAccent,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            'ترقية',
+                            style: TextStyle(
+                              fontFamily: NaseebakTypography.fontFamily,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primaryNavy,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
 
             // 3. Conversations List Area
             Expanded(

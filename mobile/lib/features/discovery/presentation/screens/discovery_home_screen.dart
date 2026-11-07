@@ -60,6 +60,7 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(discoveryProvider.notifier).loadDiscoveryFeed();
+      ref.read(profileManagementProvider.notifier).loadOwnProfile();
     });
   }
 
@@ -188,7 +189,10 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final discoveryState = ref.watch(discoveryProvider);
-    final mgmtProfile = ref.watch(profileManagementProvider).profile;
+    final mgmtState = ref.watch(profileManagementProvider);
+    final mgmtProfile = mgmtState.profile;
+    final cachedPhotoBytes = mgmtState.cachedPhotoBytes;
+    final primaryPhotoId = mgmtProfile?.primaryPhoto?.id;
     final regDraft = ref.watch(profileRegistrationProvider).draft;
     final rawName = mgmtProfile?.fullName ?? regDraft.fullName;
     final displayName =
@@ -204,8 +208,12 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
         bottom: false,
         child: RefreshIndicator(
           color: AppColors.primaryBlue,
-          onRefresh: () =>
+          onRefresh: () async {
+            await Future.wait([
               ref.read(discoveryProvider.notifier).loadDiscoveryFeed(),
+              ref.read(profileManagementProvider.notifier).loadOwnProfile(),
+            ]);
+          },
           child: CustomScrollView(
             slivers: [
               // 1. Personalized Header (Avatar with Gold Ring + Greeting + Favorites & Notifications)
@@ -234,21 +242,38 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
                               ),
                             ],
                           ),
-                          child: CircleAvatar(
-                            radius: 22,
-                            backgroundColor: AppColors.cardWhite,
-                            child: Text(
-                              displayName.isNotEmpty
-                                  ? displayName.substring(0, 1)
-                                  : 'ن',
-                              style: const TextStyle(
-                                fontFamily: NaseebakTypography.fontFamily,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.primaryBlue,
-                              ),
-                            ),
-                          ),
+                          child: cachedPhotoBytes != null
+                              ? CircleAvatar(
+                                  radius: 22,
+                                  backgroundColor: AppColors.cardWhite,
+                                  backgroundImage:
+                                      MemoryImage(cachedPhotoBytes),
+                                )
+                              : (primaryPhotoId != null
+                                  ? AuthorizedPhotoAvatar(
+                                      photoId: primaryPhotoId,
+                                      photoAuthorized: true,
+                                      fallbackName: displayName,
+                                      radius: 22,
+                                      showGoldBorder: false,
+                                      gender: mgmtProfile?.gender ?? 'male',
+                                    )
+                                  : CircleAvatar(
+                                      radius: 22,
+                                      backgroundColor: AppColors.cardWhite,
+                                      child: Text(
+                                        displayName.isNotEmpty
+                                            ? displayName.substring(0, 1)
+                                            : 'ن',
+                                        style: const TextStyle(
+                                          fontFamily:
+                                              NaseebakTypography.fontFamily,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppColors.primaryBlue,
+                                        ),
+                                      ),
+                                    )),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -532,30 +557,34 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
 
               // 5. Section Header: "أشخاص ممكن يناسبوك" + "عرض الكل"
               SliverToBoxAdapter(
-                child: Column(
-                  children: [
-                    NaseebakSectionHeader(
-                      title: 'أشخاص ممكن يناسبوك',
-                      actionTitle: 'عرض الكل',
-                      onAction: _openAllMembersResults,
-                    ),
-                    // Semantic text for test compatibility
-                    Opacity(
-                      opacity: 0.0,
-                      child: SizedBox(
-                        height: 0,
-                        child: Row(
-                          children: [
-                            const Text('الأعضاء المقترحون'),
-                            InkWell(
-                              onTap: widget.onOpenMyProfileTab,
-                              child: const Text('ملفي الشخصي'),
-                            ),
-                          ],
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: Column(
+                    children: [
+                      NaseebakSectionHeader(
+                        title: 'أشخاص ممكن يناسبوك',
+                        actionTitle: 'عرض الكل',
+                        onAction: _openAllMembersResults,
+                      ),
+                      // Semantic text for test compatibility
+                      Opacity(
+                        opacity: 0.0,
+                        child: SizedBox(
+                          height: 0,
+                          child: Row(
+                            children: [
+                              const Text('الأعضاء المقترحون'),
+                              InkWell(
+                                onTap: widget.onOpenMyProfileTab,
+                                child: const Text('ملفي الشخصي'),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
 
