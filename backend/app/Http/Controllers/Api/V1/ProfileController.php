@@ -7,6 +7,7 @@ use App\Http\Requests\Api\V1\CompleteProfileRequest;
 use App\Http\Requests\Api\V1\UpdateProfileRequest;
 use App\Models\User;
 use App\Models\UserPhoto;
+use App\Models\UserPreference;
 use App\Models\UserProfile;
 use App\Services\Matchmaking\MatchmakingService;
 use App\Services\Profile\ProfileAccessControlService;
@@ -284,7 +285,7 @@ class ProfileController extends Controller
 
         if (
             !$targetProfile
-            || (!$isOwnerOrAdmin && ($targetProfile->moderation_status !== 'approved' || $targetProfile->age_years < 18))
+            || (!$isOwnerOrAdmin && (!$targetProfile->isModerationApprovedForDiscovery() || $targetProfile->age_years < 18))
             || !$this->accessControlService->canViewProfile($viewer, $targetUser, $targetProfile)
         ) {
             return response()->json([
@@ -359,6 +360,15 @@ class ProfileController extends Controller
             $hasChildren = (bool) $validated['has_children'];
             $existingProfile = $user->profile;
 
+            // Preserve 'approved' status when an already-approved member updates their profile fields
+            if ($existingProfile?->moderation_status === UserProfile::STATUS_APPROVED) {
+                $nextModerationStatus = UserProfile::STATUS_APPROVED;
+            } elseif (!UserProfile::isModerationRequired() && $existingProfile?->moderation_status !== UserProfile::STATUS_REJECTED) {
+                $nextModerationStatus = UserProfile::STATUS_APPROVED;
+            } else {
+                $nextModerationStatus = UserProfile::STATUS_PENDING;
+            }
+
             $profile = UserProfile::updateOrCreate(
                 ['user_id' => $user->id],
                 [
@@ -390,7 +400,7 @@ class ProfileController extends Controller
                         : ($existingProfile ? (bool) $existingProfile->is_visible : true),
                     'photo_privacy' => $validated['photo_privacy']
                         ?? ($existingProfile?->photo_privacy ?? 'public'),
-                    'moderation_status' => 'pending',
+                    'moderation_status' => $nextModerationStatus,
                 ]
             );
 
@@ -398,6 +408,26 @@ class ProfileController extends Controller
                 'profile_completed' => true,
                 'last_active_at' => now(),
             ]);
+
+            $oppositeGender = $validated['gender'] === 'male'
+                ? 'female'
+                : ($validated['gender'] === 'female' ? 'male' : null);
+
+            if ($oppositeGender !== null) {
+                $existingPref = UserPreference::where('user_id', $user->id)->first();
+                if ($existingPref === null) {
+                    UserPreference::create([
+                        'user_id' => $user->id,
+                        'preferred_gender' => $oppositeGender,
+                        'min_age' => 18,
+                        'max_age' => 65,
+                    ]);
+                } elseif (empty($existingPref->preferred_gender) || $existingPref->preferred_gender === $validated['gender']) {
+                    $existingPref->update([
+                        'preferred_gender' => $oppositeGender,
+                    ]);
+                }
+            }
 
             return $profile;
         });

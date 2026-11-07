@@ -52,82 +52,95 @@ class _NotificationCenterScreenState
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: NaseebakColors.backgroundBeige,
+        backgroundColor: AppColors.cardWhite,
+        appBar: AppBar(
+          backgroundColor: AppColors.cardWhite,
+          elevation: 0,
+          centerTitle: true,
+          leading: Center(
+            child: Padding(
+              padding: const EdgeInsetsDirectional.only(start: 14),
+              child: NaseebakCircleButton(
+                icon: Icons.arrow_forward_rounded,
+                size: 40,
+                iconSize: 20,
+                onTap: () => Navigator.of(context).pop(),
+                tooltip: 'رجوع',
+              ),
+            ),
+          ),
+          title: const Text(
+            'الإشعارات',
+            style: TextStyle(
+              fontFamily: NaseebakTypography.fontFamily,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          actions: [
+            if (state.unreadCount > 0) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryBlue,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${state.unreadCount}',
+                  style: const TextStyle(
+                    fontFamily: NaseebakTypography.fontFamily,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              TextButton(
+                key: const ValueKey('btn_mark_all_read'),
+                onPressed: state.isMarkingAllRead
+                    ? null
+                    : () {
+                        ref
+                            .read(notificationProvider.notifier)
+                            .markAllNotificationsAsRead();
+                      },
+                child: const Text(
+                  'تحديد الكل كمقروء',
+                  style: TextStyle(
+                    fontFamily: NaseebakTypography.fontFamily,
+                    color: AppColors.primaryBlue,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: 14),
+              child: NaseebakCircleButton(
+                key: const ValueKey('btn_open_notification_preferences'),
+                tooltip: 'إعدادات الإشعارات',
+                icon: Icons.tune_rounded,
+                size: 40,
+                iconSize: 20,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const NotificationPreferencesScreen(),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
         body: Column(
           children: [
-            NaseebakCurvedHeader(
-              title: 'الإشعارات',
-              subtitle: 'تنبيهات طلبات التعارف والمحادثات وحالة العضوية',
-              leading: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-              trailing: [
-                if (state.unreadCount > 0) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: NaseebakColors.accentGold,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${state.unreadCount}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: NaseebakColors.primaryNavyDark,
-                      ),
-                    ),
-                  ),
-                  TextButton.icon(
-                    key: const ValueKey('btn_mark_all_read'),
-                    onPressed: state.isMarkingAllRead
-                        ? null
-                        : () {
-                            ref
-                                .read(notificationProvider.notifier)
-                                .markAllNotificationsAsRead();
-                          },
-                    icon: const Icon(
-                      Icons.done_all_rounded,
-                      size: 16,
-                      color: NaseebakColors.accentGoldLight,
-                    ),
-                    label: const Text(
-                      'تحديد الكل كمقروء',
-                      style: TextStyle(
-                        color: NaseebakColors.accentGoldLight,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-                IconButton(
-                  key: const ValueKey('btn_open_notification_preferences'),
-                  tooltip: 'إعدادات الإشعارات',
-                  icon: const Icon(
-                    Icons.tune_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const NotificationPreferencesScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
             if (!state.isSystemPermissionGranted)
               _buildPermissionPromptBanner(context, ref),
             Expanded(
@@ -340,21 +353,19 @@ class _NotificationCenterScreenState
       key: ValueKey('notification_item_${item.id}'),
       decoration: BoxDecoration(
         color: isUnread
-            ? NaseebakColors.accentGoldMuted.withOpacity(0.18)
-            : NaseebakColors.cardBackground,
+            ? AppColors.surfaceSubtleBlue
+            : AppColors.cardWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isUnread
-              ? NaseebakColors.accentGold.withOpacity(0.5)
-              : NaseebakColors.borderLight,
+              ? AppColors.primaryBlue.withOpacity(0.3)
+              : AppColors.subtleBorder,
           width: isUnread ? 1.4 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isUnread
-                ? NaseebakColors.accentGold.withOpacity(0.06)
-                : NaseebakColors.shadowColor,
-            blurRadius: 8,
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
@@ -392,7 +403,7 @@ class _NotificationCenterScreenState
                             width: 8,
                             height: 8,
                             decoration: const BoxDecoration(
-                              color: NaseebakColors.accentGold,
+                              color: AppColors.primaryBlue,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -402,10 +413,11 @@ class _NotificationCenterScreenState
                           child: Text(
                             item.titleAr,
                             style: TextStyle(
+                              fontFamily: NaseebakTypography.fontFamily,
                               fontSize: 14.5,
                               fontWeight:
                                   isUnread ? FontWeight.w800 : FontWeight.w700,
-                              color: NaseebakColors.textDarkNavy,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                         ),
@@ -473,29 +485,29 @@ class _NotificationCenterScreenState
         break;
       case 'new_message_received':
         icon = Icons.chat_bubble_rounded;
-        bgColor = NaseebakColors.accentGoldMuted.withOpacity(0.3);
-        iconColor = NaseebakColors.primaryNavy;
+        bgColor = AppColors.surfaceSubtleBlue;
+        iconColor = AppColors.primaryBlue;
         break;
       case 'subscription_activated':
       case 'subscription_expiring_soon':
       case 'subscription_expired':
         icon = Icons.workspace_premium_rounded;
-        bgColor = NaseebakColors.accentGoldMuted.withOpacity(0.4);
-        iconColor = NaseebakColors.accentGoldDark;
+        bgColor = const Color(0xFFFEF9EE);
+        iconColor = AppColors.goldAccent;
         break;
       default:
-        icon = Icons.campaign_rounded;
-        bgColor = NaseebakColors.primaryNavy.withOpacity(0.08);
-        iconColor = NaseebakColors.primaryNavy;
+        icon = Icons.notifications_rounded;
+        bgColor = AppColors.surfaceSubtleBlue;
+        iconColor = AppColors.primaryBlue;
         break;
     }
 
     return Container(
-      width: 42,
-      height: 42,
+      width: 44,
+      height: 44,
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(12),
+        shape: BoxShape.circle,
       ),
       child: Icon(icon, color: iconColor, size: 22),
     );

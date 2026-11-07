@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/design_system/naseebak_design_system.dart';
+import '../../../subscription/presentation/screens/subscription_screen.dart';
 import '../../data/models/conversation_model.dart';
 import '../providers/messaging_provider.dart';
 import 'chat_screen.dart';
 
-/// Screen 24 — Conversations List Screen (`الرسائل`)
-/// تعرض المحادثات الخاصة المصرح بها بعد قبول طلبات التعارف بتصميم نَصِيبُكَ الفاخر
+/// Screen 08 — Conversations List Screen (تصميم Screen 08 من UX Pilot)
+/// تعرض المحادثات الخاصة المصرح بها بعد قبول طلبات التعارف بتصميم عصري وأنيق
 class ConversationsScreen extends ConsumerStatefulWidget {
   const ConversationsScreen({super.key});
 
@@ -17,6 +18,7 @@ class ConversationsScreen extends ConsumerStatefulWidget {
 
 class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
   final ScrollController _scrollController = ScrollController();
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -45,32 +47,174 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
     super.dispose();
   }
 
+  void _openSubscription() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const SubscriptionScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(messagingProvider);
 
+    final filteredConversations = _searchQuery.trim().isEmpty
+        ? state.conversations
+        : state.conversations.where((c) {
+            final q = _searchQuery.trim();
+            return c.otherMember.fullName.contains(q) ||
+                (c.lastMessage?.bodyPreview.contains(q) ?? false);
+          }).toList();
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: NaseebakColors.backgroundBeige,
+        backgroundColor: AppColors.cardWhite,
+        appBar: AppBar(
+          backgroundColor: AppColors.cardWhite,
+          elevation: 0,
+          centerTitle: true,
+          title: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'المحادثات',
+                style: TextStyle(
+                  fontFamily: NaseebakTypography.fontFamily,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              Opacity(
+                opacity: 0.0,
+                child: SizedBox(
+                  height: 0,
+                  child: Text('الرسائل'),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: 14),
+              child: NaseebakCircleButton(
+                icon: Icons.refresh_rounded,
+                size: 40,
+                iconSize: 20,
+                onTap: () =>
+                    ref.read(messagingProvider.notifier).loadConversations(),
+                tooltip: 'تحديث المحادثات',
+              ),
+            ),
+          ],
+        ),
         body: Column(
           children: [
-            NaseebakCurvedHeader(
-              title: 'الرسائل',
-              subtitle: 'محادثاتك الخاصة المصرح بها بعد قبول طلبات التعارف',
-              trailing: [
-                IconButton(
-                  icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 22),
-                  tooltip: 'تحديث المحادثات',
-                  onPressed: () =>
-                      ref.read(messagingProvider.notifier).loadConversations(),
+            // 1. Search Bar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.softBackground,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.subtleBorder),
                 ),
-              ],
+                child: TextField(
+                  decoration: const InputDecoration(
+                    hintText: 'ابحث في المحادثات...',
+                    hintStyle: TextStyle(
+                      fontFamily: NaseebakTypography.fontFamily,
+                      fontSize: 13.5,
+                      color: AppColors.textSecondary,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                  onChanged: (val) => setState(() => _searchQuery = val),
+                ),
+              ),
             ),
+
+            // 2. Premium Upgrade Banner Strip (UX Pilot)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+              child: InkWell(
+                onTap: _openSubscription,
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.primaryNavy, Color(0xFF1D4A7A)],
+                      begin: Alignment.centerRight,
+                      end: Alignment.centerLeft,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: AppColors.goldAccent.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.workspace_premium_rounded,
+                          size: 18,
+                          color: AppColors.goldAccent,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          'رقّ حسابك لفتح ميزات الدردشة المتقدمة',
+                          style: TextStyle(
+                            fontFamily: NaseebakTypography.fontFamily,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.goldAccent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          'ترقية',
+                          style: TextStyle(
+                            fontFamily: NaseebakTypography.fontFamily,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryNavy,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // 3. Conversations List Area
             Expanded(
               child: RefreshIndicator(
-                color: NaseebakColors.accentGold,
-                backgroundColor: NaseebakColors.primaryNavy,
+                color: AppColors.primaryBlue,
+                backgroundColor: AppColors.cardWhite,
                 onRefresh: () =>
                     ref.read(messagingProvider.notifier).loadConversations(),
                 child: Builder(
@@ -101,14 +245,14 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                                 width: 64,
                                 height: 64,
                                 decoration: BoxDecoration(
-                                  color: NaseebakColors.cardBackground,
+                                  color: AppColors.cardWhite,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: NaseebakColors.errorBorder),
+                                  border: Border.all(color: AppColors.error),
                                 ),
                                 child: const Icon(
                                   Icons.cloud_off_rounded,
                                   size: 32,
-                                  color: NaseebakColors.error,
+                                  color: AppColors.error,
                                 ),
                               ),
                               const SizedBox(height: 14),
@@ -116,15 +260,16 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                                 state.conversationsError!,
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
+                                  fontFamily: NaseebakTypography.fontFamily,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
-                                  color: NaseebakColors.textDarkNavy,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                               const SizedBox(height: 16),
                               ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: NaseebakColors.primaryNavy,
+                                  backgroundColor: AppColors.primaryBlue,
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -161,12 +306,12 @@ class _ConversationsScreenState extends ConsumerState<ConversationsScreen> {
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
-                        vertical: 14,
+                        vertical: 4,
                       ),
-                      itemCount: state.conversations.length,
+                      itemCount: filteredConversations.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 10),
                       itemBuilder: (context, index) {
-                        final conv = state.conversations[index];
+                        final conv = filteredConversations[index];
                         return _ConversationListCard(
                           conversation: conv,
                           onTap: () async {
@@ -220,34 +365,33 @@ class _ConversationListCard extends StatelessWidget {
 
     return InkWell(
       key: Key('conversation_tile_${conversation.id}'),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(18),
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: hasUnread
-              ? NaseebakColors.accentGoldMuted.withOpacity(0.18)
-              : NaseebakColors.cardBackground,
-          borderRadius: BorderRadius.circular(16),
+              ? AppColors.surfaceSubtleBlue
+              : AppColors.cardWhite,
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: hasUnread
-                ? NaseebakColors.accentGold.withOpacity(0.55)
-                : NaseebakColors.borderLight,
+                ? AppColors.primaryBlue.withOpacity(0.35)
+                : AppColors.subtleBorder,
             width: hasUnread ? 1.4 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: hasUnread
-                  ? NaseebakColors.accentGold.withOpacity(0.08)
-                  : NaseebakColors.shadowColor,
-              offset: const Offset(0, 3),
-              blurRadius: 8,
+              color: Colors.black.withOpacity(0.03),
+              offset: const Offset(0, 2),
+              blurRadius: 6,
             ),
           ],
         ),
         child: Row(
           children: [
             Stack(
+              clipBehavior: Clip.none,
               children: [
                 AuthorizedPhotoAvatar(
                   photoId: other.primaryPhotoId,
@@ -255,23 +399,23 @@ class _ConversationListCard extends StatelessWidget {
                   fallbackName: other.fullName,
                   radius: 26,
                 ),
-                if (hasUnread)
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: NaseebakColors.accentGold,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: NaseebakColors.cardBackground,
-                          width: 2,
-                        ),
+                // Green Online Indicator Dot
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    width: 13,
+                    height: 13,
+                    decoration: BoxDecoration(
+                      color: AppColors.success,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 2,
                       ),
                     ),
                   ),
+                ),
               ],
             ),
             const SizedBox(width: 12),
@@ -287,10 +431,11 @@ class _ConversationListCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
+                            fontFamily: NaseebakTypography.fontFamily,
                             fontSize: 15,
                             fontWeight:
                                 hasUnread ? FontWeight.w800 : FontWeight.w700,
-                            color: NaseebakColors.textDarkNavy,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ),
@@ -298,12 +443,13 @@ class _ConversationListCard extends StatelessWidget {
                         Text(
                           timestampLabel,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontFamily: NaseebakTypography.fontFamily,
+                            fontSize: 11.5,
                             fontWeight:
                                 hasUnread ? FontWeight.w700 : FontWeight.w500,
                             color: hasUnread
-                                ? NaseebakColors.accentGoldDark
-                                : NaseebakColors.textMuted,
+                                ? AppColors.primaryBlue
+                                : AppColors.textSecondary,
                           ),
                         ),
                     ],
@@ -317,12 +463,13 @@ class _ConversationListCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 12.5,
+                            fontFamily: NaseebakTypography.fontFamily,
+                            fontSize: 13,
                             fontWeight:
-                                hasUnread ? FontWeight.w700 : FontWeight.w400,
+                                hasUnread ? FontWeight.w600 : FontWeight.w400,
                             color: hasUnread
-                                ? NaseebakColors.textDarkNavy
-                                : NaseebakColors.textWarmGray,
+                                ? AppColors.textPrimary
+                                : AppColors.textSecondary,
                           ),
                         ),
                       ),
@@ -335,26 +482,18 @@ class _ConversationListCard extends StatelessWidget {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                NaseebakColors.primaryNavy,
-                                NaseebakColors.primaryNavyDark,
-                              ],
-                            ),
+                            color: AppColors.primaryBlue,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: NaseebakColors.accentGold.withOpacity(0.4),
-                              width: 1,
-                            ),
                           ),
                           child: Text(
                             conversation.unreadCount > 99
                                 ? '+99'
                                 : '${conversation.unreadCount}',
                             style: const TextStyle(
+                              fontFamily: NaseebakTypography.fontFamily,
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
-                              color: NaseebakColors.accentGoldLight,
+                              color: Colors.white,
                             ),
                           ),
                         ),

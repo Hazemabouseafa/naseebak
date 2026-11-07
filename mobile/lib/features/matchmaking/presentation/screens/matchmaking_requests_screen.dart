@@ -134,76 +134,74 @@ class _MatchmakingRequestsScreenState
         initialIndex: widget.initialTabIndex,
         child: Scaffold(
           backgroundColor: AppColors.softBackground,
-          body: Column(
-            children: [
-              // Premium Royal Navy Curved Header with Tabs
-              NaseebakCurvedHeader(
-                title: 'طلبات التعارف',
-                subtitle: 'متابعة وإدارة طلبات التعارف الواردة والمرسلة',
-                actions: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.refresh_rounded,
-                      color: Colors.white,
-                      size: 21,
-                    ),
-                    tooltip: 'تحديث الطلبات',
-                    onPressed: state.isLoading
-                        ? null
-                        : () => ref
-                            .read(matchmakingProvider.notifier)
-                            .loadRequests(),
-                  ),
-                ],
-                bottom: Container(
-                  height: 44,
-                  margin: const EdgeInsets.only(top: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.18),
-                    borderRadius: BorderRadius.circular(22),
-                  ),
-                  child: TabBar(
-                    indicator: BoxDecoration(
-                      color: AppColors.cardWhite,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.12),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    labelColor: AppColors.primaryNavy,
-                    unselectedLabelColor: Colors.white.withOpacity(0.85),
-                    labelStyle: const TextStyle(
-                      fontFamily: NaseebakTypography.fontFamily,
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    unselectedLabelStyle: const TextStyle(
-                      fontFamily: NaseebakTypography.fontFamily,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    tabs: const [
-                      Tab(
-                        key: Key('tab_incoming_requests'),
-                        text: 'الواردة',
-                      ),
-                      Tab(
-                        key: Key('tab_sent_requests'),
-                        text: 'المرسلة',
-                      ),
-                      Tab(
-                        key: Key('tab_accepted_requests'),
-                        text: 'المقبولة',
-                      ),
-                    ],
-                  ),
+          appBar: AppBar(
+            backgroundColor: AppColors.cardWhite,
+            elevation: 0,
+            centerTitle: true,
+            title: const Text(
+              'طلبات التعارف',
+              style: TextStyle(
+                fontFamily: NaseebakTypography.fontFamily,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            actions: [
+              Padding(
+                padding: const EdgeInsetsDirectional.only(end: 14),
+                child: NaseebakCircleButton(
+                  icon: Icons.refresh_rounded,
+                  size: 40,
+                  iconSize: 20,
+                  onTap: state.isLoading
+                      ? null
+                      : () => ref
+                          .read(matchmakingProvider.notifier)
+                          .loadRequests(),
+                  tooltip: 'تحديث الطلبات',
                 ),
               ),
+            ],
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(48),
+              child: Container(
+                color: AppColors.cardWhite,
+                child: const TabBar(
+                  indicatorColor: AppColors.primaryBlue,
+                  indicatorWeight: 3,
+                  labelColor: AppColors.primaryBlue,
+                  unselectedLabelColor: AppColors.textSecondary,
+                  labelStyle: TextStyle(
+                    fontFamily: NaseebakTypography.fontFamily,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  unselectedLabelStyle: TextStyle(
+                    fontFamily: NaseebakTypography.fontFamily,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  tabs: [
+                    Tab(
+                      key: Key('tab_incoming_requests'),
+                      text: 'الواردة',
+                    ),
+                    Tab(
+                      key: Key('tab_sent_requests'),
+                      text: 'المرسلة',
+                    ),
+                    Tab(
+                      key: Key('tab_accepted_requests'),
+                      text: 'المقبولة',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          body: Column(
+            children: [
 
               Expanded(
                 child: Builder(
@@ -256,7 +254,7 @@ class _MatchmakingRequestsScreenState
                                 const SizedBox(height: 18),
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primaryNavy,
+                                    backgroundColor: AppColors.primaryBlue,
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(20),
@@ -533,7 +531,7 @@ class _MatchmakingRequestCard extends StatelessWidget {
                     child: ElevatedButton(
                       key: Key('request_accept_btn_${item.id}'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryNavy,
+                        backgroundColor: AppColors.primaryBlue,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         elevation: 0,
@@ -605,7 +603,7 @@ class _MatchmakingRequestCard extends StatelessWidget {
                   Expanded(
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryNavy,
+                        backgroundColor: AppColors.primaryBlue,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         elevation: 0,

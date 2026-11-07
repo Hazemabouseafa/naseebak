@@ -66,7 +66,7 @@ Route::prefix('v1')->group(function () {
 
         // Phase 3: Discovery, Advanced Search, Saved Preferences & Member Profiles
         Route::get('/discovery', [DiscoveryController::class, 'index']);
-        Route::get('/members/search', [DiscoveryController::class, 'search'])
+        Route::match(['get', 'post'], '/members/search', [DiscoveryController::class, 'search'])
             ->middleware('throttle:60,1');
         Route::get('/search/preferences', [DiscoveryController::class, 'getSearchPreferences']);
         Route::put('/search/preferences', [DiscoveryController::class, 'updateSearchPreferences'])

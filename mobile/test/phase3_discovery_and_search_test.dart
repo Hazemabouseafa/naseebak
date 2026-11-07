@@ -11,6 +11,45 @@ import 'package:naseebak_mobile/features/discovery/presentation/screens/search_r
 import 'package:naseebak_mobile/features/discovery/presentation/widgets/member_card.dart';
 
 class _FakeDiscoveryRepository extends Fake implements DiscoveryRepository {
+  final List<MemberCardModel> members;
+
+  _FakeDiscoveryRepository({this.members = const []});
+
+  @override
+  Future<({List<MemberCardModel> suggestedMembers, SearchPreferencesModel savedPreferences})>
+      fetchDiscoveryFeed() async => (
+            suggestedMembers: members,
+            savedPreferences: const SearchPreferencesModel(
+              gender: 'female',
+              minAge: 18,
+              maxAge: 60,
+            ),
+          );
+
+  @override
+  Future<SearchPreferencesModel> fetchSavedSearchPreferences() async =>
+      const SearchPreferencesModel(
+        gender: 'female',
+        minAge: 18,
+        maxAge: 60,
+      );
+
+  @override
+  Future<PaginatedMembersResponse> searchMembers({
+    required SearchPreferencesModel filters,
+    int page = 1,
+    int perPage = 20,
+    bool savePreferences = false,
+  }) async =>
+      PaginatedMembersResponse(
+        members: members,
+        currentPage: 1,
+        lastPage: 1,
+        perPage: perPage,
+        total: members.length,
+        hasMorePages: false,
+      );
+
   @override
   Future<List<MemberCardModel>> fetchFavorites() async => const [];
 }
@@ -150,6 +189,50 @@ void main() {
       expect(find.text('المفضلة'), findsOneWidget);
       expect(find.text('لم تقم بإضافة أي أعضاء إلى المفضلة بعد.'), findsOneWidget);
       expect(find.text('استكشف الأعضاء'), findsOneWidget);
+    });
+
+    testWidgets('Phase 16 — AdvancedSearchScreen submits search and renders eligible Account B on SearchResultsScreen',
+        (WidgetTester tester) async {
+      const accountB = MemberCardModel(
+        userId: 102,
+        fullName: 'مريم خالد',
+        gender: 'female',
+        ageYears: 26,
+        maritalStatus: 'single',
+        educationLevel: 'bachelor',
+        occupation: 'طبيبة صيدلانية',
+        smokingStatus: 'non_smoker',
+        nationality: 'مصرية',
+        countryOfResidence: 'مصر',
+        region: 'القاهرة',
+        photoPrivacy: 'public',
+        photoAuthorized: false,
+        isFavorited: false,
+      );
+
+      final fakeRepo = _FakeDiscoveryRepository(members: const [accountB]);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            discoveryRepositoryProvider.overrideWithValue(fakeRepo),
+          ],
+          child: const Directionality(
+            textDirection: TextDirection.rtl,
+            child: MaterialApp(
+              home: AdvancedSearchScreen(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('search_submit_btn')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('نتائج البحث'), findsOneWidget);
+      expect(find.text('مريم خالد • 26 سنة'), findsOneWidget);
+      expect(find.text('عزباء · القاهرة، مصر'), findsOneWidget);
     });
   });
 }

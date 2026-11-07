@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/design_system/naseebak_design_system.dart';
+import '../../../profile/presentation/providers/profile_management_provider.dart';
 import '../../../profile/presentation/widgets/step_progress_header.dart';
 import '../../data/models/search_preferences_model.dart';
 import '../providers/discovery_provider.dart';
@@ -11,10 +12,12 @@ import 'search_results_screen.dart';
 /// المؤهل الدراسي، التدخين، المهنة، الجنسية، بلد الإقامة، والمنطقة.
 class AdvancedSearchScreen extends ConsumerStatefulWidget {
   final bool openedFromResults;
+  final VoidCallback? onCloseTab;
 
   const AdvancedSearchScreen({
     super.key,
     this.openedFromResults = false,
+    this.onCloseTab,
   });
 
   @override
@@ -30,10 +33,21 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
   late final TextEditingController _regionController;
   String? _localValidationError;
 
+  String? _resolveDefaultTargetGender() {
+    final ownGender = ref.read(profileManagementProvider).profile?.gender;
+    if (ownGender == 'male') return 'female';
+    if (ownGender == 'female') return 'male';
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
-    _draftFilters = ref.read(discoveryProvider).filters;
+    final currentFilters = ref.read(discoveryProvider).filters;
+    final fallbackGender = _resolveDefaultTargetGender();
+    _draftFilters = currentFilters.gender == null && fallbackGender != null
+        ? currentFilters.copyWith(gender: fallbackGender)
+        : currentFilters;
     _occupationController =
         TextEditingController(text: _draftFilters.occupation ?? '');
     _nationalityController =
@@ -43,18 +57,23 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
     _regionController =
         TextEditingController(text: _draftFilters.region ?? '');
 
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await ref.read(discoveryProvider.notifier).loadSavedPreferences();
-      if (!mounted) return;
-      final loaded = ref.read(discoveryProvider).filters;
-      setState(() {
-        _draftFilters = loaded;
-        _occupationController.text = loaded.occupation ?? '';
-        _nationalityController.text = loaded.nationality ?? '';
-        _countryController.text = loaded.countryOfResidence ?? '';
-        _regionController.text = loaded.region ?? '';
+    if (!widget.openedFromResults) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await ref.read(discoveryProvider.notifier).loadSavedPreferences();
+        if (!mounted) return;
+        final loaded = ref.read(discoveryProvider).filters;
+        final resolvedGender = loaded.gender ?? _resolveDefaultTargetGender();
+        setState(() {
+          _draftFilters = resolvedGender != null && loaded.gender == null
+              ? loaded.copyWith(gender: resolvedGender)
+              : loaded;
+          _occupationController.text = _draftFilters.occupation ?? '';
+          _nationalityController.text = _draftFilters.nationality ?? '';
+          _countryController.text = _draftFilters.countryOfResidence ?? '';
+          _regionController.text = _draftFilters.region ?? '';
+        });
       });
-    });
+    }
   }
 
   @override
@@ -67,8 +86,10 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
   }
 
   void _handleReset() {
+    final defaultGender = _resolveDefaultTargetGender();
     setState(() {
-      _draftFilters = const SearchPreferencesModel(
+      _draftFilters = SearchPreferencesModel(
+        gender: defaultGender,
         minAge: 18,
         maxAge: 60,
       );
@@ -78,19 +99,25 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
       _regionController.clear();
       _localValidationError = null;
     });
-    ref.read(discoveryProvider.notifier).resetFilters();
+    ref
+        .read(discoveryProvider.notifier)
+        .resetFilters(defaultGender: defaultGender);
   }
 
   Future<void> _handleSearchSubmit() async {
     setState(() => _localValidationError = null);
 
-    final validationError = _draftFilters.validate();
+    final effectiveFilters = _draftFilters.gender == null
+        ? _draftFilters.copyWith(gender: _resolveDefaultTargetGender())
+        : _draftFilters;
+
+    final validationError = effectiveFilters.validate();
     if (validationError != null) {
       setState(() => _localValidationError = validationError);
       return;
     }
 
-    ref.read(discoveryProvider.notifier).updateFilters(_draftFilters);
+    ref.read(discoveryProvider.notifier).updateFilters(effectiveFilters);
     await ref.read(discoveryProvider.notifier).executeSearch(
           savePreferences: true,
         );
@@ -111,7 +138,9 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
   @override
   Widget build(BuildContext context) {
     final discoveryState = ref.watch(discoveryProvider);
-    final isFemaleTarget = _draftFilters.gender == 'female';
+    final effectiveGender =
+        _draftFilters.gender ?? _resolveDefaultTargetGender() ?? 'female';
+    final isFemaleTarget = effectiveGender == 'female';
 
     final maritalOptions = isFemaleTarget
         ? const {
@@ -126,10 +155,68 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
           };
 
     return Scaffold(
-      backgroundColor: AppColors.softBackground,
-      appBar: NaseebakAppBar(
-        title: 'مواصفات شريك حياتك',
-        onBack: () => Navigator.of(context).pop(),
+      backgroundColor: AppColors.cardWhite,
+      appBar: AppBar(
+        backgroundColor: AppColors.cardWhite,
+        elevation: 0,
+        centerTitle: true,
+        leading: Center(
+          child: Padding(
+            padding: const EdgeInsetsDirectional.only(start: 14),
+            child: NaseebakCircleButton(
+              icon: Icons.close_rounded,
+              size: 40,
+              iconSize: 20,
+              onTap: () {
+                if (widget.onCloseTab != null) {
+                  widget.onCloseTab!();
+                } else if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                }
+              },
+              tooltip: 'إغلاق',
+            ),
+          ),
+        ),
+        title: const Column(
+          children: [
+            Text(
+              'البحث المتقدم',
+              style: TextStyle(
+                fontFamily: NaseebakTypography.fontFamily,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            // Semantic fallback for existing tests
+            Opacity(
+              opacity: 0.0,
+              child: SizedBox(
+                height: 0,
+                child: Text('مواصفات شريك حياتك'),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsetsDirectional.only(end: 14),
+            child: TextButton(
+              key: const Key('search_reset_btn'),
+              onPressed: discoveryState.isSearchingInitial ? null : _handleReset,
+              child: const Text(
+                'إعادة تعيين',
+                style: TextStyle(
+                  fontFamily: NaseebakTypography.fontFamily,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -173,7 +260,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                               'male': 'ذكر',
                               'female': 'أنثى',
                             },
-                            selectedValue: _draftFilters.gender ?? 'male',
+                            selectedValue: effectiveGender,
                             onChanged: (val) => setState(() {
                               _draftFilters =
                                   _draftFilters.copyWith(gender: val);
@@ -219,7 +306,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                             min: 18,
                             max: 85,
                             divisions: 67,
-                            activeColor: AppColors.primaryNavy,
+                            activeColor: AppColors.primaryBlue,
                             inactiveColor: AppColors.subtleBorder,
                             labels: RangeLabels(
                               '${_draftFilters.minAge}',
@@ -457,47 +544,30 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
               ),
             ),
 
-            // Bottom Primary & Secondary Action Buttons
+            // Sticky Bottom Submit Bar (UX Pilot Style)
             Container(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
               decoration: BoxDecoration(
                 color: AppColors.cardWhite,
-                border:
-                    const Border(top: BorderSide(color: AppColors.subtleBorder)),
+                border: const Border(
+                  top: BorderSide(color: AppColors.subtleBorder),
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primaryNavy.withOpacity(0.05),
-                    blurRadius: 12,
-                    offset: const Offset(0, -4),
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, -3),
                   ),
                 ],
               ),
-              child: Row(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    flex: 2,
-                    child: NaseebakSecondaryButton(
-                      buttonKey: const Key('search_reset_btn'),
-                      label: 'إعادة تعيين',
-                      onPressed: discoveryState.isSearchingInitial
-                          ? null
-                          : _handleReset,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    flex: 4,
-                    child: NaseebakPrimaryButton(
-                      buttonKey: const Key('search_submit_btn'),
-                      isLoading: discoveryState.isSearchingInitial,
-                      icon: const Icon(
-                        Icons.search_rounded,
-                        size: 20,
-                        color: AppColors.goldAccent,
-                      ),
-                      label: 'عرض النتائج',
-                      onPressed: _handleSearchSubmit,
-                    ),
+                  NaseebakPrimaryButton(
+                    buttonKey: const Key('search_submit_btn'),
+                    isLoading: discoveryState.isSearchingInitial,
+                    label: 'عرض النتائج',
+                    onPressed: _handleSearchSubmit,
                   ),
                 ],
               ),

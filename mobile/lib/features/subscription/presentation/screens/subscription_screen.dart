@@ -42,38 +42,70 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.softBackground,
+        backgroundColor: AppColors.cardWhite,
+        appBar: AppBar(
+          backgroundColor: AppColors.cardWhite,
+          elevation: 0,
+          centerTitle: true,
+          leading: Center(
+            child: Padding(
+              padding: const EdgeInsetsDirectional.only(start: 14),
+              child: NaseebakCircleButton(
+                icon: Icons.close_rounded,
+                size: 40,
+                iconSize: 20,
+                onTap: Navigator.of(context).canPop()
+                    ? () => Navigator.of(context).pop()
+                    : null,
+                tooltip: 'إغلاق',
+              ),
+            ),
+          ),
+          title: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'نَصِيبُكَ بلس ✨',
+                style: TextStyle(
+                  fontFamily: NaseebakTypography.fontFamily,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              Opacity(
+                opacity: 0.0,
+                child: SizedBox(
+                  height: 0,
+                  child: Text('الاشتراك الشهري'),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              key: const Key('open_my_subscription_screen_btn'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const MySubscriptionScreen(),
+                  ),
+                );
+              },
+              child: const Text(
+                'اشتراكي',
+                style: TextStyle(
+                  fontFamily: NaseebakTypography.fontFamily,
+                  color: AppColors.primaryBlue,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14.5,
+                ),
+              ),
+            ),
+          ],
+        ),
         body: Column(
           children: [
-            // Premium Royal Navy Curved Header
-            NaseebakCurvedHeader(
-              title: 'الاشتراك الشهري',
-              subtitle: 'ابدأ خطوة جديدة نحو شريك حياتك',
-              onBack: Navigator.of(context).canPop()
-                  ? () => Navigator.of(context).pop()
-                  : null,
-              actions: [
-                TextButton(
-                  key: const Key('open_my_subscription_screen_btn'),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const MySubscriptionScreen(),
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    'اشتراكي',
-                    style: TextStyle(
-                      fontFamily: NaseebakTypography.fontFamily,
-                      color: AppColors.goldAccent,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
 
             Expanded(
               child: state.isLoading &&
@@ -549,12 +581,12 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                           ElevatedButton(
                             key: const Key('subscribe_now_btn'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primaryNavy,
+                              backgroundColor: AppColors.primaryBlue,
                               foregroundColor: Colors.white,
                               minimumSize: const Size.fromHeight(54),
-                              elevation: 2,
+                              elevation: 0,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(28),
+                                borderRadius: BorderRadius.circular(16),
                               ),
                             ),
                             onPressed: (state.isLoading ||

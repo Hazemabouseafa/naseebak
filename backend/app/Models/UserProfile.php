@@ -87,6 +87,48 @@ class UserProfile extends Model
     }
 
     /**
+     * Checks whether administrator profile moderation is required before discovery.
+     * Defaults to true (strict moderation) unless explicitly disabled in AppSetting.
+     */
+    public static function isModerationRequired(): bool
+    {
+        try {
+            $setting = AppSetting::where('setting_key', 'require_profile_moderation')->first();
+            if ($setting !== null && is_array($setting->setting_value) && array_key_exists('enabled', $setting->setting_value)) {
+                return (bool) $setting->setting_value['enabled'];
+            }
+        } catch (\Throwable) {
+            // Fallback to strict moderation if settings table is not yet available
+        }
+
+        return true;
+    }
+
+    /**
+     * Checks whether this profile satisfies the moderation policy for member discovery.
+     */
+    public function isModerationApprovedForDiscovery(): bool
+    {
+        if (self::isModerationRequired()) {
+            return $this->moderation_status === self::STATUS_APPROVED;
+        }
+
+        return $this->moderation_status !== self::STATUS_REJECTED;
+    }
+
+    /**
+     * Determines whether this profile satisfies moderation and visibility requirements for member discovery.
+     */
+    public function isDiscoverableByMembers(): bool
+    {
+        if (!$this->is_visible || (int) $this->age_years < 18) {
+            return false;
+        }
+
+        return $this->isModerationApprovedForDiscovery();
+    }
+
+    /**
      * Calculate exact age in years from date of birth.
      */
     public static function calculateAgeYears(string|Carbon $dateOfBirth): int

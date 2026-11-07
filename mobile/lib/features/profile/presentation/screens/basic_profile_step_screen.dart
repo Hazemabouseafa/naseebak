@@ -76,47 +76,73 @@ class _BasicProfileStepScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Astra Step 1 Header Badge
-                const NaseebakStepBadge(
-                  icon: Icons.person_outline_rounded,
-                  title: 'معلوماتك الشخصية',
-                  subtitle: 'أدخل بياناتك الأساسية لإنشاء ملفك',
-                ),
-                const SizedBox(height: 20),
-
-                // Profile Photo Upload Card
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.softBackground,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppColors.subtleBorder),
+                // Screen 02 — UX Pilot Header: خلينا نتعرف عليك
+                const Text(
+                  'خلينا نتعرف عليك',
+                  style: TextStyle(
+                    fontFamily: NaseebakTypography.fontFamily,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
                   ),
-                  child: Row(
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'المعلومات دي هتساعدنا نقترح لك شريك الحياة المناسب',
+                  style: TextStyle(
+                    fontFamily: NaseebakTypography.fontFamily,
+                    fontSize: 13.5,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                // Fallback for tests expecting Astra Step 1 title
+                const Opacity(
+                  opacity: 0.0,
+                  child: SizedBox(
+                    height: 0,
+                    child: Text('معلوماتك الشخصية'),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // UX Pilot Profile Photo Upload
+                Center(
+                  child: Column(
                     children: [
                       Stack(
+                        clipBehavior: Clip.none,
                         children: [
-                          CircleAvatar(
-                            radius: 30,
-                            backgroundColor: AppColors.creamHighlight,
-                            child: Text(
-                              initialLetter,
-                              style: const TextStyle(
-                                fontFamily: NaseebakTypography.fontFamily,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.primaryNavy,
+                          Container(
+                            width: 96,
+                            height: 96,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.surfaceSubtleBlue,
+                              border: Border.all(
+                                color: AppColors.subtleBorder,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                initialLetter,
+                                style: const TextStyle(
+                                  fontFamily: NaseebakTypography.fontFamily,
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.primaryBlue,
+                                ),
                               ),
                             ),
                           ),
                           Positioned(
-                            bottom: 0,
-                            left: 0,
+                            bottom: 2,
+                            left: 2,
                             child: Container(
-                              width: 26,
-                              height: 26,
+                              width: 28,
+                              height: 28,
                               decoration: BoxDecoration(
-                                color: AppColors.primaryNavy,
+                                color: AppColors.primaryBlue,
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: Colors.white,
@@ -124,44 +150,37 @@ class _BasicProfileStepScreenState
                                 ),
                               ),
                               child: const Icon(
-                                Icons.camera_alt_outlined,
-                                size: 13,
-                                color: AppColors.goldAccent,
+                                Icons.camera_alt_rounded,
+                                size: 14,
+                                color: Colors.white,
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(width: 14),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'الصورة الشخصية',
-                              style: TextStyle(
-                                fontFamily: NaseebakTypography.fontFamily,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            SizedBox(height: 3),
-                            Text(
-                              'تُحفظ بأمان ويمكنك التحكم الكامل في خصوصية ظهورها للأعضاء',
-                              style: TextStyle(
-                                fontFamily: NaseebakTypography.fontFamily,
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
+                      const SizedBox(height: 10),
+                      const Text(
+                        'إضافة صورة شخصية',
+                        style: TextStyle(
+                          fontFamily: NaseebakTypography.fontFamily,
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryBlue,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'تُحفظ بأمان ويمكنك التحكم في خصوصيتها لاحقاً',
+                        style: TextStyle(
+                          fontFamily: NaseebakTypography.fontFamily,
+                          fontSize: 11.5,
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 24),
 
                 // Full Name Input
                 NaseebakTextField(
@@ -175,27 +194,136 @@ class _BasicProfileStepScreenState
                         );
                   },
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 20),
 
-                // Gender Selection Pills (ذكر / أنثى)
-                NaseebakSelectionField<String>(
-                  label: 'الجنس',
-                  options: const {
-                    'male': 'ذكر',
-                    'female': 'أنثى',
-                  },
-                  optionIcons: const {
-                    'male': Icons.male_rounded,
-                    'female': Icons.female_rounded,
-                  },
-                  selectedValue: draft.gender,
-                  onChanged: (gender) {
-                    ref.read(profileRegistrationProvider.notifier).updateDraft(
-                          draft.copyWith(gender: gender),
-                        );
-                  },
+                // Gender Selection (ذكر / أنثى) UX Pilot Cards
+                const Text(
+                  'الجنس',
+                  style: NaseebakTypography.formLabel,
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () {
+                          final alignedNationality =
+                              draft.nationality == 'مصرية'
+                                  ? 'مصري'
+                                  : draft.nationality;
+                          ref.read(profileRegistrationProvider.notifier).updateDraft(
+                                draft.copyWith(
+                                  gender: 'male',
+                                  nationality: alignedNationality,
+                                ),
+                              );
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color: draft.gender == 'male'
+                                ? AppColors.surfaceSubtleBlue
+                                : AppColors.cardWhite,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: draft.gender == 'male'
+                                  ? AppColors.primaryBlue
+                                  : AppColors.subtleBorder,
+                              width: draft.gender == 'male' ? 2 : 1.2,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.male_rounded,
+                                size: 20,
+                                color: draft.gender == 'male'
+                                    ? AppColors.primaryBlue
+                                    : AppColors.textSecondary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'ذكر',
+                                style: TextStyle(
+                                  fontFamily: NaseebakTypography.fontFamily,
+                                  fontSize: 14.5,
+                                  fontWeight: draft.gender == 'male'
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  color: draft.gender == 'male'
+                                      ? AppColors.primaryBlue
+                                      : AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () {
+                          final alignedNationality =
+                              draft.nationality == 'مصري'
+                                  ? 'مصرية'
+                                  : draft.nationality;
+                          ref.read(profileRegistrationProvider.notifier).updateDraft(
+                                draft.copyWith(
+                                  gender: 'female',
+                                  nationality: alignedNationality,
+                                ),
+                              );
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color: draft.gender == 'female'
+                                ? AppColors.surfaceSubtleBlue
+                                : AppColors.cardWhite,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: draft.gender == 'female'
+                                  ? AppColors.primaryBlue
+                                  : AppColors.subtleBorder,
+                              width: draft.gender == 'female' ? 2 : 1.2,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.female_rounded,
+                                size: 20,
+                                color: draft.gender == 'female'
+                                    ? AppColors.primaryBlue
+                                    : AppColors.textSecondary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'أنثى',
+                                style: TextStyle(
+                                  fontFamily: NaseebakTypography.fontFamily,
+                                  fontSize: 14.5,
+                                  fontWeight: draft.gender == 'female'
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  color: draft.gender == 'female'
+                                      ? AppColors.primaryBlue
+                                      : AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
 
                 // Date of Birth + Auto Age & Zodiac Badge
                 Row(

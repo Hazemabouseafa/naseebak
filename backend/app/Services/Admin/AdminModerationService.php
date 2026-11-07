@@ -130,6 +130,12 @@ class AdminModerationService
                 'moderated_at' => now(),
             ]);
 
+            if ($newStatus === UserProfile::STATUS_APPROVED && $profile->user) {
+                $profile->user->update([
+                    'profile_completed' => true,
+                ]);
+            }
+
             ModerationHistory::create([
                 'administrator_id' => $actor->id,
                 'target_type' => UserProfile::class,

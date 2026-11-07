@@ -423,4 +423,125 @@ class DiscoveryAndSearchPhase3Test extends TestCase
             ->assertJsonPath('data.member.photo_authorized', false)
             ->assertJsonPath('data.member.primary_photo_url', null);
     }
+
+    /** 23. Phase 16 — Complete Two-Account Reciprocal Discovery & Filter Resilience Verification */
+    public function test_two_eligible_accounts_a_male_and_b_female_discover_each_other_across_all_scenarios(): void
+    {
+        $accountA = $this->createMember([
+            'account_status' => 'active',
+            'profile_completed' => true,
+        ], [
+            'full_name' => 'أحمد محمود',
+            'gender' => 'male',
+            'date_of_birth' => Carbon::now()->subYears(30)->format('Y-m-d'),
+            'age_years' => 30,
+            'marital_status' => 'single',
+            'education_level' => 'bachelor',
+            'occupation' => 'مهندس برمجيات',
+            'smoking_status' => 'non_smoker',
+            'nationality' => 'مصري',
+            'country_of_residence' => 'مصر',
+            'region' => 'القاهرة',
+            'is_visible' => true,
+            'moderation_status' => 'approved',
+        ]);
+
+        $accountB = $this->createMember([
+            'account_status' => 'active',
+            'profile_completed' => true,
+        ], [
+            'full_name' => 'مريم خالد',
+            'gender' => 'female',
+            'date_of_birth' => Carbon::now()->subYears(26)->format('Y-m-d'),
+            'age_years' => 26,
+            'marital_status' => 'single',
+            'education_level' => 'bachelor',
+            'occupation' => 'طبيبة صيدلانية',
+            'smoking_status' => 'non_smoker',
+            'nationality' => 'مصرية',
+            'country_of_residence' => 'جمهورية مصر العربية',
+            'region' => 'محافظة القاهرة',
+            'is_visible' => true,
+            'moderation_status' => 'approved',
+        ]);
+
+        // 1. Account A loads Home Discovery -> Account B appears
+        $this->actingAs($accountA, 'sanctum')
+            ->getJson('/api/v1/discovery')
+            ->assertOk()
+            ->assertJsonCount(1, 'data.suggested_members')
+            ->assertJsonPath('data.suggested_members.0.user_id', $accountB->id);
+
+        // 2. Account B loads Home Discovery -> Account A appears
+        $this->actingAs($accountB, 'sanctum')
+            ->getJson('/api/v1/discovery')
+            ->assertOk()
+            ->assertJsonCount(1, 'data.suggested_members')
+            ->assertJsonPath('data.suggested_members.0.user_id', $accountA->id);
+
+        // 3. Account A searches with empty optional filters -> Account B appears (defaults to opposite gender)
+        $this->actingAs($accountA, 'sanctum')
+            ->getJson('/api/v1/members/search')
+            ->assertOk()
+            ->assertJsonPath('data.pagination.total', 1)
+            ->assertJsonPath('data.members.0.user_id', $accountB->id);
+
+        // 4. Account B searches with empty optional filters -> Account A appears (defaults to opposite gender)
+        $this->actingAs($accountB, 'sanctum')
+            ->getJson('/api/v1/members/search')
+            ->assertOk()
+            ->assertJsonPath('data.pagination.total', 1)
+            ->assertJsonPath('data.members.0.user_id', $accountA->id);
+
+        // 5. Account A searches with scalar marital_statuses=single (Dio query format) & masculine nationality 'مصري' & short country 'مصر' & region 'القاهرة'
+        $this->actingAs($accountA, 'sanctum')
+            ->getJson('/api/v1/members/search?marital_statuses=single&nationality=' . urlencode('مصري') . '&country_of_residence=' . urlencode('مصر') . '&region=' . urlencode('القاهرة'))
+            ->assertOk()
+            ->assertJsonPath('data.pagination.total', 1)
+            ->assertJsonPath('data.members.0.user_id', $accountB->id);
+
+        // 6. Account B edits her already-approved profile via PATCH /api/v1/profile -> moderation_status stays 'approved'
+        $this->actingAs($accountB, 'sanctum')
+            ->patchJson('/api/v1/profile', [
+                'full_name' => 'مريم خالد عبد الرحمن',
+                'gender' => 'female',
+                'date_of_birth' => Carbon::now()->subYears(26)->format('Y-m-d'),
+                'marital_status' => 'single',
+                'previously_married' => false,
+                'has_children' => false,
+                'children_count' => 0,
+                'education_level' => 'bachelor',
+                'occupation' => 'طبيبة صيدلانية',
+                'height_cm' => 165,
+                'smoking_status' => 'non_smoker',
+                'home_ownership' => 'owned',
+                'hobbies' => ['القراءة', 'السفر'],
+                'nationality' => 'مصرية',
+                'country_of_residence' => 'مصر',
+                'region' => 'القاهرة',
+                'bio' => 'أبحث عن شريك حياة ملتزم.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.profile.moderation_status', 'approved');
+
+        // Account A still discovers Account B after profile edit
+        $this->actingAs($accountA, 'sanctum')
+            ->getJson('/api/v1/members/search')
+            ->assertOk()
+            ->assertJsonPath('data.pagination.total', 1)
+            ->assertJsonPath('data.members.0.user_id', $accountB->id);
+
+        // 7. Corrupted preferred_gender ('male' for male Account A) is automatically self-healed on discovery
+        \App\Models\UserPreference::updateOrCreate(
+            ['user_id' => $accountA->id],
+            ['preferred_gender' => 'male', 'min_age' => 18, 'max_age' => 60]
+        );
+
+        $this->actingAs($accountA, 'sanctum')
+            ->getJson('/api/v1/discovery')
+            ->assertOk()
+            ->assertJsonCount(1, 'data.suggested_members')
+            ->assertJsonPath('data.suggested_members.0.user_id', $accountB->id)
+            ->assertJsonPath('data.saved_preferences.preferred_gender', 'female');
+    }
 }

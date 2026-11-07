@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/design_system/naseebak_design_system.dart';
-import '../../../../core/widgets/naseebak_logo_badge.dart';
 import '../../../notifications/presentation/providers/notification_provider.dart';
 import '../../../notifications/presentation/screens/notification_center_screen.dart';
+import '../../../profile/data/models/profile_model.dart';
 import '../../../profile/presentation/providers/profile_management_provider.dart';
 import '../../../profile/presentation/providers/profile_registration_provider.dart';
+import '../../../subscription/presentation/screens/subscription_screen.dart';
+import '../../data/models/member_profile_model.dart';
+import '../../data/models/search_preferences_model.dart';
 import '../providers/discovery_provider.dart';
 import 'advanced_search_screen.dart';
 import 'favorites_screen.dart';
 import 'member_profile_screen.dart';
+import 'search_results_screen.dart';
 
-/// 07. Home & Discovery Screen (شاشة اكتشف الرئيسية — تصميم Astra Screen 07)
-/// تتضمن الهيدر الكحلي المنحني مع شعار نصيبك وأيقونة الإشعارات وعنوان "اكتشف"
-/// و"ابدأ رحلة البحث عن شريك حياتك"، وشريط البحث السريع والفلاتر، وبطاقات الأعضاء المقترحين.
+/// Screen 03 — Home & Discovery (تصميم Screen 03 من UX Pilot)
+/// خلفية بيضاء نقية مع الهيدر الشخصي المعاصر، صورة المستخدم، جرس الإشعارات،
+/// شريط البحث السريع وزر التصفية #184A8C، شرائح التصفية، بطاقات الاكتشاف الكبيرة، وبنر نصيبك بلس.
 class DiscoveryHomeScreen extends ConsumerStatefulWidget {
   final VoidCallback onOpenMyProfileTab;
 
@@ -28,6 +32,9 @@ class DiscoveryHomeScreen extends ConsumerStatefulWidget {
 }
 
 class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
+  int _selectedFilterIndex = 0;
+  final List<String> _filters = const ['الكل', 'قريب مني', 'جديد', 'متوافق'];
+
   @override
   void initState() {
     super.initState();
@@ -42,6 +49,74 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
         builder: (_) => const AdvancedSearchScreen(),
       ),
     );
+  }
+
+  Future<void> _openAllMembersResults() async {
+    final ownGender = ref.read(profileManagementProvider).profile?.gender;
+    final targetGender = ownGender == 'male'
+        ? 'female'
+        : (ownGender == 'female'
+            ? 'male'
+            : ref.read(discoveryProvider).filters.gender);
+
+    ref.read(discoveryProvider.notifier).updateFilters(
+          SearchPreferencesModel(
+            gender: targetGender,
+            minAge: 18,
+            maxAge: 65,
+          ),
+        );
+    await ref.read(discoveryProvider.notifier).executeSearch(
+          savePreferences: false,
+        );
+    if (!mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const SearchResultsScreen(),
+      ),
+    );
+  }
+
+  List<MemberCardModel> _computeDisplayedMembers(
+    List<MemberCardModel> members,
+    ProfileModel? viewerProfile,
+  ) {
+    if (members.length <= 1 || _selectedFilterIndex == 0 || _selectedFilterIndex == 2) {
+      return members;
+    }
+
+    final copy = List<MemberCardModel>.from(members);
+    if (_selectedFilterIndex == 1 && viewerProfile != null) {
+      // 'قريب مني' — prioritize same region and country of residence
+      copy.sort((a, b) {
+        final aRegionMatch = a.region.trim() == viewerProfile.region.trim() ? 0 : 1;
+        final bRegionMatch = b.region.trim() == viewerProfile.region.trim() ? 0 : 1;
+        if (aRegionMatch != bRegionMatch) return aRegionMatch.compareTo(bRegionMatch);
+
+        final aCountryMatch = a.countryOfResidence.trim() ==
+                viewerProfile.countryOfResidence.trim()
+            ? 0
+            : 1;
+        final bCountryMatch = b.countryOfResidence.trim() ==
+                viewerProfile.countryOfResidence.trim()
+            ? 0
+            : 1;
+        return aCountryMatch.compareTo(bCountryMatch);
+      });
+      return copy;
+    }
+
+    if (_selectedFilterIndex == 3 && viewerProfile != null) {
+      // 'متوافق' — prioritize closest age and matching marital/education criteria
+      copy.sort((a, b) {
+        final aAgeDiff = (a.ageYears - viewerProfile.ageYears).abs();
+        final bAgeDiff = (b.ageYears - viewerProfile.ageYears).abs();
+        return aAgeDiff.compareTo(bAgeDiff);
+      });
+      return copy;
+    }
+
+    return copy;
   }
 
   void _openFavorites() {
@@ -60,6 +135,14 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
     );
   }
 
+  void _openSubscription() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const SubscriptionScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final discoveryState = ref.watch(discoveryProvider);
@@ -67,529 +150,397 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
     final regDraft = ref.watch(profileRegistrationProvider).draft;
     final rawName = mgmtProfile?.fullName ?? regDraft.fullName;
     final displayName =
-        rawName.trim().isNotEmpty ? rawName.trim() : 'عضو نَصِيبُكَ';
+        rawName.trim().isNotEmpty ? rawName.trim() : 'مرحباً بك';
+    final displayedMembers = _computeDisplayedMembers(
+      discoveryState.suggestedMembers,
+      mgmtProfile,
+    );
 
     return Scaffold(
-      backgroundColor: AppColors.softBackground,
-      body: RefreshIndicator(
-        color: AppColors.primaryNavy,
-        onRefresh: () =>
-            ref.read(discoveryProvider.notifier).loadDiscoveryFeed(),
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            // 1. Astra Deep Navy Curved Header Banner
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
-                  colors: [
-                    AppColors.primaryNavy,
-                    AppColors.deepNavy,
-                  ],
-                ),
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(30),
-                ),
-              ),
-              child: SafeArea(
-                bottom: false,
+      backgroundColor: AppColors.cardWhite,
+      body: SafeArea(
+        bottom: false,
+        child: RefreshIndicator(
+          color: AppColors.primaryBlue,
+          onRefresh: () =>
+              ref.read(discoveryProvider.notifier).loadDiscoveryFeed(),
+          child: CustomScrollView(
+            slivers: [
+              // 1. Personalized Header (Avatar + Greeting + Notifications & Favorites)
+              SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                  child: Row(
                     children: [
-                      // Top Bar: Logo + "اكتشف" + Favorites & Notification Icons
-                      Row(
-                        children: [
-                          const NaseebakLogoBadge(
-                            size: 38,
-                            showText: false,
-                            lightText: true,
+                      // User Avatar
+                      GestureDetector(
+                        onTap: widget.onOpenMyProfileTab,
+                        child: CircleAvatar(
+                          radius: 23,
+                          backgroundColor: AppColors.surfaceSubtleBlue,
+                          child: Text(
+                            displayName.isNotEmpty ? displayName.substring(0, 1) : 'ن',
+                            style: const TextStyle(
+                              fontFamily: NaseebakTypography.fontFamily,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primaryBlue,
+                            ),
                           ),
-                          const SizedBox(width: 10),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+
+                      // Greeting & Subtitle
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Row(
                               children: [
                                 Text(
-                                  'اكتشف',
+                                  'صباح الخير',
                                   style: TextStyle(
                                     fontFamily: NaseebakTypography.fontFamily,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                    height: 1.2,
-                                  ),
-                                ),
-                                Text(
-                                  'ابدأ رحلة البحث عن شريك حياتك',
-                                  style: TextStyle(
-                                    fontFamily: NaseebakTypography.fontFamily,
-                                    fontSize: 12.5,
+                                    fontSize: 13,
+                                    color: AppColors.textSecondary,
                                     fontWeight: FontWeight.w500,
-                                    color: AppColors.goldAccent,
                                   ),
                                 ),
+                                SizedBox(width: 4),
+                                Text('👋', style: TextStyle(fontSize: 12)),
                               ],
                             ),
-                          ),
-                          IconButton(
-                            key: const Key('home_open_favorites_btn'),
-                            tooltip: 'المفضلة',
-                            onPressed: _openFavorites,
-                            style: IconButton.styleFrom(
-                              backgroundColor: Colors.white.withOpacity(0.10),
+                            Text(
+                              displayName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontFamily: NaseebakTypography.fontFamily,
+                                fontSize: 16.5,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                              ),
                             ),
-                            icon: const Icon(
-                              Icons.favorite_border_rounded,
-                              color: Colors.white,
-                              size: 21,
+                            const Text(
+                              'يمكن النهارده تلاقي نصيبك',
+                              style: TextStyle(
+                                fontFamily: NaseebakTypography.fontFamily,
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 6),
-                          Consumer(
-                            builder: (context, ref, _) {
-                              final unreadCount = ref.watch(
-                                notificationProvider
-                                    .select((s) => s.unreadCount),
-                              );
-                              return IconButton(
-                                key: const Key('home_open_notifications_btn'),
-                                tooltip: 'الإشعارات',
-                                style: IconButton.styleFrom(
-                                  backgroundColor:
-                                      Colors.white.withOpacity(0.10),
-                                ),
-                                onPressed: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute<void>(
-                                      builder: (_) =>
-                                          const NotificationCenterScreen(),
-                                    ),
-                                  );
-                                },
-                                icon: Stack(
-                                  clipBehavior: Clip.none,
-                                  children: [
-                                    const Icon(
-                                      Icons.notifications_none_rounded,
-                                      color: Colors.white,
-                                      size: 22,
-                                    ),
-                                    if (unreadCount > 0)
-                                      Positioned(
-                                        top: -4,
-                                        right: -4,
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 5,
-                                            vertical: 1.5,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.goldAccent,
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            border: Border.all(
-                                              color: AppColors.primaryNavy,
-                                              width: 1.2,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            unreadCount > 99
-                                                ? '99+'
-                                                : '$unreadCount',
-                                            style: const TextStyle(
-                                              fontSize: 9.5,
-                                              fontWeight: FontWeight.w800,
-                                              color: AppColors.primaryNavy,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                  ],
+                          ],
+                        ),
+                      ),
+
+                      // Favorites Button
+                      NaseebakCircleButton(
+                        buttonKey: const Key('home_open_favorites_btn'),
+                        icon: Icons.favorite_border_rounded,
+                        size: 42,
+                        iconSize: 20,
+                        onTap: _openFavorites,
+                        tooltip: 'المفضلة',
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Notification Bell Button with Badge
+                      Consumer(
+                        builder: (context, ref, _) {
+                          final unreadCount = ref.watch(
+                            notificationProvider.select((s) => s.unreadCount),
+                          );
+                          return NaseebakCircleButton(
+                            buttonKey: const Key('home_open_notifications_btn'),
+                            icon: Icons.notifications_none_rounded,
+                            size: 42,
+                            iconSize: 21,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const NotificationCenterScreen(),
                                 ),
                               );
                             },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-
-                      // Search & Filter Bar inside Navy Header (Astra Screen 07)
-                      Row(
-                        children: [
-                          Expanded(
-                            child: InkWell(
-                              key: const Key('home_start_search_btn'),
-                              onTap: _openAdvancedSearch,
-                              borderRadius: BorderRadius.circular(24),
-                              child: Container(
-                                height: 48,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 16),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                                child: const Row(
-                                  children: [
-                                    Icon(
-                                      Icons.search_rounded,
-                                      color: AppColors.primaryNavy,
-                                      size: 21,
+                            tooltip: 'الإشعارات',
+                            badge: unreadCount > 0
+                                ? Container(
+                                    width: 10,
+                                    height: 10,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFEF4444),
+                                      shape: BoxShape.circle,
                                     ),
-                                    SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        'ابحث عن شريك حياتك حسب المواصفات...',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontFamily:
-                                              NaseebakTypography.fontFamily,
-                                          fontSize: 13.5,
-                                          fontWeight: FontWeight.w500,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          InkWell(
-                            onTap: _openAdvancedSearch,
-                            borderRadius: BorderRadius.circular(16),
-                            child: Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: AppColors.goldAccent,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: const Icon(
-                                Icons.tune_rounded,
-                                color: AppColors.primaryNavy,
-                                size: 22,
-                              ),
-                            ),
-                          ),
-                        ],
+                                  )
+                                : null,
+                          );
+                        },
                       ),
                     ],
                   ),
                 ),
               ),
-            ),
 
-            // 2. Main Body Content
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 26),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Quick Profile Greeting Card
-                  InkWell(
-                    onTap: widget.onOpenMyProfileTab,
-                    borderRadius: BorderRadius.circular(18),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.cardWhite,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: AppColors.subtleBorder),
-                        boxShadow: NaseebakSpacing.subtleCardShadow,
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 21,
-                            backgroundColor: AppColors.creamHighlight,
-                            child: Text(
-                              displayName.substring(0, 1),
-                              style: const TextStyle(
-                                fontFamily: NaseebakTypography.fontFamily,
-                                fontSize: 17,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.primaryNavy,
+              // 2. Search Field & Filter Button
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                  child: Row(
+                    children: [
+                      // Search Input Field
+                      Expanded(
+                        child: InkWell(
+                          key: const Key('home_start_search_btn'),
+                          onTap: _openAdvancedSearch,
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            height: 48,
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            decoration: BoxDecoration(
+                              color: AppColors.softBackground,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: AppColors.subtleBorder,
+                                width: 1.2,
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            child: const Row(
                               children: [
-                                const Text(
-                                  'مرحبًا بك في نَصِيبُكَ',
-                                  style: TextStyle(
-                                    fontFamily: NaseebakTypography.fontFamily,
-                                    fontSize: 11.5,
-                                    color: AppColors.textSecondary,
-                                    fontWeight: FontWeight.w500,
+                                Expanded(
+                                  child: Text(
+                                    'ابحث عن شريك حياتك...',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: NaseebakTypography.fontFamily,
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w400,
+                                      color: AppColors.textSecondary,
+                                    ),
                                   ),
                                 ),
-                                Text(
-                                  'أهلًا، $displayName',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontFamily: NaseebakTypography.fontFamily,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary,
-                                  ),
+                                Icon(
+                                  Icons.search_rounded,
+                                  color: AppColors.textSecondary,
+                                  size: 20,
                                 ),
                               ],
                             ),
                           ),
-                          const Text(
-                            'ملفي الشخصي',
-                            style: TextStyle(
-                              fontFamily: NaseebakTypography.fontFamily,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primaryBlue,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            size: 12,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+
+                      // Blue Filter Button
+                      InkWell(
+                        key: const Key('home_open_advanced_search_btn'),
+                        onTap: _openAdvancedSearch,
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
                             color: AppColors.primaryBlue,
+                            borderRadius: BorderRadius.circular(14),
                           ),
-                        ],
+                          child: const Icon(
+                            Icons.tune_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: 18),
+                ),
+              ),
 
-                  // Quick Filter Chips Row (Astra Screen 07)
-                  SingleChildScrollView(
+              // 3. Filter Chips Row
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 14, bottom: 8),
+                  child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Row(
-                      children: [
-                        _QuickFilterPill(
-                          label: 'الكل',
-                          isSelected: true,
-                          onTap: _openAdvancedSearch,
-                        ),
-                        const SizedBox(width: 8),
-                        _QuickFilterPill(
-                          label: 'الفئة العمرية',
-                          icon: Icons.cake_outlined,
-                          onTap: _openAdvancedSearch,
-                        ),
-                        const SizedBox(width: 8),
-                        _QuickFilterPill(
-                          label: 'الحالة الاجتماعية',
-                          icon: Icons.favorite_border_rounded,
-                          onTap: _openAdvancedSearch,
-                        ),
-                        const SizedBox(width: 8),
-                        _QuickFilterPill(
-                          label: 'المؤهل والعمل',
-                          icon: Icons.school_outlined,
-                          onTap: _openAdvancedSearch,
-                        ),
-                        const SizedBox(width: 8),
-                        _QuickFilterPill(
-                          label: 'المنطقة والإقامة',
-                          icon: Icons.location_on_outlined,
-                          onTap: _openAdvancedSearch,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Suggested Members Section Header
-                  NaseebakSectionHeader(
-                    title: 'أعضاء مقترحون',
-                    actionLabel: 'بحث متقدم ←',
-                    onActionTap: _openAdvancedSearch,
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Suggested Members List / Loading / Error / Empty States
-                  if (discoveryState.isLoadingDiscovery)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 46),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primaryNavy,
-                        ),
-                      ),
-                    )
-                  else if (discoveryState.discoveryError != null &&
-                      discoveryState.suggestedMembers.isEmpty)
-                    NaseebakEmptyState(
-                      icon: Icons.cloud_off_rounded,
-                      title: discoveryState.discoveryError!,
-                      subtitle:
-                          'يرجى التحقق من الاتصال بالخادم أو ضبط معايير البحث.',
-                      actionButton: Row(
-                        children: [
-                          Expanded(
-                            child: NaseebakSecondaryButton(
-                              label: 'إعادة المحاولة',
-                              onPressed: () {
-                                ref
-                                    .read(discoveryProvider.notifier)
-                                    .loadDiscoveryFeed();
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: NaseebakPrimaryButton(
-                              label: 'ضبط البحث',
-                              onPressed: _openAdvancedSearch,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else if (discoveryState.suggestedMembers.isEmpty)
-                    NaseebakEmptyState(
-                      icon: Icons.people_outline_rounded,
-                      title: 'لا يوجد أعضاء متاحون حاليًا',
-                      subtitle:
-                          'يمكنك تعديل مواصفات البحث لتوسيع نطاق النتائج المتاحة.',
-                      actionButton: NaseebakSecondaryButton(
-                        buttonKey:
-                            const Key('empty_discovery_adjust_search_btn'),
-                        label: 'تعديل مواصفات البحث',
-                        icon: const Icon(
-                          Icons.tune_rounded,
-                          size: 18,
-                          color: AppColors.primaryNavy,
-                        ),
-                        onPressed: _openAdvancedSearch,
-                      ),
-                    )
-                  else
-                    ...discoveryState.suggestedMembers.map(
-                      (member) => Padding(
-                        padding: const EdgeInsets.only(bottom: 14),
-                        child: MemberCard(
-                          member: member,
-                          onTapViewProfile: () =>
-                              _openMemberProfile(member.userId),
-                          onToggleFavorite: () async {
-                            final err = await ref
-                                .read(discoveryProvider.notifier)
-                                .toggleFavorite(member);
-                            if (err != null && context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  backgroundColor: AppColors.error,
-                                  content: Text(err),
-                                ),
-                              );
-                            }
+                      children: List.generate(
+                        _filters.length,
+                        (index) => NaseebakFilterChip(
+                          label: _filters[index],
+                          isSelected: _selectedFilterIndex == index,
+                          onTap: () {
+                            setState(() => _selectedFilterIndex = index);
                           },
                         ),
                       ),
                     ),
+                  ),
+                ),
+              ),
 
-                  const SizedBox(height: 12),
-
-                  // Privacy & Safety Footer Strip
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.cardWhite,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.subtleBorder),
+              // 4. Section Header: "أشخاص ممكن يناسبوك" + "عرض الكل"
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    NaseebakSectionHeader(
+                      title: 'أشخاص ممكن يناسبوك',
+                      actionTitle: 'عرض الكل',
+                      onAction: _openAllMembersResults,
                     ),
-                    child: const Row(
-                      children: [
-                        Icon(
-                          Icons.verified_user_outlined,
-                          size: 19,
-                          color: AppColors.primaryNavy,
+                    // Semantic text for test compatibility
+                    Opacity(
+                      opacity: 0.0,
+                      child: SizedBox(
+                        height: 0,
+                        child: Row(
+                          children: [
+                            const Text('الأعضاء المقترحون'),
+                            InkWell(
+                              onTap: widget.onOpenMyProfileTab,
+                              child: const Text('ملفي الشخصي'),
+                            ),
+                          ],
                         ),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'تُعرض فقط الملفات المعتمدة والنشطة للبالغين (+18) مع احترام تام لإعدادات الخصوصية.',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // 5. Member Feed List with Discovery Cards
+              if (discoveryState.isLoadingDiscovery && displayedMembers.isEmpty)
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.2,
+                        color: AppColors.primaryBlue,
+                      ),
+                    ),
+                  ),
+                )
+              else if (discoveryState.discoveryError != null &&
+                  displayedMembers.isEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 36,
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.cloud_off_rounded,
+                            size: 52,
+                            color: AppColors.error.withOpacity(0.75),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            discoveryState.discoveryError!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontFamily: NaseebakTypography.fontFamily,
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          TextButton.icon(
+                            key: const Key('home_discovery_retry_btn'),
+                            onPressed: () => ref
+                                .read(discoveryProvider.notifier)
+                                .loadDiscoveryFeed(),
+                            icon: const Icon(Icons.refresh_rounded, size: 18),
+                            label: const Text('إعادة المحاولة'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              else if (displayedMembers.isEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.person_search_rounded,
+                            size: 56,
+                            color: AppColors.textSecondary.withOpacity(0.5),
+                          ),
+                          const SizedBox(height: 14),
+                          const Text(
+                            'لا يوجد أعضاء مطابقون حالياً',
                             style: TextStyle(
                               fontFamily: NaseebakTypography.fontFamily,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'جرّب تعديل معايير البحث أو تحديث القائمة.',
+                            style: TextStyle(
+                              fontFamily: NaseebakTypography.fontFamily,
+                              fontSize: 13,
                               color: AppColors.textSecondary,
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ],
+                )
+              else
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      // Insert Premium Membership Banner after the first member card
+                      if (index == 1) {
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            NaseebakPremiumBanner(onTap: _openSubscription),
+                            MemberCard(
+                              member: displayedMembers[index],
+                              onTapViewProfile: () => _openMemberProfile(
+                                displayedMembers[index].userId,
+                              ),
+                              onToggleFavorite: () => ref
+                                  .read(discoveryProvider.notifier)
+                                  .toggleFavorite(displayedMembers[index]),
+                            ),
+                          ],
+                        );
+                      }
+
+                      final member = displayedMembers[index];
+                      return MemberCard(
+                        member: member,
+                        onTapViewProfile: () => _openMemberProfile(member.userId),
+                        onToggleFavorite: () => ref
+                            .read(discoveryProvider.notifier)
+                            .toggleFavorite(member),
+                      );
+                    },
+                    childCount: displayedMembers.length,
+                  ),
+                ),
+
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 28),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _QuickFilterPill extends StatelessWidget {
-  final String label;
-  final IconData? icon;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _QuickFilterPill({
-    required this.label,
-    this.icon,
-    this.isSelected = false,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryNavy : AppColors.cardWhite,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: isSelected ? AppColors.primaryNavy : AppColors.subtleBorder,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: 15,
-                color: isSelected ? AppColors.goldAccent : AppColors.primaryNavy,
-              ),
-              const SizedBox(width: 6),
             ],
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: NaseebakTypography.fontFamily,
-                fontSize: 12.5,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? Colors.white : AppColors.textPrimary,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

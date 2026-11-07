@@ -44,24 +44,49 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: NaseebakColors.backgroundBeige,
+        backgroundColor: AppColors.cardWhite,
+        appBar: AppBar(
+          backgroundColor: AppColors.cardWhite,
+          elevation: 0,
+          centerTitle: true,
+          title: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'حسابي',
+                style: TextStyle(
+                  fontFamily: NaseebakTypography.fontFamily,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              Opacity(
+                opacity: 0.0,
+                child: SizedBox(
+                  height: 0,
+                  child: Text('ملفي الشخصي'),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: 14),
+              child: NaseebakCircleButton(
+                icon: Icons.refresh_rounded,
+                size: 40,
+                iconSize: 20,
+                onTap: state.isLoading
+                    ? null
+                    : () => ref.read(profileManagementProvider.notifier).loadOwnProfile(),
+                tooltip: 'تحديث البيانات',
+              ),
+            ),
+          ],
+        ),
         body: Column(
           children: [
-            NaseebakCurvedHeader(
-              title: 'ملفي الشخصي',
-              subtitle: 'بياناتك الحقيقية وإعدادات حسابك في نَصِيبُكَ',
-              trailing: [
-                IconButton(
-                  tooltip: 'تحديث البيانات',
-                  icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 22),
-                  onPressed: state.isLoading
-                      ? null
-                      : () {
-                          ref.read(profileManagementProvider.notifier).loadOwnProfile();
-                        },
-                ),
-              ],
-            ),
             Expanded(
               child: Builder(
                 builder: (context) {
@@ -235,7 +260,7 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                                   value: (state.completionPercentage / 100)
                                       .clamp(0.0, 1.0),
                                   minHeight: 7,
-                                  backgroundColor: NaseebakColors.backgroundBeige,
+                                  backgroundColor: AppColors.cardWhite,
                                   valueColor: const AlwaysStoppedAnimation<Color>(
                                     NaseebakColors.accentGold,
                                   ),

@@ -31,15 +31,21 @@ class DiscoveryController extends Controller
         $viewer->loadMissing(['profile', 'preferences']);
 
         $preferences = $viewer->preferences;
-        $defaultOppositeGender = null;
-        if ($viewer->profile?->gender === 'male') {
-            $defaultOppositeGender = 'female';
-        } elseif ($viewer->profile?->gender === 'female') {
-            $defaultOppositeGender = 'male';
+        $defaultOppositeGender = $this->resolveOppositeGender($viewer);
+
+        // Self-heal any corrupted preferred_gender that was accidentally saved as viewer's own gender
+        if (
+            $preferences !== null
+            && $defaultOppositeGender !== null
+            && $preferences->preferred_gender === $viewer->profile?->gender
+        ) {
+            $preferences->update(['preferred_gender' => $defaultOppositeGender]);
         }
 
+        $targetGender = $defaultOppositeGender ?? $preferences?->preferred_gender;
+
         $filters = [
-            'gender' => $preferences?->preferred_gender ?? $defaultOppositeGender,
+            'gender' => $targetGender,
             'min_age' => $preferences?->min_age ?? 18,
             'max_age' => $preferences?->max_age ?? 65,
             'marital_statuses' => $preferences?->marital_statuses ?? [],
@@ -57,11 +63,11 @@ class DiscoveryController extends Controller
 
         $suggestedProfiles = $query->limit(15)->get();
 
-        // If strict saved preferences yield 0 results, fall back to recent eligible members (preserving gender preference if set)
+        // If strict saved preferences yield 0 results, fall back to recent eligible members (preserving opposite gender preference)
         if ($suggestedProfiles->isEmpty()) {
             $fallbackQuery = $this->searchQueryService->buildEligibleProfilesQuery($viewer);
-            if (!empty($filters['gender'])) {
-                $fallbackQuery->where('user_profiles.gender', '=', $filters['gender']);
+            if (!empty($targetGender)) {
+                $fallbackQuery->where('user_profiles.gender', '=', $targetGender);
             }
             $fallbackQuery->orderByDesc('user_profiles.created_at')
                 ->orderByDesc('user_profiles.id');
@@ -90,7 +96,14 @@ class DiscoveryController extends Controller
     {
         /** @var User $viewer */
         $viewer = $request->user();
+        $viewer->loadMissing('profile');
+
         $filters = $request->normalizedFilters();
+        $defaultOppositeGender = $this->resolveOppositeGender($viewer);
+
+        if (empty($filters['gender']) && $defaultOppositeGender !== null) {
+            $filters['gender'] = $defaultOppositeGender;
+        }
 
         // Optionally persist preferences when user initiates search from Screen 08
         if ($request->boolean('save_preferences', false)) {
@@ -131,11 +144,13 @@ class DiscoveryController extends Controller
         $viewer = $request->user();
         $viewer->loadMissing(['profile', 'preferences']);
 
-        $defaultOppositeGender = null;
-        if ($viewer->profile?->gender === 'male') {
-            $defaultOppositeGender = 'female';
-        } elseif ($viewer->profile?->gender === 'female') {
-            $defaultOppositeGender = 'male';
+        $defaultOppositeGender = $this->resolveOppositeGender($viewer);
+        if (
+            $viewer->preferences !== null
+            && $defaultOppositeGender !== null
+            && $viewer->preferences->preferred_gender === $viewer->profile?->gender
+        ) {
+            $viewer->preferences->update(['preferred_gender' => $defaultOppositeGender]);
         }
 
         return response()->json([
@@ -153,17 +168,21 @@ class DiscoveryController extends Controller
     {
         /** @var User $viewer */
         $viewer = $request->user();
+        $viewer->loadMissing('profile');
         $validated = $request->validated();
+        $defaultOppositeGender = $this->resolveOppositeGender($viewer);
 
         $smokingStatus = $validated['smoking_status'] ?? null;
         if ($smokingStatus === 'all') {
             $smokingStatus = null;
         }
 
+        $preferredGender = $validated['preferred_gender'] ?? $defaultOppositeGender;
+
         $preferences = UserPreference::updateOrCreate(
             ['user_id' => $viewer->id],
             [
-                'preferred_gender' => $validated['preferred_gender'] ?? null,
+                'preferred_gender' => $preferredGender,
                 'min_age' => (int) $validated['min_age'],
                 'max_age' => (int) $validated['max_age'],
                 'marital_statuses' => !empty($validated['marital_statuses'])
@@ -190,17 +209,32 @@ class DiscoveryController extends Controller
             'status' => 'success',
             'message' => 'تم حفظ تفضيلات البحث بنجاح.',
             'data' => [
-                'preferences' => $this->formatPreferencesPayload($preferences, null),
+                'preferences' => $this->formatPreferencesPayload($preferences, $defaultOppositeGender),
             ],
         ]);
     }
 
+    private function resolveOppositeGender(User $viewer): ?string
+    {
+        return match ($viewer->profile?->gender) {
+            'male' => 'female',
+            'female' => 'male',
+            default => null,
+        };
+    }
+
     private function persistPreferencesFromFilters(User $viewer, array $filters): void
     {
+        $defaultOppositeGender = $this->resolveOppositeGender($viewer);
+        $preferredGender = $filters['gender'] ?? $defaultOppositeGender;
+        if ($defaultOppositeGender !== null && $preferredGender === $viewer->profile?->gender) {
+            $preferredGender = $defaultOppositeGender;
+        }
+
         UserPreference::updateOrCreate(
             ['user_id' => $viewer->id],
             [
-                'preferred_gender' => $filters['gender'],
+                'preferred_gender' => $preferredGender,
                 'min_age' => $filters['min_age'] ?? 18,
                 'max_age' => $filters['max_age'] ?? 60,
                 'marital_statuses' => !empty($filters['marital_statuses'])

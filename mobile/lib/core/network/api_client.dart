@@ -20,6 +20,7 @@ class ApiClient {
                 baseUrl: ApiEndpoints.baseUrl,
                 connectTimeout: const Duration(seconds: 15),
                 receiveTimeout: const Duration(seconds: 15),
+                listFormat: ListFormat.multiCompatible,
                 headers: {
                   'Accept': 'application/json',
                   'Content-Type': 'application/json',

@@ -35,7 +35,7 @@ class MemberSearchQueryService
     {
         $maxAdultBirthDate = Carbon::now()->subYears(18)->format('Y-m-d');
 
-        return UserProfile::query()
+        $query = UserProfile::query()
             ->select([
                 'user_profiles.id',
                 'user_profiles.user_id',
@@ -61,8 +61,15 @@ class MemberSearchQueryService
             ->whereNull('users.deleted_at')
             ->where('users.account_status', '=', 'active')
             ->where('users.profile_completed', '=', true)
-            ->where('user_profiles.is_visible', '=', true)
-            ->where('user_profiles.moderation_status', '=', 'approved')
+            ->where('user_profiles.is_visible', '=', true);
+
+        if (UserProfile::isModerationRequired()) {
+            $query->where('user_profiles.moderation_status', '=', UserProfile::STATUS_APPROVED);
+        } else {
+            $query->where('user_profiles.moderation_status', '!=', UserProfile::STATUS_REJECTED);
+        }
+
+        return $query
             ->where('user_profiles.age_years', '>=', 18)
             ->whereDate('user_profiles.date_of_birth', '<=', $maxAdultBirthDate)
             ->whereNotExists(function ($subQuery) use ($viewer) {
@@ -119,15 +126,18 @@ class MemberSearchQueryService
         }
 
         if (!empty($filters['nationality'])) {
-            $query->where('user_profiles.nationality', '=', $filters['nationality']);
+            $nationalityVariants = $this->resolveNationalityVariants((string) $filters['nationality']);
+            $query->whereIn('user_profiles.nationality', $nationalityVariants);
         }
 
         if (!empty($filters['country_of_residence'])) {
-            $query->where('user_profiles.country_of_residence', '=', $filters['country_of_residence']);
+            $countryVariants = $this->resolveCountryVariants((string) $filters['country_of_residence']);
+            $query->whereIn('user_profiles.country_of_residence', $countryVariants);
         }
 
         if (!empty($filters['region'])) {
-            $query->where('user_profiles.region', '=', $filters['region']);
+            $regionVariants = $this->resolveRegionVariants((string) $filters['region']);
+            $query->whereIn('user_profiles.region', $regionVariants);
         }
 
         // Deterministic sorting with secondary key (user_profiles.id) to prevent pagination duplicates
@@ -219,5 +229,122 @@ class MemberSearchQueryService
                 'is_favorited' => $favoritedIds->has($profile->user_id),
             ];
         });
+    }
+
+    /**
+     * Expands an Arabic nationality term to include both masculine and feminine inflections
+     * (e.g. 'مصري' <-> 'مصرية', 'سعودي' <-> 'سعودية') so gender inflection differences
+     * never exclude eligible members.
+     *
+     * @return array<int, string>
+     */
+    private function resolveNationalityVariants(string $nationality): array
+    {
+        $trimmed = trim($nationality);
+        if ($trimmed === '') {
+            return [];
+        }
+
+        $variants = [$trimmed];
+
+        // Strip trailing feminine taa marbuta / haa to obtain masculine stem
+        $stem = preg_replace('/[ةه]$/u', '', $trimmed) ?? $trimmed;
+        if ($stem !== '') {
+            $variants[] = $stem;
+            $variants[] = $stem . 'ة';
+            $variants[] = $stem . 'ه';
+        }
+
+        // Common country-name / nisba synonyms
+        $synonymGroups = [
+            ['مصري', 'مصرية', 'مصريه', 'مصر'],
+            ['سعودي', 'سعودية', 'سعوديه', 'السعودية'],
+            ['إماراتي', 'إماراتية', 'اماراتي', 'اماراتية', 'الإمارات', 'الامارات'],
+            ['أردني', 'أردنية', 'اردني', 'اردنية', 'الأردن', 'الاردن'],
+            ['كويتي', 'كويتية', 'الكويت'],
+            ['قطري', 'قطرية', 'قطر'],
+            ['بحريني', 'بحرينية', 'البحرين'],
+            ['عماني', 'عمانية', 'عُماني', 'عُمانية', 'عمان', 'سلطنة عمان'],
+            ['مغربي', 'مغربية', 'المغرب'],
+            ['تونسي', 'تونسية', 'تونس'],
+            ['جزائري', 'جزائرية', 'الجزائر'],
+            ['سوداني', 'سودانية', 'السودان'],
+            ['سوري', 'سورية', 'سوريا'],
+            ['لبناني', 'لبنانية', 'لبنان'],
+            ['فلسطيني', 'فلسطينية', 'فلسطين'],
+            ['عراقي', 'عراقية', 'العراق'],
+            ['يمني', 'يمنية', 'اليمن'],
+            ['ليبي', 'ليبية', 'ليبيا'],
+        ];
+
+        foreach ($synonymGroups as $group) {
+            if (in_array($trimmed, $group, true) || in_array($stem, $group, true)) {
+                $variants = array_merge($variants, $group);
+            }
+        }
+
+        return array_values(array_unique(array_filter($variants, fn (string $v) => $v !== '')));
+    }
+
+    /**
+     * Expands common Arabic country names to include short and official forms.
+     *
+     * @return array<int, string>
+     */
+    private function resolveCountryVariants(string $country): array
+    {
+        $trimmed = trim($country);
+        if ($trimmed === '') {
+            return [];
+        }
+
+        $variants = [$trimmed];
+
+        $countryGroups = [
+            ['مصر', 'جمهورية مصر العربية'],
+            ['السعودية', 'المملكة العربية السعودية'],
+            ['الإمارات', 'الامارات', 'الإمارات العربية المتحدة', 'الامارات العربية المتحدة'],
+            ['الأردن', 'الاردن', 'المملكة الأردنية الهاشمية'],
+            ['الكويت', 'دولة الكويت'],
+            ['قطر', 'دولة قطر'],
+            ['البحرين', 'مملكة البحرين'],
+            ['عمان', 'سلطنة عمان', 'سلطنة عُمان'],
+            ['المغرب', 'المملكة المغربية'],
+            ['تونس', 'الجمهورية التونسية'],
+            ['الجزائر', 'الجمهورية الجزائرية'],
+            ['السودان', 'جمهورية السودان'],
+        ];
+
+        foreach ($countryGroups as $group) {
+            if (in_array($trimmed, $group, true)) {
+                $variants = array_merge($variants, $group);
+            }
+        }
+
+        return array_values(array_unique($variants));
+    }
+
+    /**
+     * Expands an Arabic region/governorate name to match with or without 'محافظة ' / 'منطقة ' prefixes.
+     *
+     * @return array<int, string>
+     */
+    private function resolveRegionVariants(string $region): array
+    {
+        $trimmed = trim($region);
+        if ($trimmed === '') {
+            return [];
+        }
+
+        $base = preg_replace('/^(محافظة|منطقة|مدينة)\s+/u', '', $trimmed) ?? $trimmed;
+        $base = trim($base);
+
+        return array_values(array_unique(array_filter([
+            $trimmed,
+            $base,
+            'محافظة ' . $base,
+            'منطقة ' . $base,
+            'مدينة ' . $base,
+        ], fn (string $v) => $v !== '')));
     }
 }

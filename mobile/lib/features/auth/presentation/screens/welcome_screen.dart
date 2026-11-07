@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/design_system/naseebak_design_system.dart';
-import '../../../../core/widgets/naseebak_logo_badge.dart';
 import '../providers/auth_provider.dart';
 
-/// 01. Splash / Welcome Screen (شاشة الترحيب الفاخرة — تصميم Astra Screen 01)
-/// خلفية كحلية ملكية متدرجة (#123D6A -> #0A294E) مع الشعار الرسمي المعتمد لتطبيق نصيبك
-/// (العريس والعروس داخل القلب الذهبي)، وموجة الشريط الذهبي المنساب وأوراق الغار الذهبية.
+/// Screen 01 — Welcome & Google Sign-In (تصميم Screen 01 من UX Pilot)
+/// خلفية بيضاء نقية مع الهوية الرسمية "نَصِيبُكَ"، كولاج البورتريه الراقي،
+/// عنوان "كل حكاية جميلة ليها بداية"، والوصف الترحيبي، وزر Google الموحد، وروابط الشروط والخصوصية.
 class WelcomeScreen extends ConsumerWidget {
   const WelcomeScreen({super.key});
 
@@ -16,250 +15,258 @@ class WelcomeScreen extends ConsumerWidget {
     final authState = ref.watch(authControllerProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.deepNavy,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.primaryNavy,
-              AppColors.deepNavy,
-            ],
-          ),
-        ),
-        child: Stack(
-          children: [
-            // Soft Golden Radial Halo behind the Couple Emblem
-            Positioned(
-              top: 90,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Container(
-                  width: 280,
-                  height: 280,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        AppColors.goldAccent.withOpacity(0.22),
-                        AppColors.primaryBlue.withOpacity(0.10),
-                        AppColors.primaryNavy.withOpacity(0.0),
-                      ],
+      backgroundColor: AppColors.cardWhite,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: (constraints.maxHeight - 32).clamp(0.0, double.infinity),
+              ),
+              child: IntrinsicHeight(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 12),
+
+                    // Official Arabic Branding: نَصِيبُكَ
+                    const Center(
+                      child: Text(
+                        AppStrings.appNameAr,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: NaseebakTypography.fontFamily,
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primaryBlue,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ),
-            ),
 
-            // Golden Sweeping Ribbon Wave (Astra Screen 01 Signature)
-            Positioned.fill(
-              child: IgnorePointer(
-                child: CustomPaint(
-                  painter: NaseebakGoldenRibbonWavePainter(),
-                ),
-              ),
-            ),
+                    const SizedBox(height: 16),
 
-            // Decorative Botanical Leaves at Bottom Right & Left
-            const Positioned(
-              bottom: 36,
-              right: -12,
-              child: NaseebakGoldBotanicalDecoration(
-                size: 130,
-                opacity: 0.32,
-              ),
-            ),
-            const Positioned(
-              bottom: 50,
-              left: -16,
-              child: NaseebakGoldBotanicalDecoration(
-                size: 115,
-                opacity: 0.24,
-                flipHorizontal: true,
-              ),
-            ),
-
-            // Foreground Content
-            SafeArea(
-              child: LayoutBuilder(
-                builder: (context, constraints) => SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 20,
-                  ),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: (constraints.maxHeight - 40)
-                          .clamp(0.0, double.infinity),
+                    // Elegant Portrait Composition Collage
+                    const Center(
+                      child: NaseebakWelcomeCollage(),
                     ),
-                    child: IntrinsicHeight(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Spacer(flex: 2),
 
-                          // Animated Official Naseebak Couple & Golden Heart Emblem
-                          TweenAnimationBuilder<double>(
-                            tween: Tween<double>(begin: 0.92, end: 1.0),
-                            duration: const Duration(milliseconds: 550),
-                            curve: Curves.easeOutCubic,
-                            builder: (context, scale, child) {
-                              return Transform.scale(
-                                scale: scale,
-                                child: child,
-                              );
-                            },
-                            child: const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(8),
-                                child: NaseebakLogoBadge(
-                                  size: 164,
-                                  showText: false,
-                                  lightText: true,
-                                  useFullEmblem: true,
-                                ),
+                    const SizedBox(height: 20),
+
+                    // Welcome Heading: كل حكاية جميلة ليها بداية
+                    const Text(
+                      'كل حكاية جميلة ليها بداية',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: NaseebakTypography.fontFamily,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        height: 1.35,
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // Supporting Description
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: Text(
+                        'اكتشف أشخاص يشاركونك أهدافك، وابدأ رحلة التعارف الجاد بثقة وخصوصية.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: NaseebakTypography.fontFamily,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.textSecondary,
+                          height: 1.6,
+                        ),
+                      ),
+                    ),
+
+                    const Spacer(),
+                    const SizedBox(height: 24),
+
+                    // Google Sign-In Action Button
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 14,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton(
+                        key: const Key('welcome_continue_google_btn'),
+                        onPressed: authState.isLoading
+                            ? null
+                            : () {
+                                ref
+                                    .read(authControllerProvider.notifier)
+                                    .navigateToGoogleSignIn();
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryBlue,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(54),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              AppStrings.startNow,
+                              style: TextStyle(
+                                fontFamily: NaseebakTypography.fontFamily,
+                                fontSize: 16.5,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
                               ),
                             ),
-                          ),
-
-                          const SizedBox(height: 18),
-
-                          // Brand Title: "نصيبك"
-                          const Text(
-                            AppStrings.appNameAr,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: NaseebakTypography.fontFamily,
-                              fontSize: 40,
-                              fontWeight: FontWeight.w700,
+                            SizedBox(width: 8),
+                            Icon(
+                              Icons.arrow_forward_rounded,
                               color: Colors.white,
-                              height: 1.2,
+                              size: 20,
                             ),
-                          ),
-                          const SizedBox(height: 10),
+                          ],
+                        ),
+                      ),
+                    ),
 
-                          // Golden Tagline: "رحلتك للبحث عن شريك حياتك"
+                    const SizedBox(height: 18),
+
+                    // Terms of Service and Privacy Policy Links
+                    Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                           const Text(
-                            AppStrings.taglineBadge,
-                            textAlign: TextAlign.center,
+                            'بالمتابعة، أنت توافق على',
                             style: TextStyle(
                               fontFamily: NaseebakTypography.fontFamily,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.goldAccent,
-                              height: 1.45,
+                              fontSize: 12.5,
+                              color: AppColors.textSecondary,
                             ),
                           ),
-                          const SizedBox(height: 8),
-
-                          Text(
-                            AppStrings.welcomeSubtitle,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: NaseebakTypography.fontFamily,
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.white.withOpacity(0.84),
-                              height: 1.65,
-                            ),
-                          ),
-
-                          const Spacer(flex: 3),
-
-                          // Single Primary Transition Button -> Navigates to Login Screen
-                          ElevatedButton(
-                            key: const Key('welcome_continue_google_btn'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.cardWhite,
-                              foregroundColor: AppColors.primaryNavy,
-                              minimumSize: const Size.fromHeight(54),
-                              elevation: 4,
-                              shadowColor: Colors.black.withOpacity(0.25),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(28),
-                              ),
-                            ),
-                            onPressed: authState.isLoading
-                                ? null
-                                : () {
-                                    ref
-                                        .read(authControllerProvider.notifier)
-                                        .navigateToGoogleSignIn();
-                                  },
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  AppStrings.startNow,
-                                  style: TextStyle(
-                                    fontFamily: NaseebakTypography.fontFamily,
-                                    fontSize: 16.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.primaryNavy,
-                                  ),
-                                ),
-                                SizedBox(width: 8),
-                                Icon(
-                                  Icons.arrow_forward_rounded,
-                                  color: AppColors.primaryNavy,
-                                  size: 20,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Adults Only +18 Notice
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          const SizedBox(height: 3),
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.goldAccent,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
+                              InkWell(
+                                onTap: () => _showTermsDialog(context),
                                 child: const Text(
-                                  '+18',
+                                  AppStrings.termsOfService,
                                   style: TextStyle(
                                     fontFamily: NaseebakTypography.fontFamily,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.primaryNavy,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                    decoration: TextDecoration.underline,
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              Flexible(
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 6),
                                 child: Text(
-                                  AppStrings.adultsOnlyNotice,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  'و',
                                   style: TextStyle(
                                     fontFamily: NaseebakTypography.fontFamily,
-                                    fontSize: 12,
-                                    color: Colors.white.withOpacity(0.86),
-                                    fontWeight: FontWeight.w500,
+                                    fontSize: 12.5,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                              InkWell(
+                                onTap: () => _showPrivacyDialog(context),
+                                child: const Text(
+                                  AppStrings.privacyPolicy,
+                                  style: TextStyle(
+                                    fontFamily: NaseebakTypography.fontFamily,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                    decoration: TextDecoration.underline,
                                   ),
                                 ),
                               ),
                             ],
                           ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            AppStrings.adultsOnlyNotice,
+                            style: TextStyle(
+                              fontFamily: NaseebakTypography.fontFamily,
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                  ],
                 ),
               ),
             ),
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  void _showTermsDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text(AppStrings.termsOfService),
+        content: const SingleChildScrollView(
+          child: Text(
+            'شروط استخدام تطبيق نَصِيبُكَ:\n\n'
+            '1. المنصة مخصصة حصرياً للراغبين في الزواج الشرعي الجاد (18 عاماً فأكثر).\n'
+            '2. يُمنع منعاً باتاً نشر محتوى مسيء أو مخالف للأخلاق والآداب العامة.\n'
+            '3. تخضع كافة الصور والملفات الشخصية للتدقيق والرقابة الصارمة.\n'
+            '4. يتم إنهاء وحظر أي حساب ينتهك سياسات الاحترام المتبادل.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('إغلاق'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPrivacyDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text(AppStrings.privacyPolicy),
+        content: const SingleChildScrollView(
+          child: Text(
+            'سياسة الخصوصية وحماية البيانات في نَصِيبُكَ:\n\n'
+            '• نحن نحرص تماماً على خصوصية بياناتك الشخصية.\n'
+            '• لا تتم مشاركة أرقام الهواتف أو معلومات الاتصال الخاصة إلا بموافقة صريحة متبادلة.\n'
+            '• تخضع الصور لنظام خصوصية صارم يمنع وصول غير المصرح لهم.\n'
+            '• كافة الاتصالات مشفرة وفق أعلى معايير الأمان (HTTPS / TLS 1.3).',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('إغلاق'),
+          ),
+        ],
       ),
     );
   }

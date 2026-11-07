@@ -17,6 +17,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 
 class ProfileModerationResource extends Resource
@@ -215,6 +216,30 @@ class ProfileModerationResource extends Resource
                         Notification::make()
                             ->title('تم رفض الملف الشخصي وإخفاؤه من البحث')
                             ->danger()
+                            ->send();
+                    }),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkAction::make('approve_selected')
+                    ->label('اعتماد الملفات المحددة')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->action(function (Collection $records, AdminModerationService $service) {
+                        /** @var Administrator $actor */
+                        $actor = Auth::guard('admin')->user();
+                        $approvedCount = 0;
+
+                        foreach ($records as $profile) {
+                            if ($profile instanceof UserProfile && $profile->moderation_status !== UserProfile::STATUS_APPROVED) {
+                                $service->moderateProfile($actor, $profile, UserProfile::STATUS_APPROVED);
+                                $approvedCount++;
+                            }
+                        }
+
+                        Notification::make()
+                            ->title("تم اعتماد {$approvedCount} ملف شخصي بنجاح")
+                            ->success()
                             ->send();
                     }),
             ])

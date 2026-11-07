@@ -14,6 +14,8 @@ class AppStrings {
   static const String continueWithGoogle = 'المتابعة باستخدام Google';
   static const String termsAcceptanceNotice =
       'بالمتابعة، أنت توافق على شروط الخدمة و سياسة الخصوصية الخاصة بنا.';
+  static const String termsOfService = 'شروط الخدمة';
+  static const String privacyPolicy = 'سياسة الخصوصية';
   static const String officialLogoAsset = 'assets/images/naseebak_logo_emblem.png';
   static const String officialAppIconAsset = 'assets/images/naseebak_app_icon.png';
 }

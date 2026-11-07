@@ -28,7 +28,7 @@ class StepProgressHeader extends StatelessWidget {
                 fontFamily: NaseebakTypography.fontFamily,
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: AppColors.primaryNavy,
+                color: AppColors.primaryBlue,
               ),
             ),
             Flexible(
@@ -47,7 +47,7 @@ class StepProgressHeader extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-        // 4-Segment Horizontal Progress Bar (Astra Design)
+        // Modern Segmented Horizontal Progress Bar (UX Pilot Style)
         Row(
           children: List.generate(totalSteps, (index) {
             final stepNumber = index + 1;
@@ -59,12 +59,12 @@ class StepProgressHeader extends StatelessWidget {
                 ),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 220),
-                  height: 6,
+                  height: 5,
                   decoration: BoxDecoration(
                     color: isCompletedOrActive
-                        ? AppColors.primaryNavy
+                        ? AppColors.primaryBlue
                         : AppColors.subtleBorder,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               ),

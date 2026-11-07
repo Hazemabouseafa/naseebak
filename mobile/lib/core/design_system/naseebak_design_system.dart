@@ -93,7 +93,8 @@ class NaseebakSpacing {
   static const double screenHorizontal = 20.0;
   static const double cardRadius = 22.0;
   static const double inputRadius = 16.0;
-  static const double pillRadius = 28.0;
+  static const double buttonRadius = 16.0;
+  static const double pillRadius = 24.0;
 
   static List<BoxShadow> get subtleCardShadow => [
         BoxShadow(
@@ -112,7 +113,7 @@ class NaseebakSpacing {
       ];
 }
 
-/// زر أساسي فاخر بتصميم Astra (كحلي ملكي بحواف دائرية كاملة وظل ناعم)
+/// زر أساسي فاخر بتصميم UX Pilot (أزرق ملكي #184A8C بحواف منحنية 16px وظل ناعم)
 class NaseebakPrimaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -121,6 +122,8 @@ class NaseebakPrimaryButton extends StatelessWidget {
   final Color? backgroundColor;
   final Color? foregroundColor;
   final Key? buttonKey;
+  final double height;
+  final double borderRadius;
 
   const NaseebakPrimaryButton({
     super.key,
@@ -131,16 +134,18 @@ class NaseebakPrimaryButton extends StatelessWidget {
     this.backgroundColor,
     this.foregroundColor,
     this.buttonKey,
+    this.height = 54,
+    this.borderRadius = 16,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bg = backgroundColor ?? AppColors.primaryNavy;
+    final bg = backgroundColor ?? AppColors.primaryBlue;
     final fg = foregroundColor ?? Colors.white;
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(NaseebakSpacing.pillRadius),
+        borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: onPressed != null && !isLoading
             ? NaseebakSpacing.elevatedNavyShadow
             : null,
@@ -151,9 +156,9 @@ class NaseebakPrimaryButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: bg,
           foregroundColor: fg,
-          minimumSize: const Size.fromHeight(54),
+          minimumSize: Size.fromHeight(height),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(NaseebakSpacing.pillRadius),
+            borderRadius: BorderRadius.circular(borderRadius),
           ),
         ),
         child: Row(
@@ -189,7 +194,7 @@ class NaseebakPrimaryButton extends StatelessWidget {
   }
 }
 
-/// زر ثانوي أنيق بتصميم Astra (خلفية بيضاء وإطار ناعم)
+/// زر ثانوي أنيق بتصميم UX Pilot (خلفية بيضاء وإطار ناعم #E5EAF0)
 class NaseebakSecondaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -197,6 +202,8 @@ class NaseebakSecondaryButton extends StatelessWidget {
   final Color? borderColor;
   final Color? textColor;
   final Key? buttonKey;
+  final double height;
+  final double borderRadius;
 
   const NaseebakSecondaryButton({
     super.key,
@@ -206,24 +213,26 @@ class NaseebakSecondaryButton extends StatelessWidget {
     this.borderColor,
     this.textColor,
     this.buttonKey,
+    this.height = 52,
+    this.borderRadius = 16,
   });
 
   @override
   Widget build(BuildContext context) {
-    final fg = textColor ?? AppColors.primaryNavy;
+    final fg = textColor ?? AppColors.primaryBlue;
     return OutlinedButton(
       key: buttonKey,
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
         foregroundColor: fg,
         backgroundColor: AppColors.cardWhite,
-        minimumSize: const Size.fromHeight(52),
+        minimumSize: Size.fromHeight(height),
         side: BorderSide(
           color: borderColor ?? AppColors.subtleBorder,
           width: 1.4,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(NaseebakSpacing.pillRadius),
+          borderRadius: BorderRadius.circular(borderRadius),
         ),
       ),
       child: Row(
@@ -431,7 +440,203 @@ class NaseebakSelectionField<T> extends StatelessWidget {
   }
 }
 
-/// شريط التطبيق العلوي الموحد بتصميم Astra
+/// زر دائري موحد للأيقونات التفاعلية بتصميم UX Pilot (خلفية #F0F4FA وأيقونة زرقاء #184A8C)
+class NaseebakCircleButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+  final double size;
+  final Color? backgroundColor;
+  final Color? iconColor;
+  final double iconSize;
+  final String? tooltip;
+  final Widget? badge;
+  final Key? buttonKey;
+
+  const NaseebakCircleButton({
+    super.key,
+    required this.icon,
+    required this.onTap,
+    this.size = 42,
+    this.backgroundColor,
+    this.iconColor,
+    this.iconSize = 20,
+    this.tooltip,
+    this.badge,
+    this.buttonKey,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = backgroundColor ?? AppColors.surfaceSubtleBlue;
+    final fg = iconColor ?? AppColors.primaryBlue;
+
+    Widget btn = Material(
+      key: buttonKey,
+      color: bg,
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: Icon(icon, color: fg, size: iconSize),
+        ),
+      ),
+    );
+
+    if (tooltip != null) {
+      btn = Tooltip(message: tooltip!, child: btn);
+    }
+
+    if (badge != null) {
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          btn,
+          Positioned(
+            top: -2,
+            right: -2,
+            child: badge!,
+          ),
+        ],
+      );
+    }
+
+    return btn;
+  }
+}
+
+/// شريحة تصفية دائرية موحدة بتصميم UX Pilot (الحالة المحددة كحلي/أزرق #184A8C)
+class NaseebakFilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Widget? icon;
+  final Key? chipKey;
+
+  const NaseebakFilterChip({
+    super.key,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    this.icon,
+    this.chipKey,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(end: 8),
+      child: InkWell(
+        key: chipKey,
+        borderRadius: BorderRadius.circular(24),
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primaryBlue : AppColors.cardWhite,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isSelected ? AppColors.primaryBlue : AppColors.subtleBorder,
+              width: 1.2,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                icon!,
+                const SizedBox(width: 6),
+              ],
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: NaseebakTypography.fontFamily,
+                  fontSize: 13.5,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// بطاقة معلومات سريعة للملف الشخصي شبكة 2x2 (تصميم Screen 05 UX Pilot)
+class NaseebakProfileQuickInfoCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const NaseebakProfileQuickInfoCard({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.cardWhite,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.subtleBorder, width: 1.2),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceSubtleBlue,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: AppColors.primaryBlue, size: 20),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontFamily: NaseebakTypography.fontFamily,
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: NaseebakTypography.fontFamily,
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// شريط التطبيق العلوي الموحد بتصميم UX Pilot
 class NaseebakAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final VoidCallback? onBack;
@@ -439,6 +644,7 @@ class NaseebakAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? leading;
   final double? leadingWidth;
   final bool darkHeader;
+  final bool centerTitle;
 
   const NaseebakAppBar({
     super.key,
@@ -448,10 +654,11 @@ class NaseebakAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.leading,
     this.leadingWidth,
     this.darkHeader = false,
+    this.centerTitle = true,
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(58);
+  Size get preferredSize => const Size.fromHeight(60);
 
   @override
   Widget build(BuildContext context) {
@@ -461,28 +668,37 @@ class NaseebakAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: bg,
       foregroundColor: fg,
-      leadingWidth: leadingWidth,
+      centerTitle: centerTitle,
+      leadingWidth: leadingWidth ?? (onBack != null ? 58 : null),
       leading: leading ??
           (onBack != null
-              ? IconButton(
-                  icon: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    size: 19,
-                    color: fg,
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.only(start: 14),
+                    child: NaseebakCircleButton(
+                      icon: Icons.arrow_forward_rounded,
+                      size: 40,
+                      iconSize: 20,
+                      onTap: onBack,
+                      tooltip: 'رجوع',
+                    ),
                   ),
-                  onPressed: onBack,
-                  tooltip: 'رجوع',
                 )
               : null),
       title: Text(
         title,
         style: NaseebakTypography.cardTitle.copyWith(
-          fontSize: 17,
+          fontSize: 18,
           fontWeight: FontWeight.w700,
           color: fg,
         ),
       ),
-      actions: actions,
+      actions: actions != null
+          ? [
+              ...actions!,
+              const SizedBox(width: 8),
+            ]
+          : null,
       bottom: darkHeader
           ? null
           : PreferredSize(
@@ -616,38 +832,49 @@ class NaseebakInfoCard extends StatelessWidget {
   }
 }
 
-/// رأس قسم موحد مع إجراء فرعي اختياري
+/// رأس قسم موحد مع إجراء فرعي اختياري بتصميم UX Pilot
 class NaseebakSectionHeader extends StatelessWidget {
   final String title;
   final String? actionLabel;
+  final String? actionTitle;
   final VoidCallback? onActionTap;
+  final VoidCallback? onAction;
 
   const NaseebakSectionHeader({
     super.key,
     required this.title,
     this.actionLabel,
+    this.actionTitle,
     this.onActionTap,
+    this.onAction,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveLabel = actionTitle ?? actionLabel;
+    final effectiveAction = onAction ?? onActionTap;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Flexible(
           child: Text(
             title,
-            style: NaseebakTypography.sectionHeading,
+            style: const TextStyle(
+              fontFamily: NaseebakTypography.fontFamily,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
           ),
         ),
-        if (actionLabel != null && onActionTap != null)
-          TextButton(
-            onPressed: onActionTap,
+        if (effectiveLabel != null && effectiveAction != null)
+          InkWell(
+            onTap: effectiveAction,
             child: Text(
-              actionLabel!,
+              effectiveLabel,
               style: const TextStyle(
                 fontFamily: NaseebakTypography.fontFamily,
-                fontSize: 13,
+                fontSize: 13.5,
                 fontWeight: FontWeight.w600,
                 color: AppColors.primaryBlue,
               ),
@@ -773,15 +1000,359 @@ class NaseebakEmptyState extends StatelessWidget {
   }
 }
 
-/// شريط التنقل السفلي الموحد بتصميم Astra
+/// بنر العضوية المميزة بتصميم UX Pilot (خلفية كحلية #123D6A مع لمسات ذهبية #E8B44D)
+class NaseebakPremiumBanner extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const NaseebakPremiumBanner({
+    super.key,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: BoxDecoration(
+        color: AppColors.primaryNavy,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryNavy.withOpacity(0.20),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          const Positioned(
+            left: 4,
+            bottom: -6,
+            child: Opacity(
+              opacity: 0.12,
+              child: Icon(
+                Icons.diamond_outlined,
+                size: 76,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'خلّي فرص التواصل أكبر ✨',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: NaseebakTypography.fontFamily,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'انضم لعضوية نصيبك بلس',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: NaseebakTypography.fontFamily,
+                        fontSize: 12.5,
+                        color: Colors.white.withOpacity(0.85),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                  decoration: BoxDecoration(
+                    color: AppColors.goldAccent,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Text(
+                    'اكتشف الاشتراك',
+                    style: TextStyle(
+                      fontFamily: NaseebakTypography.fontFamily,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// كولاج البورتريه لشاشة الترحيب (تصميم Screen 01 UX Pilot)
+class NaseebakWelcomeCollage extends StatelessWidget {
+  final double height;
+  const NaseebakWelcomeCollage({super.key, this.height = 230});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: height,
+      width: double.infinity,
+      child: Center(
+        child: FittedBox(
+          fit: BoxFit.contain,
+          child: SizedBox(
+            width: 320,
+            height: 330,
+            child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Top-left portrait card
+              Positioned(
+                top: 24,
+                left: 18,
+                child: _buildCollageCard(
+                  width: 128,
+                  height: 160,
+                  gradientColors: const [Color(0xFF2C3E50), Color(0xFF1A252F)],
+                  avatarIcon: Icons.person_rounded,
+                  accentColor: const Color(0xFFD4AF37),
+                  caption: 'شريك حياة جاد',
+                ),
+              ),
+              // Bottom-left portrait card
+              Positioned(
+                bottom: 16,
+                left: 36,
+                child: _buildCollageCard(
+                  width: 132,
+                  height: 162,
+                  gradientColors: const [Color(0xFF8E7D73), Color(0xFF5A4D46)],
+                  avatarIcon: Icons.person_3_rounded,
+                  accentColor: Colors.white,
+                  caption: 'قيم وأخلاق',
+                ),
+              ),
+              // Bottom-right portrait card
+              Positioned(
+                bottom: 6,
+                right: 20,
+                child: _buildCollageCard(
+                  width: 134,
+                  height: 168,
+                  gradientColors: const [Color(0xFF1E3A5F), Color(0xFF0F1E33)],
+                  avatarIcon: Icons.person_2_rounded,
+                  accentColor: const Color(0xFF64B5F6),
+                  caption: 'توافق واهتمام',
+                ),
+              ),
+              // Center hero portrait card (with gold border)
+              Positioned(
+                top: 18,
+                child: Container(
+                  width: 168,
+                  height: 224,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: AppColors.goldAccent,
+                      width: 2.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.18),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Color(0xFF2A2826),
+                            Color(0xFF191715),
+                          ],
+                        ),
+                      ),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Center(
+                            child: Icon(
+                              Icons.face_3_rounded,
+                              size: 88,
+                              color: AppColors.creamHighlight.withOpacity(0.92),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black.withOpacity(0.85),
+                                  ],
+                                ),
+                              ),
+                              child: const Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'نصيبك',
+                                    style: TextStyle(
+                                      fontFamily: NaseebakTypography.fontFamily,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.goldAccent,
+                                    ),
+                                  ),
+                                  Text(
+                                    'تعارف جاد وموثوق',
+                                    style: TextStyle(
+                                      fontFamily: NaseebakTypography.fontFamily,
+                                      fontSize: 11,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        ),
+      ),
+    );
+  }
+
+  static Widget _buildCollageCard({
+    required double width,
+    required double height,
+    required List<Color> gradientColors,
+    required IconData avatarIcon,
+    required Color accentColor,
+    required String caption,
+  }) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: AppColors.subtleBorder.withOpacity(0.7),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(21),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: gradientColors,
+            ),
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Center(
+                child: Icon(
+                  avatarIcon,
+                  size: width * 0.48,
+                  color: accentColor.withOpacity(0.85),
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.75),
+                      ],
+                    ),
+                  ),
+                  child: Text(
+                    caption,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: NaseebakTypography.fontFamily,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// شريط التنقل السفلي الموحد بتصميم UX Pilot (5 وجهات: الرئيسية، البحث، الطلبات، المحادثات، حسابي)
 class NaseebakBottomNavigation extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
+  final bool isFiveTabs;
 
   const NaseebakBottomNavigation({
     super.key,
     required this.selectedIndex,
     required this.onDestinationSelected,
+    this.isFiveTabs = true,
   });
 
   @override
@@ -802,35 +1373,68 @@ class NaseebakBottomNavigation extends StatelessWidget {
       ),
       child: NavigationBar(
         backgroundColor: AppColors.cardWhite,
-        indicatorColor: AppColors.creamHighlight,
-        selectedIndex: selectedIndex,
+        indicatorColor: AppColors.surfaceSubtleBlue,
+        selectedIndex: selectedIndex.clamp(0, isFiveTabs ? 4 : 3),
         onDestinationSelected: onDestinationSelected,
-        destinations: const [
-          NavigationDestination(
-            key: Key('bottom_nav_discover_tab'),
-            icon: Icon(Icons.explore_outlined, color: AppColors.textSecondary),
-            selectedIcon: Icon(Icons.explore_rounded, color: AppColors.primaryNavy),
-            label: 'اكتشف',
-          ),
-          NavigationDestination(
-            key: Key('bottom_nav_requests_tab'),
-            icon: Icon(Icons.favorite_border_rounded, color: AppColors.textSecondary),
-            selectedIcon: Icon(Icons.favorite_rounded, color: AppColors.primaryNavy),
-            label: 'الطلبات',
-          ),
-          NavigationDestination(
-            key: Key('bottom_nav_messages_tab'),
-            icon: Icon(Icons.chat_bubble_outline_rounded, color: AppColors.textSecondary),
-            selectedIcon: Icon(Icons.chat_bubble_rounded, color: AppColors.primaryNavy),
-            label: 'الرسائل',
-          ),
-          NavigationDestination(
-            key: Key('bottom_nav_my_profile_tab'),
-            icon: Icon(Icons.person_outline_rounded, color: AppColors.textSecondary),
-            selectedIcon: Icon(Icons.person_rounded, color: AppColors.primaryNavy),
-            label: 'حسابي',
-          ),
-        ],
+        destinations: isFiveTabs
+            ? const [
+                NavigationDestination(
+                  key: Key('bottom_nav_discover_tab'),
+                  icon: Icon(Icons.home_outlined, color: AppColors.textSecondary),
+                  selectedIcon: Icon(Icons.home_rounded, color: AppColors.primaryBlue),
+                  label: 'الرئيسية',
+                ),
+                NavigationDestination(
+                  key: Key('bottom_nav_search_tab'),
+                  icon: Icon(Icons.search_rounded, color: AppColors.textSecondary),
+                  selectedIcon: Icon(Icons.search_rounded, color: AppColors.primaryBlue),
+                  label: 'البحث',
+                ),
+                NavigationDestination(
+                  key: Key('bottom_nav_requests_tab'),
+                  icon: Icon(Icons.volunteer_activism_outlined, color: AppColors.textSecondary),
+                  selectedIcon: Icon(Icons.volunteer_activism_rounded, color: AppColors.primaryBlue),
+                  label: 'الطلبات',
+                ),
+                NavigationDestination(
+                  key: Key('bottom_nav_messages_tab'),
+                  icon: Icon(Icons.chat_bubble_outline_rounded, color: AppColors.textSecondary),
+                  selectedIcon: Icon(Icons.chat_bubble_rounded, color: AppColors.primaryBlue),
+                  label: 'المحادثات',
+                ),
+                NavigationDestination(
+                  key: Key('bottom_nav_my_profile_tab'),
+                  icon: Icon(Icons.person_outline_rounded, color: AppColors.textSecondary),
+                  selectedIcon: Icon(Icons.person_rounded, color: AppColors.primaryBlue),
+                  label: 'حسابي',
+                ),
+              ]
+            : const [
+                NavigationDestination(
+                  key: Key('bottom_nav_discover_tab'),
+                  icon: Icon(Icons.home_outlined, color: AppColors.textSecondary),
+                  selectedIcon: Icon(Icons.home_rounded, color: AppColors.primaryBlue),
+                  label: 'الرئيسية',
+                ),
+                NavigationDestination(
+                  key: Key('bottom_nav_requests_tab'),
+                  icon: Icon(Icons.volunteer_activism_outlined, color: AppColors.textSecondary),
+                  selectedIcon: Icon(Icons.volunteer_activism_rounded, color: AppColors.primaryBlue),
+                  label: 'الطلبات',
+                ),
+                NavigationDestination(
+                  key: Key('bottom_nav_messages_tab'),
+                  icon: Icon(Icons.chat_bubble_outline_rounded, color: AppColors.textSecondary),
+                  selectedIcon: Icon(Icons.chat_bubble_rounded, color: AppColors.primaryBlue),
+                  label: 'الرسائل',
+                ),
+                NavigationDestination(
+                  key: Key('bottom_nav_my_profile_tab'),
+                  icon: Icon(Icons.person_outline_rounded, color: AppColors.textSecondary),
+                  selectedIcon: Icon(Icons.person_rounded, color: AppColors.primaryBlue),
+                  label: 'حسابي',
+                ),
+              ],
       ),
     );
   }

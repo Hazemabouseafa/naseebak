@@ -9,9 +9,10 @@ import '../../data/models/conversation_model.dart';
 import '../../data/services/realtime_messaging_service.dart';
 import '../providers/messaging_provider.dart';
 
-/// Screen 14 — Chat Screen (`المحادثة`)
-/// محادثة نصية خاصة فورية بين طرفين مرتبطة بطلب تعارف مقبول بتصميم نَصِيبُكَ الفاخر.
-/// تحترم قواعد الاشتراك الشهري النشط للإرسال، وتسمح بقراءة السجل دائماً للمشاركين المصرح لهم.
+/// Screen 09 — Private Chat (`المحادثة`) (تصميم Screen 09 من UX Pilot)
+/// هيدر أبيض نقي مع زر الرجوع الدائري #F0F4FA، صورة العضو، اسم العضو وحالة "متصل الآن"،
+/// منبه الخصوصية الأزرق، فقاعات الرسائل (المستلمة بيضاء بإطار رمادي والمرسلة زرقاء ملكية #184A8C)،
+/// وشريط الإدخال المعاصر مع زر الإرسال وزر المرفقات الدائري.
 class ChatScreen extends ConsumerStatefulWidget {
   final int conversationId;
   final String? initialMemberName;
@@ -67,7 +68,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (state.activeConversation?.isBlocked == true) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: NaseebakColors.error,
+          backgroundColor: AppColors.error,
           content: Text('لا يمكن إرسال رسائل في هذه المحادثة بسبب الحظر.'),
         ),
       );
@@ -96,25 +97,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          backgroundColor: NaseebakColors.error,
+          backgroundColor: AppColors.error,
           content: Text(result.message),
         ),
       );
     }
   }
 
-  Future<void> _retryFailedMessage(ChatMessageModel failedMessage) async {
+  Future<void> _retryFailedMessage(ChatMessageModel msg) async {
     final currentUserId = ref.read(authControllerProvider).user?.id ?? 0;
-    final res = await ref.read(messagingProvider.notifier).sendMessage(
+    final result = await ref.read(messagingProvider.notifier).sendMessage(
           conversationId: widget.conversationId,
           currentUserId: currentUserId,
-          rawText: failedMessage.body,
-          retryClientMessageId: failedMessage.clientMessageId,
+          rawText: msg.body,
+          retryClientMessageId: msg.clientMessageId,
         );
-
     if (!mounted) return;
-    if (res.isSubscriptionRequired) {
-      _messageController.text = failedMessage.body;
+    if (result.isSubscriptionRequired) {
       await _showSubscriptionRequiredDialog();
     }
   }
@@ -125,77 +124,59 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     await showDialog<void>(
       context: context,
-      builder: (dialogContext) => Directionality(
+      barrierDismissible: true,
+      builder: (ctx) => Directionality(
+        key: const Key('chat_subscription_required_dialog'),
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          key: const Key('chat_subscription_required_dialog'),
-          backgroundColor: NaseebakColors.cardBackground,
+          backgroundColor: AppColors.cardWhite,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: const BorderSide(color: NaseebakColors.borderLight),
+            borderRadius: BorderRadius.circular(22),
+            side: const BorderSide(color: AppColors.subtleBorder),
           ),
-          title: Row(
+          title: const Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: NaseebakColors.accentGoldMuted.withOpacity(0.25),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.workspace_premium_rounded,
-                  color: NaseebakColors.accentGold,
-                  size: 24,
-                ),
+              Icon(
+                Icons.workspace_premium_rounded,
+                color: AppColors.primaryBlue,
+                size: 26,
               ),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Text(
-                  'يتطلب التواصل اشتراكًا شهريًا',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: NaseebakColors.textDarkNavy,
-                  ),
+              SizedBox(width: 8),
+              Text(
+                'الاشتراك الشهري مطلوب',
+                style: TextStyle(
+                  fontFamily: NaseebakTypography.fontFamily,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ],
           ),
           content: const Text(
-            'يمكنك قراءة رسائل المحادثة مجانًا، بينما يتطلب إرسال الرسائل الخاصة اشتراكًا شهريًا نشطًا في نَصِيبُكَ. تم الاحتفاظ بمسودة رسالتك لتتمكن من إرسالها فور تفعيل الاشتراك.',
+            'يتطلب إرسال الرسائل في المحادثات اشتراكًا شهريًا نشطًا في نَصِيبُكَ. يمكنك تصفح سجل الرسائل السابقة بحرية في أي وقت.',
             style: TextStyle(
+              fontFamily: NaseebakTypography.fontFamily,
               fontSize: 13,
-              color: NaseebakColors.textWarmGray,
-              height: 1.7,
+              color: AppColors.textSecondary,
+              height: 1.65,
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                ref
-                    .read(messagingProvider.notifier)
-                    .dismissSubscriptionRequiredPrompt();
-                Navigator.of(dialogContext).pop();
-              },
-              child: const Text(
-                'لاحقاً',
-                style: TextStyle(color: NaseebakColors.textMuted),
-              ),
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('لاحقاً'),
             ),
             ElevatedButton(
-              key: const Key('chat_open_subscription_btn'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: NaseebakColors.accentGold,
-                foregroundColor: NaseebakColors.primaryNavyDark,
+                backgroundColor: AppColors.primaryBlue,
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
               onPressed: () async {
-                ref
-                    .read(messagingProvider.notifier)
-                    .dismissSubscriptionRequiredPrompt();
-                Navigator.of(dialogContext).pop();
+                Navigator.of(ctx).pop();
                 await Navigator.of(context).push(
                   MaterialPageRoute<void>(
                     builder: (_) => const SubscriptionScreen(),
@@ -209,7 +190,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               },
               child: const Text(
                 'اشترك الآن',
-                style: TextStyle(fontWeight: FontWeight.w800),
+                style: TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
           ],
@@ -241,24 +222,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       builder: (ctx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          backgroundColor: NaseebakColors.cardBackground,
+          backgroundColor: AppColors.cardWhite,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: const BorderSide(color: NaseebakColors.borderLight),
           ),
           title: Text(
             'حظر $otherFullName؟',
             style: const TextStyle(
+              fontFamily: NaseebakTypography.fontFamily,
               fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: NaseebakColors.textDarkNavy,
+              fontWeight: FontWeight.w700,
             ),
           ),
           content: const Text(
             'عند حظر هذا العضو سيتم إيقاف المحادثة فوراً ولن يتمكن أي طرف من إرسال رسائل جديدة.',
             style: TextStyle(
-              fontSize: 12.5,
-              color: NaseebakColors.textWarmGray,
+              fontFamily: NaseebakTypography.fontFamily,
+              fontSize: 13,
+              color: AppColors.textSecondary,
               height: 1.7,
             ),
           ),
@@ -269,10 +250,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: NaseebakColors.error,
+                backgroundColor: AppColors.error,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
               onPressed: () => Navigator.of(ctx).pop(true),
@@ -293,12 +274,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (!mounted) return;
     if (err != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(backgroundColor: NaseebakColors.error, content: Text(err)),
+        SnackBar(backgroundColor: AppColors.error, content: Text(err)),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: NaseebakColors.primaryNavy,
+          backgroundColor: AppColors.primaryNavy,
           content: Text('تم حظر العضو وإغلاق المحادثة.'),
         ),
       );
@@ -322,19 +303,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           return Directionality(
             textDirection: TextDirection.rtl,
             child: AlertDialog(
-              backgroundColor: NaseebakColors.cardBackground,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: const BorderSide(color: NaseebakColors.borderLight),
-              ),
+              backgroundColor: AppColors.cardWhite,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               title: Text(
                 messageId != null
                     ? 'الإبلاغ عن رسالة من $otherFullName'
                     : 'الإبلاغ عن $otherFullName',
                 style: const TextStyle(
-                  fontSize: 15.5,
-                  fontWeight: FontWeight.w800,
-                  color: NaseebakColors.textDarkNavy,
+                  fontFamily: NaseebakTypography.fontFamily,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               content: SingleChildScrollView(
@@ -342,132 +320,51 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
-                      'سبب البلاغ',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: NaseebakColors.textDarkNavy,
-                      ),
-                    ),
+                    const Text('سبب البلاغ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
                     const SizedBox(height: 6),
                     DropdownButtonFormField<String>(
                       value: selectedCategory,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: NaseebakColors.backgroundBeige,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: NaseebakColors.borderLight),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: NaseebakColors.borderLight),
-                        ),
-                      ),
                       items: const [
-                        DropdownMenuItem(
-                          value: 'inappropriate_behavior',
-                          child: Text('سلوك أو محتوى غير لائق'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'harassment',
-                          child: Text('إزعاج أو إساءة في المحادثة'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'scam_attempt',
-                          child: Text('محاولة احتيال أو طلب أموال'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'fake_profile',
-                          child: Text('ملف غير حقيقي أو مضلل'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'other',
-                          child: Text('سبب آخر'),
-                        ),
+                        DropdownMenuItem(value: 'inappropriate_behavior', child: Text('سلوك أو محتوى غير لائق')),
+                        DropdownMenuItem(value: 'harassment', child: Text('إزعاج أو إساءة في المحادثة')),
+                        DropdownMenuItem(value: 'scam_attempt', child: Text('محاولة احتيال')),
+                        DropdownMenuItem(value: 'fake_profile', child: Text('ملف غير حقيقي أو مضلل')),
+                        DropdownMenuItem(value: 'other', child: Text('سبب آخر')),
                       ],
                       onChanged: (val) {
-                        if (val != null) {
-                          setDialogState(() => selectedCategory = val);
-                        }
+                        if (val != null) setDialogState(() => selectedCategory = val);
                       },
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'تفاصيل البلاغ',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: NaseebakColors.textDarkNavy,
-                      ),
-                    ),
+                    const Text('تفاصيل البلاغ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
                     const SizedBox(height: 6),
                     TextField(
-                      key: const Key('chat_report_details_input'),
                       controller: detailsController,
                       maxLines: 3,
-                      decoration: InputDecoration(
-                        hintText: 'يرجى كتابة تفاصيل البلاغ لمراجعتها من الإدارة...',
-                        filled: true,
-                        fillColor: NaseebakColors.backgroundBeige,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: NaseebakColors.borderLight),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: NaseebakColors.borderLight),
-                        ),
-                      ),
+                      decoration: const InputDecoration(hintText: 'يرجى كتابة تفاصيل البلاغ...'),
                     ),
                     if (dialogError != null) ...[
                       const SizedBox(height: 8),
-                      Text(
-                        dialogError!,
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          color: NaseebakColors.error,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      Text(dialogError!, style: const TextStyle(color: AppColors.error, fontSize: 11.5)),
                     ],
                   ],
                 ),
               ),
               actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(false),
-                  child: const Text('إلغاء'),
-                ),
+                TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('إلغاء')),
                 ElevatedButton(
-                  key: const Key('chat_submit_report_btn'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: NaseebakColors.primaryNavy,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
                   onPressed: () async {
                     if (detailsController.text.trim().length < 5) {
-                      setDialogState(() {
-                        dialogError = 'يرجى كتابة تفاصيل كافية للبلاغ.';
-                      });
+                      setDialogState(() => dialogError = 'يرجى كتابة تفاصيل كافية للبلاغ.');
                       return;
                     }
-                    final err =
-                        await ref.read(discoveryProvider.notifier).reportMember(
-                              memberUserId: otherUserId,
-                              reasonCategory: selectedCategory,
-                              details: detailsController.text.trim(),
-                              conversationId: widget.conversationId,
-                              messageId: messageId,
-                            );
+                    final err = await ref.read(discoveryProvider.notifier).reportMember(
+                          memberUserId: otherUserId,
+                          reasonCategory: selectedCategory,
+                          details: detailsController.text.trim(),
+                          conversationId: widget.conversationId,
+                          messageId: messageId,
+                        );
                     if (err != null) {
                       setDialogState(() => dialogError = err);
                     } else if (dialogContext.mounted) {
@@ -488,7 +385,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (reported == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: NaseebakColors.primaryNavy,
+          backgroundColor: AppColors.primaryNavy,
           content: Text('تم استلام البلاغ وسيتم مراجعته من فريق الإشراف.'),
         ),
       );
@@ -507,189 +404,154 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: NaseebakColors.backgroundBeige,
+        backgroundColor: AppColors.cardWhite,
         appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(68),
+          preferredSize: const Size.fromHeight(64),
           child: Container(
             decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topRight,
-                end: Alignment.bottomLeft,
-                colors: [
-                  NaseebakColors.primaryNavy,
-                  NaseebakColors.primaryNavyDark,
-                ],
+              color: AppColors.cardWhite,
+              border: Border(
+                bottom: BorderSide(color: AppColors.subtleBorder, width: 1),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 6,
-                  offset: Offset(0, 2),
-                ),
-              ],
             ),
             child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 child: Row(
                   children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      onPressed: () {
+                    // Circular Back Button (#F0F4FA)
+                    NaseebakCircleButton(
+                      icon: Icons.arrow_forward_rounded,
+                      size: 40,
+                      iconSize: 20,
+                      onTap: () {
                         ref.read(messagingProvider.notifier).leaveActiveConversation();
                         Navigator.of(context).pop();
                       },
                       tooltip: 'رجوع',
                     ),
-                    if (otherMember != null) ...[
-                      Stack(
-                        children: [
-                          AuthorizedPhotoAvatar(
-                            photoId: otherMember.primaryPhotoId,
-                            photoAuthorized: otherMember.photoAuthorized,
-                            fallbackName: otherMember.fullName,
-                            radius: 20,
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              width: 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                color: NaseebakColors.accentGold,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: NaseebakColors.primaryNavyDark,
-                                  width: 1.5,
-                                ),
-                              ),
+                    const SizedBox(width: 10),
+
+                    // Avatar with Online Green Dot
+                    Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: AppColors.surfaceSubtleBlue,
+                          child: Text(
+                            displayTitle.isNotEmpty ? displayTitle.substring(0, 1) : 'ن',
+                            style: const TextStyle(
+                              fontFamily: NaseebakTypography.fontFamily,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primaryBlue,
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(width: 10),
-                    ],
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          child: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: AppColors.success,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 1.5),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 10),
+
+                    // Name and "متصل الآن"
                     Expanded(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  displayTitle,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (otherMember != null && otherMember.region.isNotEmpty)
-                            Text(
-                              '${otherMember.ageYears} سنة • ${otherMember.region}',
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                color: Colors.white.withOpacity(0.85),
-                              ),
+                          Text(
+                            displayTitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontFamily: NaseebakTypography.fontFamily,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
                             ),
+                          ),
+                          const Text(
+                            'متصل الآن',
+                            style: TextStyle(
+                              fontFamily: NaseebakTypography.fontFamily,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.success,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    if (otherMember != null)
-                      PopupMenuButton<String>(
-                        key: const Key('chat_safety_menu_btn'),
-                        icon: const Icon(
-                          Icons.more_vert_rounded,
-                          color: Colors.white,
-                        ),
-                        tooltip: 'خيارات المحادثة',
-                        onSelected: (action) {
-                          if (action == 'profile') {
-                            Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => MemberProfileScreen(
-                                  memberUserId: otherMember.userId,
-                                ),
+
+                    // More Menu Button (3-dots)
+                    NaseebakCircleButton(
+                      buttonKey: const Key('chat_safety_menu_btn'),
+                      icon: Icons.more_vert_rounded,
+                      size: 40,
+                      iconSize: 20,
+                      onTap: () {
+                        if (otherMember == null) return;
+                        showModalBottomSheet<void>(
+                          context: context,
+                          backgroundColor: AppColors.cardWhite,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                          ),
+                          builder: (ctx) => Directionality(
+                            textDirection: TextDirection.rtl,
+                            child: SafeArea(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ListTile(
+                                    leading: const Icon(Icons.person_outline_rounded, color: AppColors.primaryBlue),
+                                    title: const Text('عرض الملف الشخصي'),
+                                    onTap: () {
+                                      Navigator.of(ctx).pop();
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute<void>(
+                                          builder: (_) => MemberProfileScreen(memberUserId: otherMember.userId),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  ListTile(
+                                    leading: const Icon(Icons.flag_outlined, color: AppColors.textSecondary),
+                                    title: const Text('الإبلاغ عن العضو'),
+                                    onTap: () {
+                                      Navigator.of(ctx).pop();
+                                      _showReportDialog(otherUserId: otherMember.userId, otherFullName: otherMember.fullName);
+                                    },
+                                  ),
+                                  ListTile(
+                                    leading: const Icon(Icons.block_rounded, color: AppColors.error),
+                                    title: const Text('حظر العضو', style: TextStyle(color: AppColors.error)),
+                                    onTap: () {
+                                      Navigator.of(ctx).pop();
+                                      _confirmAndBlockOtherMember(otherMember.userId, otherMember.fullName);
+                                    },
+                                  ),
+                                ],
                               ),
-                            );
-                          } else if (action == 'block') {
-                            _confirmAndBlockOtherMember(
-                              otherMember.userId,
-                              otherMember.fullName,
-                            );
-                          } else if (action == 'report') {
-                            _showReportDialog(
-                              otherUserId: otherMember.userId,
-                              otherFullName: otherMember.fullName,
-                            );
-                          }
-                        },
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(
-                            value: 'profile',
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.person_outline_rounded,
-                                  size: 18,
-                                  color: NaseebakColors.primaryNavy,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'عرض الملف الشخصي',
-                                  style: TextStyle(color: NaseebakColors.textDarkNavy),
-                                ),
-                              ],
                             ),
                           ),
-                          const PopupMenuItem(
-                            value: 'report',
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.flag_outlined,
-                                  size: 18,
-                                  color: NaseebakColors.textDarkNavy,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'الإبلاغ عن العضو',
-                                  style: TextStyle(color: NaseebakColors.textDarkNavy),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const PopupMenuItem(
-                            value: 'block',
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.block_rounded,
-                                  size: 18,
-                                  color: NaseebakColors.error,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'حظر العضو',
-                                  style: TextStyle(color: NaseebakColors.error),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                        );
+                      },
+                      tooltip: 'خيارات المحادثة',
+                    ),
                   ],
                 ),
               ),
@@ -700,302 +562,152 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (state.connectionState ==
-                  RealtimeConnectionState.reconnecting)
+              // Reconnecting Banner
+              if (state.connectionState == RealtimeConnectionState.reconnecting)
                 Container(
                   key: const Key('chat_reconnecting_banner'),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                  color: NaseebakColors.accentGoldMuted.withOpacity(0.35),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  color: AppColors.surfaceSubtleBlue,
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SizedBox(
                         width: 13,
                         height: 13,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: NaseebakColors.primaryNavyDark,
-                        ),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryBlue),
                       ),
                       SizedBox(width: 8),
                       Text(
                         'جاري إعادة الاتصال الفوري بالخادم...',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: NaseebakColors.primaryNavyDark,
-                        ),
+                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.primaryBlue),
                       ),
                     ],
                   ),
                 ),
 
-              if (conv != null &&
-                  !conv.isBlocked &&
-                  !conv.canSendMessages &&
-                  conv.restrictionCode == 'SUBSCRIPTION_REQUIRED')
+              // Subscription Warning Banner
+              if (conv != null && !conv.isBlocked && !conv.canSendMessages && conv.restrictionCode == 'SUBSCRIPTION_REQUIRED')
                 Container(
                   key: const Key('chat_subscription_banner'),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: NaseebakColors.accentGoldMuted.withOpacity(0.22),
-                    border: Border(
-                      bottom: BorderSide(
-                        color: NaseebakColors.accentGold.withOpacity(0.3),
-                      ),
-                    ),
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  color: AppColors.surfaceSubtleBlue,
                   child: Row(
                     children: [
-                      const Icon(
-                        Icons.workspace_premium_rounded,
-                        size: 20,
-                        color: NaseebakColors.accentGoldDark,
-                      ),
+                      const Icon(Icons.workspace_premium_rounded, size: 20, color: AppColors.goldAccent),
                       const SizedBox(width: 8),
                       const Expanded(
                         child: Text(
                           'إرسال الرسائل يتطلب اشتراكًا شهريًا نشطًا.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: NaseebakColors.primaryNavyDark,
-                          ),
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                         ),
                       ),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: NaseebakColors.accentGold,
-                          foregroundColor: NaseebakColors.primaryNavyDark,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                          backgroundColor: AppColors.primaryBlue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         onPressed: () async {
                           await Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => const SubscriptionScreen(),
-                            ),
+                            MaterialPageRoute<void>(builder: (_) => const SubscriptionScreen()),
                           );
                           if (mounted) {
-                            await ref
-                                .read(messagingProvider.notifier)
-                                .resynchronizeAfterReconnection();
+                            await ref.read(messagingProvider.notifier).resynchronizeAfterReconnection();
                           }
                         },
-                        child: const Text(
-                          'اشترك الآن',
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
+                        child: const Text('اشترك الآن', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
                       ),
                     ],
                   ),
                 ),
 
+              // Messages List
               Expanded(
-                child: Builder(
-                  builder: (context) {
-                    if (state.isLoadingMessages &&
-                        state.activeMessages.isEmpty) {
-                      return const Center(
-                        child: CircularProgressIndicator(
-                          color: NaseebakColors.accentGold,
-                        ),
-                      );
-                    }
-
-                    if (state.messagesError != null &&
-                        state.activeMessages.isEmpty) {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.error_outline_rounded,
-                                size: 42,
-                                color: NaseebakColors.error,
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                state.messagesError!,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: NaseebakColors.textDarkNavy,
-                                ),
-                              ),
-                              const SizedBox(height: 14),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: NaseebakColors.primaryNavy,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                onPressed: () => ref
-                                    .read(messagingProvider.notifier)
-                                    .openConversation(widget.conversationId),
-                                child: const Text('إعادة المحاولة'),
-                              ),
-                            ],
+                child: ListView(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                  children: [
+                    // Centered Date Pill
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceSubtleBlue,
+                            borderRadius: BorderRadius.all(Radius.circular(14)),
                           ),
-                        ),
-                      );
-                    }
-
-                    if (state.activeMessages.isEmpty) {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(28),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 68,
-                                height: 68,
-                                decoration: BoxDecoration(
-                                  color: NaseebakColors.accentGoldMuted.withOpacity(0.2),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: NaseebakColors.accentGold.withOpacity(0.4),
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.mark_chat_unread_rounded,
-                                  size: 32,
-                                  color: NaseebakColors.accentGoldDark,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              const Text(
-                                'بدأت المحادثة الخاصة بعد قبول طلب التعارف',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 15.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: NaseebakColors.textDarkNavy,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'نوصي بالالتزام بالجدية والاحترام المتبادل وفق ضوابط منصة نَصِيبُكَ الشرعية والأخلاقية.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  color: NaseebakColors.textWarmGray,
-                                  height: 1.7,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
-
-                    return ListView.builder(
-                      key: const Key('chat_messages_list'),
-                      controller: _scrollController,
-                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
-                      itemCount: state.activeMessages.length +
-                          (state.isLoadingOlderMessages ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (state.isLoadingOlderMessages && index == 0) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 10),
-                            child: Center(
-                              child: SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: NaseebakColors.accentGold,
-                                ),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            child: Text(
+                              'اليوم',
+                              style: TextStyle(
+                                fontFamily: NaseebakTypography.fontFamily,
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                          );
-                        }
+                          ),
+                        ),
+                      ),
+                    ),
 
-                        final msgIndex = state.isLoadingOlderMessages
-                            ? index - 1
-                            : index;
-                        final message = state.activeMessages[msgIndex];
-                        final prevMessage = msgIndex > 0
-                            ? state.activeMessages[msgIndex - 1]
-                            : null;
+                    // Privacy Reminder Card (Screen 09 Signature)
+                    Container(
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceSubtleBlue,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.primaryBlue.withOpacity(0.2), width: 1.2),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'خصوصيتك مهمة، خليك حريص على معلوماتك الشخصية.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: NaseebakTypography.fontFamily,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primaryBlue,
+                          ),
+                        ),
+                      ),
+                    ),
 
-                        final showDateHeader = _shouldShowDateSeparator(
-                          prevMessage?.createdAt,
-                          message.createdAt,
-                        );
-
-                        final isOutgoing = message.senderId == currentUserId;
-
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (showDateHeader)
-                              _DateSeparatorChip(
-                                label: _formatDateHeader(message.createdAt),
-                              ),
-                            _MessageBubbleItem(
-                              message: message,
-                              isOutgoing: isOutgoing,
-                              onRetry: message.sendState ==
-                                      OutgoingSendState.failed
-                                  ? () => _retryFailedMessage(message)
-                                  : null,
-                              onReportMessage: (!isOutgoing &&
-                                      otherMember != null &&
-                                      message.id > 0)
-                                  ? () => _showReportDialog(
-                                        otherUserId: otherMember.userId,
-                                        otherFullName: otherMember.fullName,
-                                        messageId: message.id,
-                                      )
-                                  : null,
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
+                    // Messages Items
+                    ...state.activeMessages.map((message) {
+                      final isOutgoing = message.senderId == currentUserId;
+                      return _MessageBubbleItem(
+                        message: message,
+                        isOutgoing: isOutgoing,
+                        onRetry: message.sendState == OutgoingSendState.failed
+                            ? () => _retryFailedMessage(message)
+                            : null,
+                        onReportMessage: (!isOutgoing && otherMember != null && message.id > 0)
+                            ? () => _showReportDialog(
+                                  otherUserId: otherMember.userId,
+                                  otherFullName: otherMember.fullName,
+                                  messageId: message.id,
+                                )
+                            : null,
+                      );
+                    }),
+                  ],
                 ),
               ),
 
+              // Message Composer
               if (conv?.isBlocked == true)
                 Container(
                   key: const Key('chat_blocked_composer_banner'),
                   padding: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
-                    color: NaseebakColors.cardBackground,
-                    border: Border(
-                      top: BorderSide(color: NaseebakColors.borderLight),
-                    ),
-                  ),
+                  color: AppColors.cardWhite,
                   child: const Text(
                     'تم إيقاف إرسال الرسائل في هذه المحادثة بسبب وجود حظر بين الطرفين.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                      color: NaseebakColors.error,
-                    ),
+                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.error),
                   ),
                 )
               else
@@ -1008,180 +720,81 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildMessageComposer(MessagingState state) {
-    final currentLen = _messageController.text.characters.length;
-    final maxLen = state.maxMessageLength;
-
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-      decoration: BoxDecoration(
-        color: NaseebakColors.cardBackground,
-        border: const Border(top: BorderSide(color: NaseebakColors.borderLight)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            offset: const Offset(0, -3),
-            blurRadius: 10,
-          ),
-        ],
+      decoration: const BoxDecoration(
+        color: AppColors.cardWhite,
+        border: Border(top: BorderSide(color: AppColors.subtleBorder, width: 1)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: TextField(
-                  key: const Key('chat_message_input'),
-                  controller: _messageController,
-                  minLines: 1,
-                  maxLines: 4,
-                  maxLength: maxLen,
-                  onChanged: (_) => setState(() {}),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: NaseebakColors.textDarkNavy,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'اكتب رسالتك باحترام وجدية...',
-                    hintStyle: const TextStyle(
-                      fontSize: 13,
-                      color: NaseebakColors.textMuted,
-                    ),
-                    counterText: '',
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 11,
-                    ),
-                    filled: true,
-                    fillColor: NaseebakColors.backgroundBeige,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      borderSide: const BorderSide(color: NaseebakColors.borderLight),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      borderSide: const BorderSide(color: NaseebakColors.borderLight),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      borderSide: const BorderSide(color: NaseebakColors.accentGold),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              SizedBox(
-                height: 46,
-                width: 48,
-                child: ElevatedButton(
-                  key: const Key('chat_send_message_btn'),
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    backgroundColor: NaseebakColors.primaryNavy,
-                    foregroundColor: NaseebakColors.accentGoldLight,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 2,
-                  ),
-                  onPressed: state.isSendingMessage ? null : _handleSendPressed,
-                  child: state.isSendingMessage
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: NaseebakColors.accentGold,
-                          ),
-                        )
-                      : const Icon(
-                          Icons.send_rounded,
-                          size: 20,
-                          color: NaseebakColors.accentGold,
-                        ),
-                ),
-              ),
-            ],
+          // Attachment / Options Circular '+' Button
+          NaseebakCircleButton(
+            icon: Icons.add_rounded,
+            size: 42,
+            iconSize: 22,
+            backgroundColor: AppColors.surfaceSubtleBlue,
+            iconColor: AppColors.textPrimary,
+            onTap: () {},
           ),
-          if (currentLen > 0)
-            Padding(
-              padding: const EdgeInsets.only(top: 4, right: 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '$currentLen / $maxLen',
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    color: currentLen > maxLen
-                        ? NaseebakColors.error
-                        : NaseebakColors.textMuted,
-                  ),
+          const SizedBox(width: 8),
+
+          // Message Input Field
+          Expanded(
+            child: TextField(
+              key: const Key('chat_message_input'),
+              controller: _messageController,
+              minLines: 1,
+              maxLines: 4,
+              onChanged: (_) => setState(() {}),
+              style: const TextStyle(
+                fontFamily: NaseebakTypography.fontFamily,
+                fontSize: 14,
+                color: AppColors.textPrimary,
+              ),
+              decoration: InputDecoration(
+                hintText: 'اكتب رسالتك...',
+                hintStyle: const TextStyle(
+                  fontFamily: NaseebakTypography.fontFamily,
+                  fontSize: 13.5,
+                  color: AppColors.textSecondary,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                filled: true,
+                fillColor: AppColors.softBackground,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: const BorderSide(color: AppColors.subtleBorder),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: const BorderSide(color: AppColors.subtleBorder),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: const BorderSide(color: AppColors.primaryBlue),
                 ),
               ),
             ),
+          ),
+          const SizedBox(width: 8),
+
+          // Circular Send Button (#184A8C)
+          Material(
+            color: AppColors.primaryBlue,
+            shape: const CircleBorder(),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              key: const Key('chat_send_message_btn'),
+              onTap: state.isSendingMessage ? null : _handleSendPressed,
+              child: const SizedBox(
+                width: 44,
+                height: 44,
+                child: Icon(Icons.send_rounded, size: 20, color: Colors.white),
+              ),
+            ),
+          ),
         ],
-      ),
-    );
-  }
-
-  bool _shouldShowDateSeparator(String? previousIso, String? currentIso) {
-    if (currentIso == null) return false;
-    if (previousIso == null) return true;
-    final prev = DateTime.tryParse(previousIso)?.toLocal();
-    final curr = DateTime.tryParse(currentIso)?.toLocal();
-    if (prev == null || curr == null) return false;
-    return prev.year != curr.year ||
-        prev.month != curr.month ||
-        prev.day != curr.day;
-  }
-
-  String _formatDateHeader(String? iso) {
-    final dt = iso != null ? DateTime.tryParse(iso)?.toLocal() : null;
-    if (dt == null) return 'اليوم';
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final msgDay = DateTime(dt.year, dt.month, dt.day);
-    final diffDays = today.difference(msgDay).inDays;
-    if (diffDays == 0) return 'اليوم';
-    if (diffDays == 1) return 'أمس';
-    return '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')}';
-  }
-}
-
-class _DateSeparatorChip extends StatelessWidget {
-  final String label;
-
-  const _DateSeparatorChip({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-          decoration: BoxDecoration(
-            color: NaseebakColors.cardBackground,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: NaseebakColors.borderLight),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 4,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: NaseebakColors.primaryNavyDark,
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -1205,153 +818,59 @@ class _MessageBubbleItem extends StatelessWidget {
     final timeLabel = _formatTime(message.createdAt);
 
     return Align(
-      alignment: isOutgoing ? Alignment.centerRight : Alignment.centerLeft,
-      child: GestureDetector(
-        onLongPress: onReportMessage,
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 295),
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
-          decoration: BoxDecoration(
-            gradient: isOutgoing
-                ? const LinearGradient(
-                    colors: [
-                      NaseebakColors.primaryNavy,
-                      NaseebakColors.primaryNavyDark,
-                    ],
-                  )
-                : null,
-            color: isOutgoing ? null : NaseebakColors.cardBackground,
-            borderRadius: BorderRadius.only(
-              topRight: const Radius.circular(18),
-              topLeft: const Radius.circular(18),
-              bottomRight: Radius.circular(isOutgoing ? 4 : 18),
-              bottomLeft: Radius.circular(isOutgoing ? 18 : 4),
-            ),
-            border: isOutgoing
-                ? Border.all(
-                    color: NaseebakColors.accentGold.withOpacity(0.2),
-                    width: 0.8,
-                  )
-                : Border.all(color: NaseebakColors.borderLight),
-            boxShadow: [
-              BoxShadow(
-                color: isOutgoing
-                    ? NaseebakColors.primaryNavyDark.withOpacity(0.12)
-                    : NaseebakColors.shadowColor,
-                offset: const Offset(0, 2),
-                blurRadius: 6,
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                message.body,
-                style: TextStyle(
-                  fontSize: 13.5,
-                  color: isOutgoing ? Colors.white : NaseebakColors.textDarkNavy,
-                  height: 1.55,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    timeLabel,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: isOutgoing
-                          ? Colors.white.withOpacity(0.75)
-                          : NaseebakColors.textMuted,
-                    ),
-                  ),
-                  if (isOutgoing) ...[
-                    const SizedBox(width: 5),
-                    _buildDeliveryIcon(),
-                  ],
-                  if (!isOutgoing && onReportMessage != null) ...[
-                    const SizedBox(width: 6),
-                    InkWell(
-                      onTap: onReportMessage,
-                      child: const Icon(
-                        Icons.flag_outlined,
-                        size: 13,
-                        color: NaseebakColors.textMuted,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              if (message.sendState == OutgoingSendState.failed &&
-                  onRetry != null) ...[
-                const SizedBox(height: 5),
-                InkWell(
-                  key: Key('retry_message_${message.clientMessageId}'),
-                  onTap: onRetry,
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.refresh_rounded,
-                        size: 13,
-                        color: NaseebakColors.accentGoldLight,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        'فشل الإرسال • اضغط لإعادة المحاولة',
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          color: NaseebakColors.accentGoldLight,
-                        ),
-                      ),
-                    ],
-                  ),
+      alignment: isOutgoing ? Alignment.centerLeft : Alignment.centerRight,
+      child: Column(
+        crossAxisAlignment: isOutgoing ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+        children: [
+          Container(
+            constraints: const BoxConstraints(maxWidth: 280),
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isOutgoing ? AppColors.primaryBlue : AppColors.cardWhite,
+              borderRadius: BorderRadius.circular(18),
+              border: isOutgoing ? null : Border.all(color: AppColors.subtleBorder, width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
-            ],
+            ),
+            child: Text(
+              message.body,
+              style: TextStyle(
+                fontFamily: NaseebakTypography.fontFamily,
+                fontSize: 14,
+                color: isOutgoing ? Colors.white : AppColors.textPrimary,
+                height: 1.5,
+              ),
+            ),
           ),
-        ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  timeLabel,
+                  style: const TextStyle(
+                    fontFamily: NaseebakTypography.fontFamily,
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                if (isOutgoing) ...[
+                  const SizedBox(width: 4),
+                  const Icon(Icons.done_all_rounded, size: 14, color: AppColors.primaryBlue),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+        ],
       ),
-    );
-  }
-
-  Widget _buildDeliveryIcon() {
-    if (message.sendState == OutgoingSendState.sending) {
-      return const Icon(
-        Icons.access_time_rounded,
-        size: 12,
-        color: Colors.white70,
-      );
-    }
-    if (message.sendState == OutgoingSendState.failed) {
-      return const Icon(
-        Icons.error_outline_rounded,
-        size: 13,
-        color: NaseebakColors.error,
-      );
-    }
-    if (message.isRead || message.deliveryStatus == 'read') {
-      return const Icon(
-        Icons.done_all_rounded,
-        size: 14,
-        color: NaseebakColors.accentGold,
-      );
-    }
-    if (message.deliveryStatus == 'delivered_recipient') {
-      return const Icon(
-        Icons.done_all_rounded,
-        size: 14,
-        color: Colors.white70,
-      );
-    }
-    return const Icon(
-      Icons.check_rounded,
-      size: 13,
-      color: Colors.white70,
     );
   }
 

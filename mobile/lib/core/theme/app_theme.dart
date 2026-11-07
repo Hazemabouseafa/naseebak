@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 
-/// نظام الثيم الموحد لتطبيق نصيبك — Naseebak (Astra Premium Design)
+/// نظام الثيم الموحد لتطبيق نصيبك — Naseebak (UX Pilot Design System)
 /// يعتمد خط IBM Plex Sans Arabic المضمّن محلياً في التطبيق (Regular, Medium, SemiBold, Bold)
-/// مع التدرج اللوني الكحلي الملكي والذهبي الدافئ.
+/// مع التدرج اللوني الأزرق الملكي (#184A8C)، الكحلي (#123D6A)، والذهبي المميز (#E8B44D).
 class AppTheme {
   AppTheme._();
 
@@ -69,11 +69,11 @@ class AppTheme {
       fontFamily: fontFamily,
       scaffoldBackgroundColor: AppColors.softBackground,
       colorScheme: const ColorScheme.light(
-        primary: AppColors.primaryNavy,
+        primary: AppColors.primaryBlue,
         onPrimary: Colors.white,
         secondary: AppColors.goldAccent,
         onSecondary: AppColors.primaryNavy,
-        tertiary: AppColors.primaryBlue,
+        tertiary: AppColors.primaryNavy,
         surface: AppColors.cardWhite,
         onSurface: AppColors.textPrimary,
         error: AppColors.error,
@@ -95,7 +95,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryNavy,
+          backgroundColor: AppColors.primaryBlue,
           foregroundColor: Colors.white,
           disabledBackgroundColor: AppColors.subtleBorder,
           disabledForegroundColor: AppColors.textSecondary,
@@ -103,7 +103,7 @@ class AppTheme {
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(16),
           ),
           textStyle: const TextStyle(
             fontFamily: fontFamily,
@@ -115,13 +115,13 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primaryNavy,
+          foregroundColor: AppColors.primaryBlue,
           backgroundColor: AppColors.cardWhite,
           minimumSize: const Size.fromHeight(52),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
           side: const BorderSide(color: AppColors.subtleBorder, width: 1.3),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(16),
           ),
           textStyle: const TextStyle(
             fontFamily: fontFamily,
@@ -143,7 +143,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.softBackground,
+        fillColor: AppColors.cardWhite,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 18,
           vertical: 15,
@@ -170,7 +170,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.primaryNavy, width: 1.6),
+          borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.6),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -179,8 +179,8 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.cardWhite,
-        selectedColor: AppColors.primaryNavy,
-        secondarySelectedColor: AppColors.primaryNavy,
+        selectedColor: AppColors.primaryBlue,
+        secondarySelectedColor: AppColors.primaryBlue,
         side: const BorderSide(color: AppColors.subtleBorder),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
@@ -202,13 +202,13 @@ class AppTheme {
         color: AppColors.cardWhite,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(22),
           side: const BorderSide(color: AppColors.subtleBorder),
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.cardWhite,
-        indicatorColor: AppColors.creamHighlight,
+        indicatorColor: AppColors.surfaceSubtleBlue,
         height: 70,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final isSelected = states.contains(WidgetState.selected);
@@ -216,7 +216,7 @@ class AppTheme {
             fontFamily: fontFamily,
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            color: isSelected ? AppColors.primaryNavy : AppColors.textSecondary,
+            color: isSelected ? AppColors.primaryBlue : AppColors.textSecondary,
           );
         }),
       ),

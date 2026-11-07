@@ -150,11 +150,38 @@ class ManageApplicationSettingsPage extends Page implements HasForms
                 ]
             );
 
+            $moderationRecord = AppSetting::updateOrCreate(
+                ['setting_key' => 'require_profile_moderation'],
+                [
+                    'setting_value' => [
+                        'enabled' => (bool) ($validated['require_profile_moderation'] ?? true),
+                    ],
+                    'description_ar' => 'إلزام مراجعة الملفات الشخصية قبل ظهورها في البحث',
+                    'updated_by_admin_id' => $actor->id,
+                ]
+            );
+
+            AppSetting::updateOrCreate(
+                ['setting_key' => 'privacy_and_terms_urls'],
+                [
+                    'setting_value' => [
+                        'privacy_policy_url' => $validated['privacy_policy_url'],
+                        'terms_of_service_url' => $validated['terms_of_service_url'],
+                        'account_deletion_url' => $validated['account_deletion_url'],
+                    ],
+                    'description_ar' => 'روابط سياسة الخصوصية والشروط وحذف الحساب',
+                    'updated_by_admin_id' => $actor->id,
+                ]
+            );
+
             $auditService->record(
                 actor: $actor,
                 action: 'app_setting.updated',
                 target: $record,
-                newValues: $record->setting_value,
+                newValues: array_merge(
+                    $record->setting_value,
+                    ['require_profile_moderation' => $moderationRecord->setting_value['enabled']]
+                ),
                 reason: 'تحديث الإعدادات العامة للتطبيق من لوحة التحكم'
             );
         });

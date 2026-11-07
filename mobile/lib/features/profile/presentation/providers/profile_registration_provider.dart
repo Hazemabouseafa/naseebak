@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../discovery/presentation/providers/discovery_provider.dart';
 import '../../domain/profile_registration_draft.dart';
 import 'profile_management_provider.dart';
 
@@ -198,6 +199,7 @@ class ProfileRegistrationNotifier
           .syncFromRegistrationDraft(state.draft);
       state = state.copyWith(isSubmitting: false);
       _ref.read(authControllerProvider.notifier).markProfileCompleted();
+      _ref.read(discoveryProvider.notifier).loadDiscoveryFeed();
     } catch (_) {
       _ref
           .read(profileManagementProvider.notifier)

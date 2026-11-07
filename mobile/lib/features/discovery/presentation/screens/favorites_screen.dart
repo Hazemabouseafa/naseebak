@@ -49,29 +49,61 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: AppColors.softBackground,
+        backgroundColor: AppColors.cardWhite,
+        appBar: AppBar(
+          backgroundColor: AppColors.cardWhite,
+          elevation: 0,
+          centerTitle: true,
+          leading: Center(
+            child: Padding(
+              padding: const EdgeInsetsDirectional.only(start: 14),
+              child: NaseebakCircleButton(
+                icon: Icons.arrow_forward_rounded,
+                size: 40,
+                iconSize: 20,
+                onTap: () => Navigator.of(context).pop(),
+                tooltip: 'رجوع',
+              ),
+            ),
+          ),
+          title: const Text(
+            'المفضلة',
+            style: TextStyle(
+              fontFamily: NaseebakTypography.fontFamily,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          actions: [
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: 14),
+              child: NaseebakCircleButton(
+                icon: Icons.refresh_rounded,
+                size: 40,
+                iconSize: 20,
+                onTap: state.isLoadingFavorites
+                    ? null
+                    : () => ref.read(discoveryProvider.notifier).loadFavorites(),
+                tooltip: 'تحديث',
+              ),
+            ),
+          ],
+        ),
         body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Premium Royal Navy Curved Header
-            NaseebakCurvedHeader(
-              title: 'المفضلة',
-              subtitle: 'الملفات المحفوظة التي تهمك للعودة إليها بسهولة',
-              onBack: () => Navigator.of(context).pop(),
-              actions: [
-                IconButton(
-                  tooltip: 'تحديث',
-                  onPressed: state.isLoadingFavorites
-                      ? null
-                      : () {
-                          ref.read(discoveryProvider.notifier).loadFavorites();
-                        },
-                  icon: const Icon(
-                    Icons.refresh_rounded,
-                    color: Colors.white,
-                    size: 21,
-                  ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Text(
+                'الأشخاص الذين لفتوا انتباهك',
+                style: TextStyle(
+                  fontFamily: NaseebakTypography.fontFamily,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
                 ),
-              ],
+              ),
             ),
 
             Expanded(
@@ -240,31 +272,35 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
                           ),
                         ),
                       Expanded(
-                        child: ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                        child: GridView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 0.68,
+                          ),
                           itemCount: filteredFavorites.length,
                           itemBuilder: (context, index) {
                             final member = filteredFavorites[index];
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: MemberCard(
-                                member: member,
-                                onTapViewProfile: () =>
-                                    _openMemberProfile(member.userId),
-                                onToggleFavorite: () async {
-                                  final err = await ref
-                                      .read(discoveryProvider.notifier)
-                                      .toggleFavorite(member);
-                                  if (err != null && context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        backgroundColor: AppColors.error,
-                                        content: Text(err),
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
+                            return MemberCard(
+                              member: member,
+                              isGridMode: true,
+                              onTapViewProfile: () =>
+                                  _openMemberProfile(member.userId),
+                              onToggleFavorite: () async {
+                                final err = await ref
+                                    .read(discoveryProvider.notifier)
+                                    .toggleFavorite(member);
+                                if (err != null && context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      backgroundColor: AppColors.error,
+                                      content: Text(err),
+                                    ),
+                                  );
+                                }
+                              },
                             );
                           },
                         ),

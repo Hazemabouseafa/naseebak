@@ -223,19 +223,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
-          backgroundColor: NaseebakColors.backgroundBeige,
-          body: Column(
-            children: [
-              NaseebakCurvedHeader(
-                title: 'تعديل الملف الشخصي',
-                subtitle: 'تحديث بياناتك الشخصية ونمط حياتك بدقة ووضوح',
-                leading: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  onPressed: () async {
+          backgroundColor: AppColors.cardWhite,
+          appBar: AppBar(
+            backgroundColor: AppColors.cardWhite,
+            elevation: 0,
+            centerTitle: true,
+            leading: Center(
+              child: Padding(
+                padding: const EdgeInsetsDirectional.only(start: 14),
+                child: NaseebakCircleButton(
+                  icon: Icons.arrow_forward_rounded,
+                  size: 40,
+                  iconSize: 20,
+                  onTap: () async {
                     final shouldDiscard = await _confirmDiscardIfNeeded();
                     if (shouldDiscard && context.mounted) {
                       Navigator.of(context).pop();
@@ -244,6 +244,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   tooltip: 'رجوع',
                 ),
               ),
+            ),
+            title: const Text(
+              'تعديل الملف الشخصي',
+              style: TextStyle(
+                fontFamily: NaseebakTypography.fontFamily,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          body: Column(
+            children: [
               Expanded(
                 child: Column(
                   children: [
@@ -721,13 +734,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       ),
                     ),
 
-                    // Bottom Save Button Bar
+                    // Bottom Save Button Bar (UX Pilot Style)
                     Container(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                       decoration: BoxDecoration(
-                        color: NaseebakColors.cardBackground,
+                        color: AppColors.cardWhite,
                         border: const Border(
-                          top: BorderSide(color: NaseebakColors.borderLight),
+                          top: BorderSide(color: AppColors.subtleBorder),
                         ),
                         boxShadow: [
                           BoxShadow(
@@ -740,11 +753,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       child: ElevatedButton.icon(
                         key: const Key('save_edited_profile_btn'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: NaseebakColors.primaryNavy,
+                          backgroundColor: AppColors.primaryBlue,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(16),
                           ),
                         ),
                         onPressed: mgmtState.isSaving ? null : _handleSave,
@@ -754,7 +768,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 height: 18,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2.2,
-                                  color: NaseebakColors.accentGold,
+                                  color: Colors.white,
                                 ),
                               )
                             : const Icon(Icons.check_rounded, size: 20),
@@ -763,8 +777,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               ? 'جارٍ حفظ التعديلات...'
                               : 'حفظ التعديلات',
                           style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
+                            fontFamily: NaseebakTypography.fontFamily,
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
@@ -794,16 +809,9 @@ class _FormSectionContainer extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: NaseebakColors.cardBackground,
+        color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: NaseebakColors.borderLight),
-        boxShadow: const [
-          BoxShadow(
-            color: NaseebakColors.shadowColor,
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppColors.subtleBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -811,12 +819,13 @@ class _FormSectionContainer extends StatelessWidget {
           Text(
             title,
             style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: NaseebakColors.textDarkNavy,
+              fontFamily: NaseebakTypography.fontFamily,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
             ),
           ),
-          const Divider(height: 20),
+          const Divider(height: 20, color: AppColors.subtleBorder),
           ...children,
         ],
       ),

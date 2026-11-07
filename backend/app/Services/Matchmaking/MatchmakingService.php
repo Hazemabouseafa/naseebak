@@ -121,7 +121,7 @@ class MatchmakingService
         if (
             $target->account_status !== 'active'
             || !$targetProfile
-            || $targetProfile->moderation_status !== UserProfile::STATUS_APPROVED
+            || !$targetProfile->isModerationApprovedForDiscovery()
             || !$targetProfile->is_visible
             || UserProfile::calculateAgeYears($targetProfile->date_of_birth) < 18
         ) {
@@ -221,7 +221,7 @@ class MatchmakingService
         $recipientProfile = $recipient->profile;
         if (
             !$recipientProfile
-            || $recipientProfile->moderation_status !== UserProfile::STATUS_APPROVED
+            || !$recipientProfile->isModerationApprovedForDiscovery()
             || !$recipientProfile->is_visible
             || UserProfile::calculateAgeYears($recipientProfile->date_of_birth) < 18
         ) {

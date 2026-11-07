@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\MemberResource\Pages;
 use App\Models\Administrator;
 use App\Models\User;
+use App\Models\UserProfile;
 use App\Providers\Filament\AdminPanelProvider;
 use App\Services\Admin\AdminModerationService;
 use Filament\Forms\Components\Textarea;
@@ -16,6 +17,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 
 class MemberResource extends Resource
@@ -164,7 +166,10 @@ class MemberResource extends Resource
                     }),
                 Tables\Columns\IconColumn::make('profile.is_visible')
                     ->label('الظهور في البحث')
-                    ->boolean(),
+                    ->boolean()
+                    ->getStateUsing(fn (User $record): bool => $record->account_status === 'active'
+                        && (bool) $record->profile_completed
+                        && ($record->profile?->isDiscoverableByMembers() ?? false)),
                 Tables\Columns\IconColumn::make('activeSubscription.id')
                     ->label('اشتراك فعال')
                     ->boolean()
@@ -211,6 +216,29 @@ class MemberResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make()->label('عرض التفاصيل'),
 
+                Tables\Actions\Action::make('approve_profile')
+                    ->label('اعتماد الملف')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('اعتماد الملف الشخصي للعضو')
+                    ->modalDescription('سيؤدي اعتماد الملف الشخصي إلى إظهار العضو فوراً في نتائج البحث والاكتشاف للأعضاء المؤهلين.')
+                    ->visible(fn (User $record): bool => $record->profile !== null
+                        && $record->profile->moderation_status !== UserProfile::STATUS_APPROVED)
+                    ->action(function (User $record, AdminModerationService $service) {
+                        if (!$record->profile) {
+                            return;
+                        }
+                        /** @var Administrator $actor */
+                        $actor = Auth::guard('admin')->user();
+                        $service->moderateProfile($actor, $record->profile, UserProfile::STATUS_APPROVED);
+
+                        Notification::make()
+                            ->title('تم اعتماد الملف الشخصي وتفعيله في البحث بنجاح')
+                            ->success()
+                            ->send();
+                    }),
+
                 Tables\Actions\Action::make('suspend')
                     ->label('إيقاف الحساب')
                     ->icon('heroicon-o-no-symbol')
@@ -255,6 +283,30 @@ class MemberResource extends Resource
 
                         Notification::make()
                             ->title('تمت إعادة تفعيل حساب العضو بنجاح')
+                            ->success()
+                            ->send();
+                    }),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkAction::make('approve_selected_profiles')
+                    ->label('اعتماد الملفات المحددة للظهور في البحث')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->action(function (Collection $records, AdminModerationService $service) {
+                        /** @var Administrator $actor */
+                        $actor = Auth::guard('admin')->user();
+                        $approvedCount = 0;
+
+                        foreach ($records as $member) {
+                            if ($member instanceof User && $member->profile && $member->profile->moderation_status !== UserProfile::STATUS_APPROVED) {
+                                $service->moderateProfile($actor, $member->profile, UserProfile::STATUS_APPROVED);
+                                $approvedCount++;
+                            }
+                        }
+
+                        Notification::make()
+                            ->title("تم اعتماد {$approvedCount} ملف شخصي بنجاح")
                             ->success()
                             ->send();
                     }),

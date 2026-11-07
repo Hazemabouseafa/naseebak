@@ -104,7 +104,7 @@ class FavoriteController extends Controller
 
         if (
             !$targetProfile
-            || $targetProfile->moderation_status !== 'approved'
+            || !$targetProfile->isModerationApprovedForDiscovery()
             || $targetProfile->age_years < 18
             || !$this->accessControlService->canViewProfile($viewer, $member, $targetProfile)
         ) {

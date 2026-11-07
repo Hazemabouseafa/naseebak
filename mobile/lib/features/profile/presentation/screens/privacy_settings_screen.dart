@@ -38,7 +38,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          backgroundColor: NaseebakColors.primaryNavy,
+          backgroundColor: AppColors.primaryBlue,
           content: Text('تم حفظ وتطبيق إعدادات الخصوصية فوراً.'),
         ),
       );
@@ -53,22 +53,35 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: NaseebakColors.backgroundBeige,
-        body: Column(
-          children: [
-            NaseebakCurvedHeader(
-              title: 'إعدادات الخصوصية',
-              subtitle: 'التحكم التام في ظهور ملفك الشخصي وصورك في نَصِيبُكَ',
-              leading: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                onPressed: () => Navigator.of(context).pop(),
+        backgroundColor: AppColors.cardWhite,
+        appBar: AppBar(
+          backgroundColor: AppColors.cardWhite,
+          elevation: 0,
+          centerTitle: true,
+          leading: Center(
+            child: Padding(
+              padding: const EdgeInsetsDirectional.only(start: 14),
+              child: NaseebakCircleButton(
+                icon: Icons.arrow_forward_rounded,
+                size: 40,
+                iconSize: 20,
+                onTap: () => Navigator.of(context).pop(),
                 tooltip: 'رجوع',
               ),
             ),
+          ),
+          title: const Text(
+            'إعدادات الخصوصية',
+            style: TextStyle(
+              fontFamily: NaseebakTypography.fontFamily,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+        body: Column(
+          children: [
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -178,9 +191,9 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: NaseebakColors.cardBackground,
+                        color: AppColors.cardWhite,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: NaseebakColors.borderLight),
+                        border: Border.all(color: AppColors.subtleBorder),
                         boxShadow: const [
                           BoxShadow(
                             color: NaseebakColors.shadowColor,
@@ -199,7 +212,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
                             ),
                             child: const Icon(
                               Icons.verified_user_outlined,
-                              color: NaseebakColors.primaryNavy,
+                              color: AppColors.primaryBlue,
                               size: 20,
                             ),
                           ),
@@ -226,8 +239,8 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
             Container(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               decoration: BoxDecoration(
-                color: NaseebakColors.cardBackground,
-                border: const Border(top: BorderSide(color: NaseebakColors.borderLight)),
+                color: AppColors.cardWhite,
+                border: const Border(top: BorderSide(color: AppColors.subtleBorder)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.04),
@@ -239,7 +252,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
               child: ElevatedButton.icon(
                 key: const Key('save_privacy_settings_btn'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: NaseebakColors.primaryNavy,
+                  backgroundColor: AppColors.primaryBlue,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -305,13 +318,13 @@ class _PrivacyRadioCard<T> extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: isSelected
-              ? NaseebakColors.accentGoldMuted.withOpacity(0.2)
-              : NaseebakColors.cardBackground,
+              ? AppColors.surfaceSubtleBlue
+              : AppColors.cardWhite,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
-                ? NaseebakColors.accentGoldDark
-                : NaseebakColors.borderLight,
+                ? AppColors.primaryBlue
+                : AppColors.subtleBorder,
             width: isSelected ? 1.6 : 1.0,
           ),
           boxShadow: [
@@ -331,15 +344,15 @@ class _PrivacyRadioCard<T> extends StatelessWidget {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? NaseebakColors.accentGoldMuted.withOpacity(0.35)
-                    : NaseebakColors.backgroundBeige,
+                    ? AppColors.surfaceSubtleBlue
+                    : AppColors.cardWhite,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
                 size: 20,
                 color: isSelected
-                    ? NaseebakColors.primaryNavy
+                    ? AppColors.primaryBlue
                     : NaseebakColors.textMuted,
               ),
             ),
@@ -373,7 +386,7 @@ class _PrivacyRadioCard<T> extends StatelessWidget {
             Radio<T>(
               value: value,
               groupValue: groupValue,
-              activeColor: NaseebakColors.accentGoldDark,
+              activeColor: AppColors.primaryBlue,
               onChanged: (val) {
                 if (val != null) onChanged(val);
               },

@@ -10,13 +10,16 @@ import '../../../notifications/data/services/notification_navigation_service.dar
 import '../../../notifications/data/services/push_notification_service.dart';
 import '../../../notifications/presentation/providers/notification_provider.dart';
 import '../../../profile/presentation/screens/my_profile_screen.dart';
+import '../providers/discovery_provider.dart';
+import 'advanced_search_screen.dart';
 import 'discovery_home_screen.dart';
 
-/// Main Authenticated Shell with 4 Bottom Navigation Tabs (RTL):
-/// 1. اكتشف -> Opens DiscoveryHomeScreen (Screen 07)
-/// 2. الطلبات -> Opens MatchmakingRequestsScreen (Screen 13)
-/// 3. الرسائل -> Opens ConversationsScreen (Screen 24)
-/// 4. حسابي -> Opens MyProfileScreen (Screen 18)
+/// Main Authenticated Shell with 5 Bottom Navigation Tabs (UX Pilot RTL):
+/// 1. الرئيسية -> Opens DiscoveryHomeScreen (Screen 03)
+/// 2. البحث -> Opens AdvancedSearchScreen (Screen 04)
+/// 3. الطلبات -> Opens MatchmakingRequestsScreen (Screen 07)
+/// 4. المحادثات -> Opens ConversationsScreen (Screen 08)
+/// 5. حسابي -> Opens MyProfileScreen (Screen 13)
 class HomeDiscoveryPlaceholderScreen extends ConsumerStatefulWidget {
   const HomeDiscoveryPlaceholderScreen({super.key});
 
@@ -77,7 +80,11 @@ class _HomeDiscoveryPlaceholderScreenState
         index: _selectedIndex,
         children: [
           DiscoveryHomeScreen(
-            onOpenMyProfileTab: () => setState(() => _selectedIndex = 3),
+            onOpenMyProfileTab: () => setState(() => _selectedIndex = 4),
+          ),
+          AdvancedSearchScreen(
+            openedFromResults: false,
+            onCloseTab: () => setState(() => _selectedIndex = 0),
           ),
           const MatchmakingRequestsScreen(),
           const ConversationsScreen(),
@@ -86,8 +93,12 @@ class _HomeDiscoveryPlaceholderScreenState
       ),
       bottomNavigationBar: NaseebakBottomNavigation(
         selectedIndex: _selectedIndex,
+        isFiveTabs: true,
         onDestinationSelected: (index) {
           setState(() => _selectedIndex = index);
+          if (index == 0) {
+            ref.read(discoveryProvider.notifier).loadDiscoveryFeed();
+          }
         },
       ),
     );

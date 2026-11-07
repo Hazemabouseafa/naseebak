@@ -41,6 +41,39 @@ class SearchMembersRequest extends FormRequest
         return $this->user() !== null && $this->user()->account_status === 'active';
     }
 
+    protected function prepareForValidation(): void
+    {
+        $rawMaritalStatuses = $this->input('marital_statuses');
+        if (is_string($rawMaritalStatuses)) {
+            $trimmed = trim($rawMaritalStatuses);
+            if ($trimmed === '' || $trimmed === 'all') {
+                $this->merge(['marital_statuses' => null]);
+            } else {
+                $parts = array_values(array_filter(
+                    array_map('trim', explode(',', $trimmed)),
+                    fn (string $v) => $v !== '' && $v !== 'all'
+                ));
+                $this->merge(['marital_statuses' => $parts]);
+            }
+        } elseif (is_array($rawMaritalStatuses)) {
+            $parts = array_values(array_filter(
+                array_map(fn ($v) => is_string($v) ? trim($v) : $v, $rawMaritalStatuses),
+                fn ($v) => $v !== '' && $v !== null && $v !== 'all'
+            ));
+            $this->merge(['marital_statuses' => $parts]);
+        }
+
+        foreach (['gender', 'marital_status', 'education_level', 'occupation', 'nationality', 'country_of_residence', 'region'] as $field) {
+            $value = $this->input($field);
+            if (is_string($value)) {
+                $trimmed = trim($value);
+                if ($trimmed === '' || $trimmed === 'all') {
+                    $this->merge([$field => null]);
+                }
+            }
+        }
+    }
+
     public function rules(): array
     {
         return [
