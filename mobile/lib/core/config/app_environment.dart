@@ -107,7 +107,7 @@ class AppEnvironmentConfig {
       }
     }
 
-    final resolvedApiUrl = definedApiUrl.isNotEmpty
+    final rawResolvedApiUrl = definedApiUrl.isNotEmpty
         ? definedApiUrl
         : switch (env) {
             NaseebakEnvironment.development => 'https://dev-api.example.com/api/v1',
@@ -117,6 +117,7 @@ class AppEnvironmentConfig {
                 'API_BASE_URL via --dart-define.',
               ),
           };
+    final resolvedApiUrl = _normalizeApiBaseUrl(rawResolvedApiUrl);
 
     final resolvedWsUrl = definedWsUrl.isNotEmpty
         ? definedWsUrl
@@ -170,6 +171,21 @@ class AppEnvironmentConfig {
     }
 
     return config;
+  }
+
+  static String _normalizeApiBaseUrl(String rawUrl) {
+    var trimmed = rawUrl.trim();
+    while (trimmed.endsWith('/')) {
+      trimmed = trimmed.substring(0, trimmed.length - 1);
+    }
+    if (trimmed.isEmpty) return trimmed;
+    if (!trimmed.endsWith('/api/v1')) {
+      if (trimmed.endsWith('/api')) {
+        return '$trimmed/v1';
+      }
+      return '$trimmed/api/v1';
+    }
+    return trimmed;
   }
 
   /// Validates that Staging and Production configurations strictly use HTTPS and WSS

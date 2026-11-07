@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/network/api_client.dart';
@@ -30,13 +31,32 @@ class GoogleAuthRepository {
   /// 3. Sends the ID token over HTTPS to Laravel (/api/v1/auth/google)
   /// 4. Stores the Laravel Sanctum session credential in FlutterSecureStorage
   Future<AuthSessionResult> signInWithGoogle() async {
-    // Ensure fresh account selection if needed
-    final googleAccount = await _googleSignIn.signIn();
+    GoogleSignInAccount? googleAccount;
+    try {
+      // Clear any stale cached Google session so account selection mints a fresh ID token
+      try {
+        await _googleSignIn.signOut();
+      } catch (_) {}
+      googleAccount = await _googleSignIn.signIn();
+    } on PlatformException catch (e) {
+      throw Exception(
+        'تعذر إتمام تسجيل الدخول عبر خدمات Google (${e.code}). يرجى المحاولة مرة أخرى.',
+      );
+    }
+
     if (googleAccount == null) {
       throw Exception('تم إلغاء اختيار حساب Google.');
     }
 
-    final googleAuth = await googleAccount.authentication;
+    final GoogleSignInAuthentication googleAuth;
+    try {
+      googleAuth = await googleAccount.authentication;
+    } on PlatformException catch (e) {
+      throw Exception(
+        'تعذر الحصول على مصادقة حساب Google (${e.code}). يرجى المحاولة مرة أخرى.',
+      );
+    }
+
     final idToken = googleAuth.idToken;
 
     if (idToken == null || idToken.isEmpty) {
@@ -67,7 +87,9 @@ class GoogleAuthRepository {
       final userMap = (data['user'] as Map<String, dynamic>?) ?? {};
       final user = AuthUserModel.fromJson(
         userMap,
-        googleSuggestedName: data['google_Suggested_name'] as String?,
+        googleSuggestedName: (data['google_suggested_name'] as String?) ??
+            (data['google_Suggested_name'] as String?) ??
+            googleAccount.displayName,
       );
 
       return AuthSessionResult(

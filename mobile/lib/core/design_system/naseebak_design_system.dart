@@ -1101,10 +1101,10 @@ class NaseebakPremiumBanner extends StatelessWidget {
   }
 }
 
-/// كولاج البورتريه لشاشة الترحيب (تصميم Screen 01 UX Pilot)
+/// شعار نَصِيبُكَ الرسمي لشاشة الترحيب وتسجيل الدخول
 class NaseebakWelcomeCollage extends StatelessWidget {
   final double height;
-  const NaseebakWelcomeCollage({super.key, this.height = 230});
+  const NaseebakWelcomeCollage({super.key, this.height = 240});
 
   @override
   Widget build(BuildContext context) {
@@ -1112,229 +1112,14 @@ class NaseebakWelcomeCollage extends StatelessWidget {
       height: height,
       width: double.infinity,
       child: Center(
-        child: FittedBox(
+        child: Image.asset(
+          'assets/images/naseebak_logo.png',
+          height: height,
           fit: BoxFit.contain,
-          child: SizedBox(
-            width: 320,
-            height: 330,
-            child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Top-left portrait card
-              Positioned(
-                top: 24,
-                left: 18,
-                child: _buildCollageCard(
-                  width: 128,
-                  height: 160,
-                  gradientColors: const [Color(0xFF2C3E50), Color(0xFF1A252F)],
-                  avatarIcon: Icons.person_rounded,
-                  accentColor: const Color(0xFFD4AF37),
-                  caption: 'شريك حياة جاد',
-                ),
-              ),
-              // Bottom-left portrait card
-              Positioned(
-                bottom: 16,
-                left: 36,
-                child: _buildCollageCard(
-                  width: 132,
-                  height: 162,
-                  gradientColors: const [Color(0xFF8E7D73), Color(0xFF5A4D46)],
-                  avatarIcon: Icons.person_3_rounded,
-                  accentColor: Colors.white,
-                  caption: 'قيم وأخلاق',
-                ),
-              ),
-              // Bottom-right portrait card
-              Positioned(
-                bottom: 6,
-                right: 20,
-                child: _buildCollageCard(
-                  width: 134,
-                  height: 168,
-                  gradientColors: const [Color(0xFF1E3A5F), Color(0xFF0F1E33)],
-                  avatarIcon: Icons.person_2_rounded,
-                  accentColor: const Color(0xFF64B5F6),
-                  caption: 'توافق واهتمام',
-                ),
-              ),
-              // Center hero portrait card (with gold border)
-              Positioned(
-                top: 18,
-                child: Container(
-                  width: 168,
-                  height: 224,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: AppColors.goldAccent,
-                      width: 2.2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.18),
-                        blurRadius: 24,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(22),
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Color(0xFF2A2826),
-                            Color(0xFF191715),
-                          ],
-                        ),
-                      ),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Center(
-                            child: Icon(
-                              Icons.face_3_rounded,
-                              size: 88,
-                              color: AppColors.creamHighlight.withOpacity(0.92),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.transparent,
-                                    Colors.black.withOpacity(0.85),
-                                  ],
-                                ),
-                              ),
-                              child: const Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'نصيبك',
-                                    style: TextStyle(
-                                      fontFamily: NaseebakTypography.fontFamily,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.goldAccent,
-                                    ),
-                                  ),
-                                  Text(
-                                    'تعارف جاد وموثوق',
-                                    style: TextStyle(
-                                      fontFamily: NaseebakTypography.fontFamily,
-                                      fontSize: 11,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        ),
-      ),
-    );
-  }
-
-  static Widget _buildCollageCard({
-    required double width,
-    required double height,
-    required List<Color> gradientColors,
-    required IconData avatarIcon,
-    required Color accentColor,
-    required String caption,
-  }) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: AppColors.subtleBorder.withOpacity(0.7),
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.12),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(21),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: gradientColors,
-            ),
-          ),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Center(
-                child: Icon(
-                  avatarIcon,
-                  size: width * 0.48,
-                  color: accentColor.withOpacity(0.85),
-                ),
-              ),
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.75),
-                      ],
-                    ),
-                  ),
-                  child: Text(
-                    caption,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontFamily: NaseebakTypography.fontFamily,
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          errorBuilder: (context, error, stackTrace) => Icon(
+            Icons.favorite_rounded,
+            size: height * 0.45,
+            color: AppColors.goldAccent,
           ),
         ),
       ),
