@@ -335,7 +335,16 @@ class MatchmakingService
                 ]);
             }
 
-            MatchmakingRequestCreated::dispatch($request);
+            try {
+                app(\App\Services\Notification\NotificationService::class)
+                    ->notifyMatchmakingRequestCreated($request);
+            } catch (\Throwable) {
+            }
+
+            try {
+                MatchmakingRequestCreated::dispatch($request);
+            } catch (\Throwable) {
+            }
 
             return $request;
         });
@@ -482,11 +491,22 @@ class MatchmakingService
                 ]
             );
 
-            MatchmakingRequestAccepted::dispatch($lockedRequest->fresh(), $conversation);
-            ConversationUpdated::dispatch($conversation, [(int) $sender->id, (int) $recipient->id]);
+            $freshRequest = $lockedRequest->fresh();
+
+            try {
+                app(\App\Services\Notification\NotificationService::class)
+                    ->notifyMatchmakingRequestAccepted($freshRequest, $conversation);
+            } catch (\Throwable) {
+            }
+
+            try {
+                MatchmakingRequestAccepted::dispatch($freshRequest, $conversation);
+                ConversationUpdated::dispatch($conversation, [(int) $sender->id, (int) $recipient->id]);
+            } catch (\Throwable) {
+            }
 
             return [
-                'request' => $lockedRequest->fresh(),
+                'request' => $freshRequest,
                 'conversation' => $conversation->fresh(),
             ];
         });
@@ -537,9 +557,20 @@ class MatchmakingService
                 'responded_at' => now(),
             ]);
 
-            MatchmakingRequestRejected::dispatch($lockedRequest->fresh());
+            $freshRejected = $lockedRequest->fresh();
 
-            return $lockedRequest->fresh();
+            try {
+                app(\App\Services\Notification\NotificationService::class)
+                    ->notifyMatchmakingRequestRejected($freshRejected);
+            } catch (\Throwable) {
+            }
+
+            try {
+                MatchmakingRequestRejected::dispatch($freshRejected);
+            } catch (\Throwable) {
+            }
+
+            return $freshRejected;
         });
     }
 

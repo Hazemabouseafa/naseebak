@@ -262,10 +262,20 @@ class ConversationMessagingService
                 ->firstOrFail();
 
             $recipientParticipant->increment('unread_count');
+            $freshConversation = $lockedConversation->fresh();
+
+            try {
+                app(\App\Services\Notification\NotificationService::class)
+                    ->notifyPrivateMessageSent($freshConversation, $message, (int) $otherUser->id);
+            } catch (\Throwable) {
+            }
 
             // Dispatch broadcast events (ShouldDispatchAfterCommit ensures delivery only after DB commit)
-            MessageSent::dispatch($message, $lockedConversation->fresh(), (int) $otherUser->id);
-            ConversationUpdated::dispatch($lockedConversation->fresh(), [(int) $sender->id, (int) $otherUser->id]);
+            try {
+                MessageSent::dispatch($message, $freshConversation, (int) $otherUser->id);
+                ConversationUpdated::dispatch($freshConversation, [(int) $sender->id, (int) $otherUser->id]);
+            } catch (\Throwable) {
+            }
 
             return [
                 'message' => $message,

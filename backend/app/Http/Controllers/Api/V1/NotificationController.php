@@ -26,6 +26,8 @@ class NotificationController extends Controller
         /** @var User $user */
         $user = $request->user();
 
+        $this->notificationService->syncUserActivityNotifications($user);
+
         $perPage = min(50, max(5, (int) $request->query(
             'per_page',
             config('naseebak.notifications.notifications_per_page', 20)
@@ -65,6 +67,8 @@ class NotificationController extends Controller
     {
         /** @var User $user */
         $user = $request->user();
+
+        $this->notificationService->syncUserActivityNotifications($user);
 
         return response()->json([
             'status' => 'success',

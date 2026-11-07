@@ -42,47 +42,62 @@ class NotificationItemModel {
       createdAt != null ? DateTime.tryParse(createdAt!) : null;
 
   factory NotificationItemModel.fromJson(Map<String, dynamic> json) {
-    final payload = json['notification'] is Map<String, dynamic>
-        ? json['notification'] as Map<String, dynamic>
+    final rawNotif = json['notification'];
+    final payload = rawNotif is Map
+        ? Map<String, dynamic>.from(rawNotif)
         : json;
     final rawMeta = payload['routing_metadata'] ?? json['routing_metadata'];
+    final meta = rawMeta is Map
+        ? Map<String, dynamic>.from(rawMeta)
+        : const <String, dynamic>{};
+
     final rawDataPayload = payload['data_payload'];
-    final resolvedEventId = (json['event_id'] as String?) ??
-        (payload['event_id'] as String?) ??
-        (rawDataPayload is Map<String, dynamic>
-            ? rawDataPayload['event_id'] as String?
-            : null) ??
-        '';
+    final dataMap = rawDataPayload is Map
+        ? Map<String, dynamic>.from(rawDataPayload)
+        : null;
+
+    final resolvedEventId = (json['event_id'] ??
+            payload['event_id'] ??
+            (dataMap != null ? dataMap['event_id'] : null) ??
+            '')
+        .toString();
+
+    final rawId = payload['id'] ?? json['id'] ?? 0;
+    final parsedId =
+        rawId is num ? rawId.toInt() : (int.tryParse('$rawId') ?? 0);
+
+    final rawRefId = payload['reference_id'] ?? json['reference_id'];
+    final parsedRefId = rawRefId is num
+        ? rawRefId.toInt()
+        : (rawRefId != null ? int.tryParse('$rawRefId') : null);
+
+    final rawIsRead = payload['is_read'] ?? json['is_read'];
+    final parsedIsRead =
+        rawIsRead == true || rawIsRead == 1 || rawIsRead == '1' || rawIsRead == 'true';
 
     return NotificationItemModel(
-      id: (payload['id'] as num?)?.toInt() ?? (json['id'] as num?)?.toInt() ?? 0,
+      id: parsedId,
       eventId: resolvedEventId,
-      eventType: (payload['event_type'] as String?) ??
-          (payload['notification_type'] as String?) ??
-          (json['event_type'] as String?) ??
-          'admin_announcement',
-      titleAr: (payload['title_ar'] as String?) ??
-          (json['title_ar'] as String?) ??
-          'إشعار جديد',
-      bodyAr: (payload['body_ar'] as String?) ??
-          (json['body_ar'] as String?) ??
-          '',
-      referenceType: (payload['reference_type'] as String?) ??
-          (json['reference_type'] as String?),
-      referenceId: (payload['reference_id'] as num?)?.toInt() ??
-          (json['reference_id'] as num?)?.toInt(),
-      actionRoute: (payload['action_route'] as String?) ??
-          (json['action_route'] as String?) ??
-          'notification_center',
-      routingMetadata: rawMeta is Map<String, dynamic>
-          ? rawMeta
-          : const <String, dynamic>{},
-      isRead: (payload['is_read'] as bool?) ??
-          (json['is_read'] as bool?) ??
-          false,
-      readAt: (payload['read_at'] as String?) ?? (json['read_at'] as String?),
-      createdAt: (payload['created_at'] as String?) ??
-          (json['created_at'] as String?),
+      eventType: (payload['event_type'] ??
+              payload['notification_type'] ??
+              json['event_type'] ??
+              json['notification_type'] ??
+              'admin_announcement')
+          .toString(),
+      titleAr: (payload['title_ar'] ?? json['title_ar'] ?? 'إشعار جديد')
+          .toString(),
+      bodyAr: (payload['body_ar'] ?? json['body_ar'] ?? '').toString(),
+      referenceType:
+          (payload['reference_type'] ?? json['reference_type'])?.toString(),
+      referenceId: parsedRefId,
+      actionRoute: (payload['action_route'] ??
+              json['action_route'] ??
+              'notification_center')
+          .toString(),
+      routingMetadata: meta,
+      isRead: parsedIsRead,
+      readAt: (payload['read_at'] ?? json['read_at'])?.toString(),
+      createdAt: (payload['created_at'] ?? json['created_at'])?.toString(),
     );
   }
 
@@ -134,21 +149,35 @@ class PaginatedNotificationsResponse {
   List<NotificationItemModel> get items => notifications;
 
   factory PaginatedNotificationsResponse.fromJson(Map<String, dynamic> data) {
-    final rawList = data['notifications'] as List<dynamic>? ?? const [];
-    final pagination =
-        data['pagination'] as Map<String, dynamic>? ?? const <String, dynamic>{};
+    final rawList = (data['notifications'] ?? data['items']) as List<dynamic>? ??
+        const [];
+    final rawPagination = data['pagination'];
+    final pagination = rawPagination is Map
+        ? Map<String, dynamic>.from(rawPagination)
+        : const <String, dynamic>{};
+
+    final items = rawList
+        .whereType<Map>()
+        .map((e) => NotificationItemModel.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+
+    final rawUnread = data['unread_count'];
+    final parsedUnread = rawUnread is num
+        ? rawUnread.toInt()
+        : (int.tryParse('${rawUnread ?? ''}') ??
+            items.where((n) => !n.isRead).length);
+
+    int parseIntField(dynamic val, int fallback) =>
+        val is num ? val.toInt() : (int.tryParse('${val ?? ''}') ?? fallback);
 
     return PaginatedNotificationsResponse(
-      notifications: rawList
-          .whereType<Map<String, dynamic>>()
-          .map(NotificationItemModel.fromJson)
-          .toList(),
-      unreadCount: (data['unread_count'] as num?)?.toInt() ?? 0,
-      currentPage: (pagination['current_page'] as num?)?.toInt() ?? 1,
-      lastPage: (pagination['last_page'] as num?)?.toInt() ?? 1,
-      perPage: (pagination['per_page'] as num?)?.toInt() ?? 20,
-      total: (pagination['total'] as num?)?.toInt() ?? 0,
-      hasMorePages: (pagination['has_more_pages'] as bool?) ?? false,
+      notifications: items,
+      unreadCount: parsedUnread,
+      currentPage: parseIntField(pagination['current_page'], 1),
+      lastPage: parseIntField(pagination['last_page'], 1),
+      perPage: parseIntField(pagination['per_page'], 20),
+      total: parseIntField(pagination['total'], items.length),
+      hasMorePages: pagination['has_more_pages'] == true,
     );
   }
 }

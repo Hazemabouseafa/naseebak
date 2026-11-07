@@ -424,7 +424,15 @@ class AdminModerationService
                     ipAddress: $ipAddress
                 );
 
-                return $existingActive->refresh();
+                $refreshedExisting = $existingActive->refresh();
+
+                try {
+                    app(\App\Services\Notification\NotificationService::class)
+                        ->notifySubscriptionActivated($refreshedExisting);
+                } catch (\Throwable) {
+                }
+
+                return $refreshedExisting;
             }
 
             $startsAt = now();
@@ -464,6 +472,12 @@ class AdminModerationService
                 reason: $reasonText,
                 ipAddress: $ipAddress
             );
+
+            try {
+                app(\App\Services\Notification\NotificationService::class)
+                    ->notifySubscriptionActivated($subscription);
+            } catch (\Throwable) {
+            }
 
             return $subscription;
         });

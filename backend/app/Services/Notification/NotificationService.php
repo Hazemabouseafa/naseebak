@@ -496,11 +496,25 @@ class NotificationService
             ]);
 
             // Broadcast over Reverb private-user.{userId} after commit for active foreground sessions
-            NotificationCreated::dispatch($notification);
+            try {
+                NotificationCreated::dispatch($notification);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Failed to broadcast NotificationCreated over Reverb', [
+                    'notification_id' => $notification->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
             // Queue FCM push notification job after commit if user enabled this category
             if ($categoryEnabled) {
-                SendPushNotificationJob::dispatch($notification->id)->afterCommit();
+                try {
+                    SendPushNotificationJob::dispatch($notification->id)->afterCommit();
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('Failed to dispatch SendPushNotificationJob', [
+                        'notification_id' => $notification->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
 
             return $notification;
@@ -568,7 +582,271 @@ class NotificationService
             );
         }
 
+        if (!empty($notification->deduplication_key)) {
+            $cacheKey = "user_deleted_notif_keys:{$user->id}";
+            $deletedKeys = \Illuminate\Support\Facades\Cache::get($cacheKey, []);
+            if (!is_array($deletedKeys)) {
+                $deletedKeys = [];
+            }
+            $deletedKeys[$notification->deduplication_key] = true;
+            \Illuminate\Support\Facades\Cache::forever($cacheKey, $deletedKeys);
+        }
+
         $notification->delete();
+    }
+
+    /**
+     * Ensures real user activity (incoming/accepted/rejected matchmaking requests,
+     * incoming private messages, and active subscriptions) has corresponding in-app
+     * NotificationRecord rows even if an earlier real-time broadcast failed.
+     */
+    public function syncUserActivityNotifications(User $user): void
+    {
+        if ($user->account_status !== 'active') {
+            return;
+        }
+
+        try {
+            $deletedKeys = \Illuminate\Support\Facades\Cache::get("user_deleted_notif_keys:{$user->id}", []);
+            if (!is_array($deletedKeys)) {
+                $deletedKeys = [];
+            }
+
+            $existingKeys = NotificationRecord::where('user_id', $user->id)
+                ->whereNotNull('deduplication_key')
+                ->pluck('deduplication_key')
+                ->flip()
+                ->all();
+
+            // 1. Incoming pending matchmaking requests
+            $incomingRequests = MatchmakingRequest::where('recipient_id', $user->id)
+                ->where('status', MatchmakingRequest::STATUS_PENDING)
+                ->with('sender.profile')
+                ->orderByDesc('id')
+                ->limit(25)
+                ->get();
+
+            foreach ($incomingRequests as $req) {
+                $dedupKey = "matchmaking_created:{$req->id}";
+                if (isset($existingKeys[$dedupKey]) || isset($deletedKeys[$dedupKey])) {
+                    continue;
+                }
+                $senderName = $req->sender?->profile?->full_name;
+                $bodyAr = $senderName
+                    ? "أرسل لك \"{$senderName}\" طلب تعارف جديد."
+                    : 'لديك طلب تعارف جديد';
+
+                $this->insertBackfilledNotification(
+                    user: $user,
+                    eventType: NotificationRecord::TYPE_NEW_MATCHMAKING_REQUEST,
+                    titleAr: 'طلب تعارف جديد',
+                    bodyAr: $bodyAr,
+                    deduplicationKey: $dedupKey,
+                    actionRoute: NotificationRecord::ROUTE_MATCHMAKING_INCOMING,
+                    referenceType: 'matchmaking_request',
+                    referenceId: (int) $req->id,
+                    routingMetadata: [
+                        'request_id' => (int) $req->id,
+                        'tab' => 'incoming',
+                    ],
+                    createdAt: $req->created_at
+                );
+                $existingKeys[$dedupKey] = true;
+            }
+
+            // 2. Accepted matchmaking requests (for sender)
+            $acceptedRequests = MatchmakingRequest::where('sender_id', $user->id)
+                ->where('status', MatchmakingRequest::STATUS_ACCEPTED)
+                ->with(['recipient.profile', 'conversation'])
+                ->orderByDesc('responded_at')
+                ->orderByDesc('id')
+                ->limit(20)
+                ->get();
+
+            foreach ($acceptedRequests as $req) {
+                $dedupKey = "matchmaking_accepted:{$req->id}";
+                if (isset($existingKeys[$dedupKey]) || isset($deletedKeys[$dedupKey])) {
+                    continue;
+                }
+                $convId = $req->conversation?->id;
+                $recipientName = $req->recipient?->profile?->full_name;
+                $bodyAr = $recipientName
+                    ? "وافق \"{$recipientName}\" على طلب التعارف الخاص بك."
+                    : 'تمت الموافقة على طلب التعارف';
+
+                $this->insertBackfilledNotification(
+                    user: $user,
+                    eventType: NotificationRecord::TYPE_ACCEPTED_MATCHMAKING_REQUEST,
+                    titleAr: 'تمت الموافقة على طلبك',
+                    bodyAr: $bodyAr,
+                    deduplicationKey: $dedupKey,
+                    actionRoute: $convId ? NotificationRecord::ROUTE_CONVERSATION : NotificationRecord::ROUTE_MATCHMAKING_INCOMING,
+                    referenceType: $convId ? 'conversation' : 'matchmaking_request',
+                    referenceId: (int) ($convId ?? $req->id),
+                    routingMetadata: array_filter([
+                        'request_id' => (int) $req->id,
+                        'conversation_id' => $convId ? (int) $convId : null,
+                        'tab' => 'accepted',
+                    ], fn ($v) => $v !== null),
+                    createdAt: $req->responded_at ?? $req->updated_at
+                );
+                $existingKeys[$dedupKey] = true;
+            }
+
+            // 3. Rejected matchmaking requests (for sender)
+            $rejectedRequests = MatchmakingRequest::where('sender_id', $user->id)
+                ->where('status', MatchmakingRequest::STATUS_REJECTED)
+                ->orderByDesc('responded_at')
+                ->orderByDesc('id')
+                ->limit(15)
+                ->get();
+
+            foreach ($rejectedRequests as $req) {
+                $dedupKey = "matchmaking_rejected:{$req->id}";
+                if (isset($existingKeys[$dedupKey]) || isset($deletedKeys[$dedupKey])) {
+                    continue;
+                }
+                $this->insertBackfilledNotification(
+                    user: $user,
+                    eventType: NotificationRecord::TYPE_REJECTED_MATCHMAKING_REQUEST,
+                    titleAr: 'تحديث طلب التعارف',
+                    bodyAr: 'هناك تحديث بخصوص طلب التعارف',
+                    deduplicationKey: $dedupKey,
+                    actionRoute: NotificationRecord::ROUTE_MATCHMAKING_SENT,
+                    referenceType: 'matchmaking_request',
+                    referenceId: (int) $req->id,
+                    routingMetadata: [
+                        'request_id' => (int) $req->id,
+                        'tab' => 'sent',
+                    ],
+                    createdAt: $req->responded_at ?? $req->updated_at
+                );
+                $existingKeys[$dedupKey] = true;
+            }
+
+            // 4. Incoming messages in user's active conversations
+            $conversationIds = ConversationParticipant::where('user_id', $user->id)
+                ->pluck('conversation_id')
+                ->all();
+
+            if (!empty($conversationIds)) {
+                $incomingMessages = Message::whereIn('conversation_id', $conversationIds)
+                    ->where('sender_id', '!=', $user->id)
+                    ->with('sender.profile')
+                    ->orderByDesc('id')
+                    ->limit(20)
+                    ->get();
+
+                foreach ($incomingMessages as $msg) {
+                    $dedupKey = "message_sent:{$msg->id}";
+                    if (isset($existingKeys[$dedupKey]) || isset($deletedKeys[$dedupKey])) {
+                        continue;
+                    }
+                    $senderName = $msg->sender?->profile?->full_name;
+                    $bodyAr = $senderName
+                        ? "أرسل لك \"{$senderName}\" رسالة جديدة في المحادثة."
+                        : 'لديك رسالة جديدة';
+
+                    $this->insertBackfilledNotification(
+                        user: $user,
+                        eventType: NotificationRecord::TYPE_NEW_PRIVATE_MESSAGE,
+                        titleAr: 'رسالة جديدة',
+                        bodyAr: $bodyAr,
+                        deduplicationKey: $dedupKey,
+                        actionRoute: NotificationRecord::ROUTE_CONVERSATION,
+                        referenceType: 'conversation',
+                        referenceId: (int) $msg->conversation_id,
+                        routingMetadata: [
+                            'conversation_id' => (int) $msg->conversation_id,
+                        ],
+                        isRead: (bool) $msg->is_read,
+                        readAt: $msg->read_at,
+                        createdAt: $msg->created_at
+                    );
+                    $existingKeys[$dedupKey] = true;
+                }
+            }
+
+            // 5. Active subscriptions
+            $activeSubscriptions = Subscription::where('user_id', $user->id)
+                ->whereIn('status', Subscription::ENTITLED_STATUSES)
+                ->where('ends_at', '>', now())
+                ->orderByDesc('id')
+                ->limit(5)
+                ->get();
+
+            foreach ($activeSubscriptions as $sub) {
+                $periodKey = $sub->ends_at?->getTimestamp() ?? $sub->id;
+                $dedupKey = "sub_activated:{$sub->id}:{$periodKey}";
+                if (isset($existingKeys[$dedupKey]) || isset($deletedKeys[$dedupKey])) {
+                    continue;
+                }
+                $this->insertBackfilledNotification(
+                    user: $user,
+                    eventType: NotificationRecord::TYPE_SUBSCRIPTION_ACTIVATED,
+                    titleAr: 'تم تفعيل اشتراكك',
+                    bodyAr: 'تم تفعيل اشتراكك الشهري في نصيبك بنجاح.',
+                    deduplicationKey: $dedupKey,
+                    actionRoute: NotificationRecord::ROUTE_SUBSCRIPTION,
+                    referenceType: 'subscription',
+                    referenceId: (int) $sub->id,
+                    routingMetadata: [
+                        'reference_id' => (int) $sub->id,
+                    ],
+                    createdAt: $sub->starts_at ?? $sub->created_at
+                );
+                $existingKeys[$dedupKey] = true;
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('syncUserActivityNotifications encountered non-fatal error', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function insertBackfilledNotification(
+        User $user,
+        string $eventType,
+        string $titleAr,
+        string $bodyAr,
+        string $deduplicationKey,
+        string $actionRoute,
+        ?string $referenceType = null,
+        ?int $referenceId = null,
+        array $routingMetadata = [],
+        bool $isRead = false,
+        $readAt = null,
+        $createdAt = null
+    ): void {
+        $record = NotificationRecord::firstOrCreate(
+            [
+                'user_id' => $user->id,
+                'deduplication_key' => $deduplicationKey,
+            ],
+            [
+                'event_id' => (string) Str::uuid(),
+                'event_type' => $eventType,
+                'title_ar' => mb_substr(trim($titleAr), 0, 160),
+                'body_ar' => mb_substr(trim($bodyAr), 0, 500),
+                'reference_type' => $referenceType,
+                'reference_id' => $referenceId,
+                'action_route' => $actionRoute,
+                'routing_metadata' => $this->sanitizeRoutingMetadata($routingMetadata),
+                'is_read' => $isRead,
+                'read_at' => $readAt,
+                'fcm_delivery_status' => NotificationRecord::DELIVERY_NO_ACTIVE_DEVICES,
+                'delivery_attempts' => 0,
+            ]
+        );
+
+        if ($createdAt !== null && $record->wasRecentlyCreated) {
+            $record->timestamps = false;
+            $record->forceFill([
+                'created_at' => $createdAt,
+                'updated_at' => $createdAt,
+            ])->saveQuietly();
+        }
     }
 
     public function getUnreadCount(User $user): int

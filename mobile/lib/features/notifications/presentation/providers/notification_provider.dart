@@ -131,7 +131,7 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
     await _pushService.initialize();
     state = state.copyWith(permissionStatus: _pushService.permissionStatus);
     await _pushService.synchronizeDeviceTokenForAuthenticatedUser();
-    await refreshUnreadCount();
+    await loadNotifications(loadMore: false);
   }
 
   /// Requests Android 13+ runtime notification permission when user taps "تفعيل الإشعارات".
@@ -181,17 +181,24 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
               ...state.notifications,
               ...res.notifications,
             ])
-          : res.notifications;
+          : _deduplicateNotifications([
+              ...res.notifications,
+              ...state.notifications,
+            ]);
 
       for (final item in res.notifications) {
         _pushService.markEventSeenIfNew(item.eventId);
       }
 
+      final computedUnread = merged.where((n) => !n.isRead).length;
+      final effectiveUnread =
+          res.unreadCount > computedUnread ? res.unreadCount : computedUnread;
+
       state = state.copyWith(
         isLoading: false,
         isLoadingMore: false,
         notifications: merged,
-        unreadCount: res.unreadCount,
+        unreadCount: effectiveUnread,
         currentPage: res.currentPage,
         hasMorePages: res.hasMorePages,
       );
@@ -356,9 +363,70 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
   }
 
   void _handleReverbEvent(ReverbEventMessage event) {
-    if (event.event != 'notification.created') return;
+    NotificationItemModel? incoming;
 
-    final incoming = NotificationItemModel.fromJson(event.data);
+    if (event.event == 'notification.created') {
+      incoming = NotificationItemModel.fromJson(event.data);
+    } else if (event.event == 'matchmaking.request.created') {
+      final reqId = int.tryParse('${event.data['request_id'] ?? 0}') ?? 0;
+      incoming = NotificationItemModel(
+        id: -(100000 + reqId),
+        eventId: 'reverb_match_created_$reqId',
+        eventType: 'new_matchmaking_request',
+        titleAr: 'طلب تعارف جديد',
+        bodyAr: 'لديك طلب تعارف جديد بانتظار ردك.',
+        actionRoute: 'matchmaking_requests_incoming',
+        referenceType: 'matchmaking_request',
+        referenceId: reqId > 0 ? reqId : null,
+        routingMetadata: {
+          if (reqId > 0) 'request_id': reqId,
+          'tab': 'incoming',
+        },
+        isRead: false,
+        createdAt: event.data['created_at']?.toString() ??
+            DateTime.now().toUtc().toIso8601String(),
+      );
+    } else if (event.event == 'matchmaking.request.accepted') {
+      final reqId = int.tryParse('${event.data['request_id'] ?? 0}') ?? 0;
+      final convId = int.tryParse('${event.data['conversation_id'] ?? 0}');
+      incoming = NotificationItemModel(
+        id: -(200000 + reqId),
+        eventId: 'reverb_match_accepted_$reqId',
+        eventType: 'accepted_matchmaking_request',
+        titleAr: 'تمت الموافقة على طلبك',
+        bodyAr: 'تمت الموافقة على طلب التعارف وفتح المحادثة الخاصة.',
+        actionRoute: 'conversation',
+        referenceType: 'conversation',
+        referenceId: convId,
+        routingMetadata: {
+          if (reqId > 0) 'request_id': reqId,
+          if (convId != null && convId > 0) 'conversation_id': convId,
+          'tab': 'accepted',
+        },
+        isRead: false,
+        createdAt: DateTime.now().toUtc().toIso8601String(),
+      );
+    } else if (event.event == 'matchmaking.request.rejected') {
+      final reqId = int.tryParse('${event.data['request_id'] ?? 0}') ?? 0;
+      incoming = NotificationItemModel(
+        id: -(250000 + reqId),
+        eventId: 'reverb_match_rejected_$reqId',
+        eventType: 'rejected_matchmaking_request',
+        titleAr: 'تحديث طلب التعارف',
+        bodyAr: 'هناك تحديث بخصوص طلب التعارف المرسل.',
+        actionRoute: 'matchmaking_requests_sent',
+        referenceType: 'matchmaking_request',
+        referenceId: reqId > 0 ? reqId : null,
+        routingMetadata: {
+          if (reqId > 0) 'request_id': reqId,
+          'tab': 'sent',
+        },
+        isRead: false,
+        createdAt: DateTime.now().toUtc().toIso8601String(),
+      );
+    }
+
+    if (incoming == null) return;
     if (!_pushService.markEventSeenIfNew(incoming.eventId)) {
       return;
     }

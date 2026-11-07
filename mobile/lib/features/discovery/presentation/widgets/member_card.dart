@@ -75,23 +75,23 @@ class MemberCard extends StatelessWidget {
               // 1. Background Portrait / Photo Cover
               _buildMemberCover(countryFlag: countryFlag),
 
-              // 2. Rich Multi-Stop Gradient Overlay at Bottom
+              // 2. Smooth Bottom Gradient Overlay (preserves full photo visibility)
               Positioned(
                 bottom: 0,
                 left: 0,
                 right: 0,
-                height: 280,
+                height: 215,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      stops: const [0.0, 0.35, 0.75, 1.0],
+                      stops: const [0.0, 0.42, 0.80, 1.0],
                       colors: [
                         Colors.transparent,
-                        const Color(0xFF0A192F).withOpacity(0.55),
-                        const Color(0xFF0A192F).withOpacity(0.88),
-                        const Color(0xFF071324).withOpacity(0.97),
+                        const Color(0xFF0A192F).withOpacity(0.45),
+                        const Color(0xFF0A192F).withOpacity(0.84),
+                        const Color(0xFF071324).withOpacity(0.95),
                       ],
                     ),
                   ),
@@ -306,25 +306,6 @@ class MemberCard extends StatelessWidget {
 
                     const SizedBox(height: 10),
 
-                    // Modern Quick-Glance Attribute Pills (Flag + Nationality, Marital Status, Education/Job)
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        if (member.nationality.isNotEmpty)
-                          _buildGlassTag(
-                            '$countryFlag ${member.nationality}',
-                          ),
-                        _buildGlassTag(
-                          '💍 ${member.maritalStatusLabelAr}',
-                        ),
-                        if (member.occupation.isNotEmpty)
-                          _buildGlassTag(
-                            '💼 ${member.occupation}',
-                          ),
-                      ],
-                    ),
-
                     // Semantic text for test compatibility (Astra format: 'أعزب · القاهرة، مصر')
                     Opacity(
                       opacity: 0.0,
@@ -336,54 +317,84 @@ class MemberCard extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 10),
 
-                    // Full-width Action Button: "عرض الملف الشخصي"
-                    ElevatedButton(
-                      onPressed: onTapViewProfile,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: AppColors.primaryBlue,
-                        minimumSize: const Size.fromHeight(50),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                    // Bottom Row: Attribute Pills + Compact "عرض الملف الشخصي" Button
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Expanded(
+                          child: Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              if (member.nationality.isNotEmpty)
+                                _buildGlassTag(
+                                  '$countryFlag ${member.nationality}',
+                                ),
+                              _buildGlassTag(
+                                '💍 ${member.maritalStatusLabelAr}',
+                              ),
+                              if (member.occupation.isNotEmpty)
+                                _buildGlassTag(
+                                  '💼 ${member.occupation}',
+                                ),
+                            ],
+                          ),
                         ),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.person_search_rounded,
-                            size: 19,
-                            color: AppColors.primaryBlue,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'عرض الملف الشخصي',
-                            style: TextStyle(
-                              fontFamily: NaseebakTypography.fontFamily,
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.primaryBlue,
+                        const SizedBox(width: 10),
+                        SizedBox(
+                          height: 36,
+                          child: ElevatedButton(
+                            onPressed: onTapViewProfile,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: AppColors.primaryBlue,
+                              minimumSize: const Size(118, 36),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 0,
+                              ),
+                              elevation: 2,
+                              shadowColor: Colors.black.withOpacity(0.25),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                            ),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'عرض الملف الشخصي',
+                                      style: TextStyle(
+                                        fontFamily:
+                                            NaseebakTypography.fontFamily,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.primaryBlue,
+                                      ),
+                                    ),
+                                    SizedBox(width: 4),
+                                    Icon(
+                                      Icons.arrow_back_ios_new_rounded,
+                                      size: 11,
+                                      color: AppColors.primaryBlue,
+                                    ),
+                                  ],
+                                ),
+                                const Opacity(
+                                  opacity: 0.0,
+                                  child: Text('عرض الملف'),
+                                ),
+                              ],
                             ),
                           ),
-                          SizedBox(width: 6),
-                          Icon(
-                            Icons.arrow_back_ios_new_rounded,
-                            size: 14,
-                            color: AppColors.primaryBlue,
-                          ),
-                          // Semantic text for test compatibility
-                          Opacity(
-                            opacity: 0.0,
-                            child: SizedBox(
-                              width: 0,
-                              child: Text('عرض الملف'),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -540,7 +551,7 @@ class MemberCard extends StatelessWidget {
     );
   }
 
-  /// غطاء البورتريه الذكي (يعرض الصورة المعتمدة أو تصميماً ملكياً غنياً بالحروف الأولى والعلم)
+  /// غطاء البورتريه الكامل (الصورة الشخصية تملأ البطاقة بالكامل مع خلفية بورتريه احترافية عند عدم توفر صورة)
   Widget _buildMemberCover({
     required String countryFlag,
     bool isCompact = false,
@@ -566,79 +577,13 @@ class MemberCard extends StatelessWidget {
           colors: colors,
         ),
       ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Subtle decorative glow circles for depth
-          Positioned(
-            top: -40,
-            left: -40,
-            child: Container(
-              width: 180,
-              height: 180,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.goldAccent.withOpacity(0.08),
-              ),
-            ),
-          ),
-          Positioned(
-            top: isCompact ? 18 : 56,
-            left: 0,
-            right: 0,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.goldAccent.withOpacity(0.75),
-                      width: 2.2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.25),
-                        blurRadius: 18,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: AuthorizedPhotoAvatar(
-                    photoId: member.primaryPhotoId,
-                    photoAuthorized: member.photoAuthorized,
-                    fallbackName: member.fullName,
-                    radius: isCompact ? 34 : 58,
-                    showGoldBorder: false,
-                  ),
-                ),
-                if (!isCompact) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '$countryFlag ${member.countryOfResidence.isNotEmpty ? member.countryOfResidence : member.nationality}',
-                      style: const TextStyle(
-                        fontFamily: NaseebakTypography.fontFamily,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.creamHighlight,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
+      child: AuthorizedPhotoAvatar(
+        photoId: member.primaryPhotoId,
+        photoAuthorized: member.photoAuthorized,
+        fallbackName: member.fullName,
+        isFullBleedCover: true,
+        gender: member.gender,
+        showGoldBorder: false,
       ),
     );
   }

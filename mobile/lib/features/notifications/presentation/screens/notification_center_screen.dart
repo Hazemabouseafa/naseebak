@@ -34,8 +34,10 @@ class _NotificationCenterScreenState
     if (!_scrollController.hasClients) return;
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.position.pixels;
-    if (currentScroll >= maxScroll - 200) {
-      ref.read(notificationProvider.notifier).fetchNotifications(refresh: false);
+    if (maxScroll > 0 && currentScroll >= maxScroll - 200) {
+      ref
+          .read(notificationProvider.notifier)
+          .fetchNotifications(loadMore: true);
     }
   }
 
@@ -476,6 +478,9 @@ class _NotificationCenterScreenState
     Color iconColor;
 
     switch (type) {
+      case 'new_matchmaking_request':
+      case 'accepted_matchmaking_request':
+      case 'rejected_matchmaking_request':
       case 'matchmaking_request_received':
       case 'matchmaking_request_accepted':
       case 'matchmaking_request_rejected':
@@ -483,6 +488,7 @@ class _NotificationCenterScreenState
         bgColor = const Color(0xFFFFF1F3);
         iconColor = const Color(0xFFE11D48);
         break;
+      case 'new_private_message':
       case 'new_message_received':
         icon = Icons.chat_bubble_rounded;
         bgColor = AppColors.surfaceSubtleBlue;
