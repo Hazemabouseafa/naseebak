@@ -107,21 +107,35 @@ class AppEnvironmentConfig {
       }
     }
 
-    final rawResolvedApiUrl = definedApiUrl.isNotEmpty
-        ? definedApiUrl
-        : switch (env) {
-            NaseebakEnvironment.development => 'https://dev-api.example.com/api/v1',
-            NaseebakEnvironment.staging => 'https://naseebak-api.hazem.my/api/v1',
-            NaseebakEnvironment.production => throw StateError(
-                'Missing production API URL. Production builds require explicit '
-                'API_BASE_URL via --dart-define.',
-              ),
-          };
+    final isPlaceholderStagingApi = env.isStaging &&
+        (definedApiUrl.contains('naseebak.co') ||
+            definedApiUrl.contains('naseebak.com') ||
+            definedApiUrl.contains('example.com'));
+
+    final rawResolvedApiUrl =
+        (definedApiUrl.isNotEmpty && !isPlaceholderStagingApi)
+            ? definedApiUrl
+            : switch (env) {
+                NaseebakEnvironment.development =>
+                  'https://dev-api.example.com/api/v1',
+                NaseebakEnvironment.staging =>
+                  'https://naseebak-api.hazem.my/api/v1',
+                NaseebakEnvironment.production => throw StateError(
+                    'Missing production API URL. Production builds require explicit '
+                    'API_BASE_URL via --dart-define.',
+                  ),
+              };
     final resolvedApiUrl = _normalizeApiBaseUrl(rawResolvedApiUrl);
 
-    final resolvedWsUrl = definedWsUrl.isNotEmpty
+    final isPlaceholderStagingWs = env.isStaging &&
+        (definedWsUrl.contains('naseebak.co') ||
+            definedWsUrl.contains('naseebak.com') ||
+            definedWsHost.contains('naseebak.co') ||
+            definedWsHost.contains('naseebak.com'));
+
+    final resolvedWsUrl = (definedWsUrl.isNotEmpty && !isPlaceholderStagingWs)
         ? definedWsUrl
-        : (definedWsHost.isNotEmpty
+        : ((definedWsHost.isNotEmpty && !isPlaceholderStagingWs)
             ? '$definedWsScheme://$definedWsHost${definedWsPort != '443' && definedWsPort != '80' ? ':$definedWsPort' : ''}/app/$definedReverbKey?protocol=7&client=flutter&version=1.0'
             : switch (env) {
                 NaseebakEnvironment.development =>

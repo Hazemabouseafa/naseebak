@@ -8,8 +8,8 @@ void main() {
       final config = ApiEndpoints.environmentConfig;
 
       expect(config.androidPackageName, equals('com.naseebak.app'));
-      expect(ApiEndpoints.baseUrl.startsWith('https://'), isTrue);
-      expect(ApiEndpoints.reverbWsUrl.startsWith('wss://'), isTrue);
+      expect(ApiEndpoints.baseUrl, equals('https://naseebak-api.hazem.my/api/v1'));
+      expect(ApiEndpoints.reverbWsUrl.startsWith('wss://naseebak-ws.hazem.my/'), isTrue);
       expect(config.isSecureForRelease, isTrue);
     });
 
