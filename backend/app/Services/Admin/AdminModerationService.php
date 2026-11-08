@@ -169,6 +169,32 @@ class AdminModerationService
                 ipAddress: $ipAddress
             );
 
+            if ($profile->user && $profile->user->account_status === 'active') {
+                try {
+                    $notifTitle = match ($newStatus) {
+                        UserProfile::STATUS_APPROVED => 'تم اعتماد ملفك الشخصي',
+                        UserProfile::STATUS_CORRECTION_REQUESTED => 'ملاحظة لمراجعة ملفك الشخصي',
+                        UserProfile::STATUS_REJECTED => 'تحديث حالة الملف الشخصي',
+                        default => 'تحديث الملف الشخصي',
+                    };
+                    $notifBody = match ($newStatus) {
+                        UserProfile::STATUS_APPROVED => 'تمت مراجعة واعتماد ملفك الشخصي بنجاح وهو متاح الآن للظهور والتعارف.',
+                        default => $trimmedReason !== '' ? $trimmedReason : 'يرجى مراجعة بيانات ملفك الشخصي.',
+                    };
+                    app(\App\Services\Notification\NotificationService::class)->createAndDispatchNotification(
+                        recipient: $profile->user,
+                        eventType: \App\Models\NotificationRecord::TYPE_ADMIN_ANNOUNCEMENT,
+                        titleAr: $notifTitle,
+                        bodyAr: $notifBody,
+                        deduplicationKey: "profile_mod:{$profile->id}:{$newStatus}:" . now()->format('YmdHi'),
+                        actionRoute: \App\Models\NotificationRecord::ROUTE_NOTIFICATION_CENTER,
+                        referenceType: 'user_profile',
+                        referenceId: (int) $profile->id
+                    );
+                } catch (\Throwable) {
+                }
+            }
+
             return $profile->refresh();
         });
     }
@@ -224,6 +250,28 @@ class AdminModerationService
                 reason: $trimmedReason !== '' ? $trimmedReason : 'اعتماد الصورة الشخصية',
                 ipAddress: $ipAddress
             );
+
+            if ($photo->user && $photo->user->account_status === 'active') {
+                try {
+                    $notifTitle = $newStatus === UserPhoto::STATUS_APPROVED
+                        ? 'تم اعتماد صورتك الشخصية'
+                        : 'تحديث بخصوص صورتك الشخصية';
+                    $notifBody = $newStatus === UserPhoto::STATUS_APPROVED
+                        ? 'تمت الموافقة على صورتك الشخصية بنجاح في نَصِيبُكَ.'
+                        : ($trimmedReason !== '' ? $trimmedReason : 'يرجى رفع صورة شخصية واضحة ومطابقة لمعايير المنصة.');
+                    app(\App\Services\Notification\NotificationService::class)->createAndDispatchNotification(
+                        recipient: $photo->user,
+                        eventType: \App\Models\NotificationRecord::TYPE_ADMIN_ANNOUNCEMENT,
+                        titleAr: $notifTitle,
+                        bodyAr: $notifBody,
+                        deduplicationKey: "photo_mod:{$photo->id}:{$newStatus}:" . now()->format('YmdHi'),
+                        actionRoute: \App\Models\NotificationRecord::ROUTE_NOTIFICATION_CENTER,
+                        referenceType: 'user_photo',
+                        referenceId: (int) $photo->id
+                    );
+                } catch (\Throwable) {
+                }
+            }
 
             return $photo->refresh();
         });

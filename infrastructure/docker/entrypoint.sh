@@ -43,6 +43,7 @@ case "$ROLE" in
         if [ -n "${PHP_FPM_MAX_CHILDREN:-}" ]; then
             sed -i "s/^pm.max_children = .*/pm.max_children = ${PHP_FPM_MAX_CHILDREN}/" /usr/local/etc/php-fpm.d/www.conf
         fi
+        (while true; do php artisan queue:work "${QUEUE_CONNECTION:-database}" --stop-when-empty --tries=3 --timeout=60 --memory=96 --no-interaction >/dev/null 2>&1 || true; sleep 5; done) &
         php-fpm -D
         exec nginx -g "daemon off;"
         ;;

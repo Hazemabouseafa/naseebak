@@ -163,6 +163,7 @@ class PushNotificationService {
       // Firebase credentials (google-services.json) not yet provisioned in this environment;
       // application continues functioning normally without crashing.
       _isFirebaseAvailable = false;
+      await _checkCurrentPermissionStatus();
       return;
     }
 
@@ -198,7 +199,21 @@ class PushNotificationService {
   /// Never blocks registration, browsing, or messaging if denied.
   Future<NotificationPermissionStatus> requestNotificationPermission() async {
     if (!_isFirebaseAvailable) {
-      _updatePermissionStatus(NotificationPermissionStatus.denied);
+      try {
+        final androidPlugin =
+            _localNotifications.resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
+        if (androidPlugin != null) {
+          final granted = await androidPlugin.requestNotificationsPermission();
+          _updatePermissionStatus(
+            (granted ?? true)
+                ? NotificationPermissionStatus.granted
+                : NotificationPermissionStatus.denied,
+          );
+          return _permissionStatus;
+        }
+      } catch (_) {}
+      _updatePermissionStatus(NotificationPermissionStatus.granted);
       return _permissionStatus;
     }
 
@@ -221,6 +236,18 @@ class PushNotificationService {
 
   Future<NotificationPermissionStatus> _checkCurrentPermissionStatus() async {
     if (!_isFirebaseAvailable) {
+      try {
+        final androidPlugin =
+            _localNotifications.resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>();
+        if (androidPlugin != null) {
+          final enabled = await androidPlugin.areNotificationsEnabled();
+          if (enabled == true) {
+            _updatePermissionStatus(NotificationPermissionStatus.granted);
+          }
+          return _permissionStatus;
+        }
+      } catch (_) {}
       return _permissionStatus;
     }
 

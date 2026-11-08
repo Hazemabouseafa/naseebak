@@ -618,6 +618,65 @@ class NotificationService
                 ->flip()
                 ->all();
 
+            // 0. Administrative Announcement Campaigns (ensures Filament campaigns appear even without a separate queue worker)
+            if ($this->isCategoryEnabledForUser($user, NotificationRecord::TYPE_ADMIN_ANNOUNCEMENT)) {
+                $campaigns = AnnouncementCampaign::whereIn('status', [
+                    AnnouncementCampaign::STATUS_QUEUED,
+                    AnnouncementCampaign::STATUS_PROCESSING,
+                    AnnouncementCampaign::STATUS_COMPLETED,
+                    AnnouncementCampaign::STATUS_SCHEDULED,
+                ])
+                    ->where(function ($q) {
+                        $q->whereNull('scheduled_at')
+                            ->orWhere('scheduled_at', '<=', now());
+                    })
+                    ->orderByDesc('id')
+                    ->limit(25)
+                    ->get();
+
+                foreach ($campaigns as $campaign) {
+                    if (in_array($campaign->status, [
+                        AnnouncementCampaign::STATUS_QUEUED,
+                        AnnouncementCampaign::STATUS_SCHEDULED,
+                    ], true)) {
+                        try {
+                            $this->processQueuedAnnouncementCampaign($campaign);
+                        } catch (\Throwable) {
+                        }
+                    }
+
+                    $dedupKey = "campaign:{$campaign->id}:user:{$user->id}";
+                    if (isset($existingKeys[$dedupKey]) || isset($deletedKeys[$dedupKey])) {
+                        continue;
+                    }
+
+                    $audience = $campaign->audience ?: AnnouncementCampaign::AUDIENCE_ALL_ELIGIBLE;
+                    $isEligibleForCampaign = $this->buildEligibleAudienceQuery($audience)
+                        ->where('users.id', $user->id)
+                        ->exists();
+
+                    if (!$isEligibleForCampaign) {
+                        continue;
+                    }
+
+                    $this->insertBackfilledNotification(
+                        user: $user,
+                        eventType: NotificationRecord::TYPE_ADMIN_ANNOUNCEMENT,
+                        titleAr: $campaign->title_ar,
+                        bodyAr: $campaign->body_ar,
+                        deduplicationKey: $dedupKey,
+                        actionRoute: $campaign->action_route ?: NotificationRecord::ROUTE_NOTIFICATION_CENTER,
+                        referenceType: 'announcement_campaign',
+                        referenceId: (int) $campaign->id,
+                        routingMetadata: [
+                            'reference_id' => (int) $campaign->id,
+                        ],
+                        createdAt: $campaign->dispatched_at ?? $campaign->created_at
+                    );
+                    $existingKeys[$dedupKey] = true;
+                }
+            }
+
             // 1. Incoming pending matchmaking requests
             $incomingRequests = MatchmakingRequest::where('recipient_id', $user->id)
                 ->where('status', MatchmakingRequest::STATUS_PENDING)
@@ -654,30 +713,41 @@ class NotificationService
                 $existingKeys[$dedupKey] = true;
             }
 
-            // 2. Accepted matchmaking requests (for sender)
-            $acceptedRequests = MatchmakingRequest::where('sender_id', $user->id)
-                ->where('status', MatchmakingRequest::STATUS_ACCEPTED)
-                ->with(['recipient.profile', 'conversation'])
+            // 2. Accepted matchmaking requests (for both sender and recipient)
+            $acceptedRequests = MatchmakingRequest::where('status', MatchmakingRequest::STATUS_ACCEPTED)
+                ->where(function ($q) use ($user) {
+                    $q->where('sender_id', $user->id)
+                        ->orWhere('recipient_id', $user->id);
+                })
+                ->with(['sender.profile', 'recipient.profile', 'conversation'])
                 ->orderByDesc('responded_at')
                 ->orderByDesc('id')
                 ->limit(20)
                 ->get();
 
             foreach ($acceptedRequests as $req) {
-                $dedupKey = "matchmaking_accepted:{$req->id}";
+                $isSender = (int) $req->sender_id === (int) $user->id;
+                $dedupKey = $isSender
+                    ? "matchmaking_accepted:{$req->id}"
+                    : "matchmaking_accepted_recipient:{$req->id}";
                 if (isset($existingKeys[$dedupKey]) || isset($deletedKeys[$dedupKey])) {
                     continue;
                 }
                 $convId = $req->conversation?->id;
-                $recipientName = $req->recipient?->profile?->full_name;
-                $bodyAr = $recipientName
-                    ? "وافق \"{$recipientName}\" على طلب التعارف الخاص بك."
+                $otherName = $isSender
+                    ? $req->recipient?->profile?->full_name
+                    : $req->sender?->profile?->full_name;
+                $titleAr = $isSender ? 'تمت الموافقة على طلبك' : 'تم فتح محادثة تعارف';
+                $bodyAr = $otherName
+                    ? ($isSender
+                        ? "وافق \"{$otherName}\" على طلب التعارف الخاص بك."
+                        : "تم قبول طلب التعارف وفتح المحادثة الخاصة مع \"{$otherName}\".")
                     : 'تمت الموافقة على طلب التعارف';
 
                 $this->insertBackfilledNotification(
                     user: $user,
                     eventType: NotificationRecord::TYPE_ACCEPTED_MATCHMAKING_REQUEST,
-                    titleAr: 'تمت الموافقة على طلبك',
+                    titleAr: $titleAr,
                     bodyAr: $bodyAr,
                     deduplicationKey: $dedupKey,
                     actionRoute: $convId ? NotificationRecord::ROUTE_CONVERSATION : NotificationRecord::ROUTE_MATCHMAKING_INCOMING,
@@ -972,8 +1042,14 @@ class NotificationService
                 reason: 'إرسال إشعار إداري عام عبر لوحة التحكم'
             );
 
-            if (!$scheduledAt) {
-                DispatchAnnouncementCampaignJob::dispatch($campaign->id)->afterCommit();
+            if (!$scheduledAt || \Illuminate\Support\Carbon::parse($scheduledAt)->lte(now())) {
+                DB::afterCommit(function () use ($campaign) {
+                    try {
+                        $this->processQueuedAnnouncementCampaign($campaign->fresh() ?? $campaign);
+                    } catch (\Throwable) {
+                        DispatchAnnouncementCampaignJob::dispatch($campaign->id);
+                    }
+                });
             }
 
             return $campaign;

@@ -143,7 +143,8 @@ class _NotificationCenterScreenState
         ),
         body: Column(
           children: [
-            if (!state.isSystemPermissionGranted)
+            if (!state.isSystemPermissionGranted &&
+                !state.permissionBannerDismissed)
               _buildPermissionPromptBanner(context, ref),
             Expanded(
               child: _buildBody(context, ref, state),
@@ -191,10 +192,13 @@ class _NotificationCenterScreenState
           const SizedBox(width: 8),
           ElevatedButton(
             key: const ValueKey('btn_banner_enable_notifications'),
-            onPressed: () {
-              ref
+            onPressed: () async {
+              await ref
                   .read(notificationProvider.notifier)
                   .requestNotificationPermission();
+              ref
+                  .read(notificationProvider.notifier)
+                  .dismissPermissionBanner();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: NaseebakColors.primaryNavy,

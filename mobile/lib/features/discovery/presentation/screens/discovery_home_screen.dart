@@ -61,6 +61,7 @@ class _DiscoveryHomeScreenState extends ConsumerState<DiscoveryHomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(discoveryProvider.notifier).loadDiscoveryFeed();
       ref.read(profileManagementProvider.notifier).loadOwnProfile();
+      ref.read(notificationProvider.notifier).loadNotifications();
     });
   }
 
