@@ -279,7 +279,53 @@ class DiscoveryNotifier extends StateNotifier<DiscoveryState> {
     );
 
     try {
-      final detail = await _repository.fetchMemberProfile(targetUserId);
+      var detail = await _repository.fetchMemberProfile(targetUserId);
+      if (detail.primaryPhotoId == null) {
+        for (final m in [
+          ...state.suggestedMembers,
+          ...state.searchResults,
+          ...state.favorites,
+        ]) {
+          if (m.userId == targetUserId &&
+              m.primaryPhotoId != null &&
+              m.photoAuthorized) {
+            detail = MemberProfileDetailModel(
+              userId: detail.userId,
+              fullName: detail.fullName,
+              gender: detail.gender,
+              ageYears: detail.ageYears,
+              maritalStatus: detail.maritalStatus,
+              educationLevel: detail.educationLevel,
+              occupation: detail.occupation,
+              smokingStatus: detail.smokingStatus,
+              nationality: detail.nationality,
+              countryOfResidence: detail.countryOfResidence,
+              region: detail.region,
+              photoPrivacy: detail.photoPrivacy,
+              photoAuthorized: true,
+              primaryPhotoId: m.primaryPhotoId,
+              primaryPhotoUrl: m.primaryPhotoUrl ?? detail.primaryPhotoUrl,
+              isFavorited: detail.isFavorited,
+              zodiacSign: detail.zodiacSign,
+              previouslyMarried: detail.previouslyMarried,
+              hasChildren: detail.hasChildren,
+              childrenCount: detail.childrenCount,
+              heightCm: detail.heightCm,
+              homeOwnership: detail.homeOwnership,
+              hobbies: detail.hobbies,
+              bio: detail.bio,
+              matchmakingButtonState: detail.matchmakingButtonState,
+              matchmakingRequestId: detail.matchmakingRequestId,
+              matchmakingRequestStatus: detail.matchmakingRequestStatus,
+              matchmakingConversationId: detail.matchmakingConversationId,
+              viewerHasActiveSubscription: detail.viewerHasActiveSubscription,
+              viewerCanSendMatchRequests: detail.viewerCanSendMatchRequests,
+              viewerCanSendMessages: detail.viewerCanSendMessages,
+            );
+            break;
+          }
+        }
+      }
       state = state.copyWith(
         isLoadingMemberDetail: false,
         activeMemberProfile: detail,

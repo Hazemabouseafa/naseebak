@@ -10,6 +10,17 @@ import '../providers/discovery_provider.dart';
 class AuthorizedPhotoAvatar extends ConsumerStatefulWidget {
   static final Map<int, Uint8List> _photoMemoryCache = <int, Uint8List>{};
 
+  static void cachePhoto(int photoId, Uint8List bytes) {
+    if (bytes.isNotEmpty) {
+      _photoMemoryCache[photoId] = bytes;
+    }
+  }
+
+  static Uint8List? getCachedPhoto(int? photoId) {
+    if (photoId == null) return null;
+    return _photoMemoryCache[photoId];
+  }
+
   final int? photoId;
   final bool photoAuthorized;
   final String fallbackName;

@@ -4,6 +4,7 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../discovery/presentation/widgets/authorized_photo_avatar.dart';
 import '../providers/profile_management_provider.dart';
 
 /// ProfilePhotoUploader (مكوّن اختيار وضغط ورفع الصورة الشخصية بأمان)
@@ -150,7 +151,9 @@ class _ProfilePhotoUploaderState extends ConsumerState<ProfilePhotoUploader> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(profileManagementProvider);
-    final photoBytes = state.cachedPhotoBytes;
+    final primaryPhotoId = state.profile?.primaryPhoto?.id;
+    final photoBytes = state.cachedPhotoBytes ??
+        AuthorizedPhotoAvatar.getCachedPhoto(primaryPhotoId);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -158,22 +161,31 @@ class _ProfilePhotoUploaderState extends ConsumerState<ProfilePhotoUploader> {
         Stack(
           alignment: Alignment.center,
           children: [
-            CircleAvatar(
-              radius: widget.radius,
-              backgroundColor: AppColors.surfaceSubtleBlue,
-              backgroundImage:
-                  photoBytes != null ? MemoryImage(photoBytes) : null,
-              child: photoBytes == null
-                  ? Text(
-                      widget.fallbackInitial,
-                      style: TextStyle(
-                        fontSize: widget.radius * 0.72,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primaryBlue,
-                      ),
-                    )
-                  : null,
-            ),
+            if (photoBytes == null && primaryPhotoId != null)
+              AuthorizedPhotoAvatar(
+                photoId: primaryPhotoId,
+                photoAuthorized: true,
+                fallbackName: widget.fallbackInitial,
+                radius: widget.radius,
+                showGoldBorder: false,
+              )
+            else
+              CircleAvatar(
+                radius: widget.radius,
+                backgroundColor: AppColors.surfaceSubtleBlue,
+                backgroundImage:
+                    photoBytes != null ? MemoryImage(photoBytes) : null,
+                child: photoBytes == null
+                    ? Text(
+                        widget.fallbackInitial,
+                        style: TextStyle(
+                          fontSize: widget.radius * 0.72,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primaryBlue,
+                        ),
+                      )
+                    : null,
+              ),
             if (state.isUploadingPhoto)
               SizedBox(
                 width: widget.radius * 2,

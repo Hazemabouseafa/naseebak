@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/design_system/naseebak_design_system.dart';
+import '../providers/profile_management_provider.dart';
 import '../providers/profile_registration_provider.dart';
 
 /// 06. Profile Preview Screen (الخطوة 4 من 4: معاينة ومراجعة الملف الشخصي قبل النشر)
@@ -11,6 +12,9 @@ class ProfilePreviewStepScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final regState = ref.watch(profileRegistrationProvider);
+    final mgmtState = ref.watch(profileManagementProvider);
+    final photoBytes = mgmtState.cachedPhotoBytes ??
+        AuthorizedPhotoAvatar.getCachedPhoto(mgmtState.profile?.primaryPhoto?.id);
     final draft = regState.draft;
     final ageYears = draft.calculatedAgeYears ?? 30;
     final initialLetter = draft.fullName.trim().isNotEmpty
@@ -67,15 +71,20 @@ class ProfilePreviewStepScreen extends ConsumerWidget {
                             child: CircleAvatar(
                               radius: 40,
                               backgroundColor: AppColors.creamHighlight,
-                              child: Text(
-                                initialLetter,
-                                style: const TextStyle(
-                                  fontFamily: NaseebakTypography.fontFamily,
-                                  fontSize: 30,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.primaryNavy,
-                                ),
-                              ),
+                              backgroundImage: photoBytes != null
+                                  ? MemoryImage(photoBytes)
+                                  : null,
+                              child: photoBytes == null
+                                  ? Text(
+                                      initialLetter,
+                                      style: const TextStyle(
+                                        fontFamily: NaseebakTypography.fontFamily,
+                                        fontSize: 30,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primaryNavy,
+                                      ),
+                                    )
+                                  : null,
                             ),
                           ),
                         ),

@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../discovery/presentation/widgets/authorized_photo_avatar.dart';
 import '../../data/models/profile_model.dart';
 import '../../data/repositories/profile_repository.dart';
 import '../../domain/profile_registration_draft.dart';
@@ -79,12 +80,15 @@ class ProfileManagementNotifier extends StateNotifier<ProfileManagementState> {
       Uint8List? photoBytes = state.cachedPhotoBytes;
 
       if (bundle.profile?.primaryPhoto != null) {
+        final photoId = bundle.profile!.primaryPhoto!.id;
         try {
-          photoBytes = await _repository.fetchProtectedPhotoBytes(
-            bundle.profile!.primaryPhoto!.id,
-          );
+          photoBytes = await _repository.fetchProtectedPhotoBytes(photoId);
+          if (photoBytes.isNotEmpty) {
+            AuthorizedPhotoAvatar.cachePhoto(photoId, photoBytes);
+          }
         } catch (_) {
           // Keep existing cached bytes if photo stream is temporarily unreachable
+          photoBytes ??= AuthorizedPhotoAvatar.getCachedPhoto(photoId);
         }
       }
 
@@ -193,6 +197,7 @@ class ProfileManagementNotifier extends StateNotifier<ProfileManagementState> {
       );
 
       final updatedProfile = state.profile?.copyWith(primaryPhoto: metadata);
+      AuthorizedPhotoAvatar.cachePhoto(metadata.id, compressedBytes);
 
       state = state.copyWith(
         isUploadingPhoto: false,

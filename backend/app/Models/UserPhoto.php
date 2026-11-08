@@ -53,4 +53,18 @@ class UserPhoto extends Model
             ->where('target_type', self::class)
             ->orderByDesc('created_at');
     }
+
+    /**
+     * Checks whether this photo satisfies the moderation policy for display to authorized members.
+     * When strict moderation is required (default), only 'approved' photos are displayed.
+     * When require_profile_moderation is disabled in AppSetting, non-rejected photos are displayed.
+     */
+    public function isModerationApprovedForDisplay(): bool
+    {
+        if (UserProfile::isModerationRequired()) {
+            return $this->moderation_status === self::STATUS_APPROVED;
+        }
+
+        return $this->moderation_status !== self::STATUS_REJECTED;
+    }
 }

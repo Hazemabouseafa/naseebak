@@ -187,10 +187,17 @@ class MemberSearchQueryService
 
         $userIds = $profiles->pluck('user_id')->unique()->values()->all();
 
-        // Bulk load approved primary photos
-        $primaryPhotosByUser = UserPhoto::whereIn('user_id', $userIds)
-            ->where('is_primary', true)
-            ->where('moderation_status', 'approved')
+        // Bulk load eligible primary photos according to moderation policy
+        $primaryPhotosQuery = UserPhoto::whereIn('user_id', $userIds)
+            ->where('is_primary', true);
+
+        if (UserProfile::isModerationRequired()) {
+            $primaryPhotosQuery->where('moderation_status', UserPhoto::STATUS_APPROVED);
+        } else {
+            $primaryPhotosQuery->where('moderation_status', '!=', UserPhoto::STATUS_REJECTED);
+        }
+
+        $primaryPhotosByUser = $primaryPhotosQuery
             ->with('user.profile')
             ->get()
             ->keyBy('user_id');

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,6 +11,7 @@ import 'package:naseebak_mobile/features/discovery/data/models/search_preference
 import 'package:naseebak_mobile/features/discovery/data/repositories/discovery_repository.dart';
 import 'package:naseebak_mobile/features/discovery/presentation/providers/discovery_provider.dart';
 import 'package:naseebak_mobile/features/discovery/presentation/screens/discovery_home_screen.dart';
+import 'package:naseebak_mobile/features/discovery/presentation/screens/member_profile_screen.dart';
 import 'package:naseebak_mobile/features/messaging/data/models/conversation_model.dart';
 import 'package:naseebak_mobile/features/messaging/data/repositories/messaging_repository.dart';
 import 'package:naseebak_mobile/features/messaging/data/services/realtime_messaging_service.dart';
@@ -105,6 +107,19 @@ class _FakeSubscriptionRepo extends Fake implements SubscriptionRepository {
 }
 
 class _FakeDiscoveryRepo extends Fake implements DiscoveryRepository {
+  // Valid 1x1 transparent PNG bytes for testing Image.memory rendering
+  static final Uint8List validPngBytes = Uint8List.fromList(<int>[
+    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+    0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+    0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+    0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4,
+    0x89, 0x00, 0x00, 0x00, 0x0A, 0x49, 0x44, 0x41,
+    0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
+    0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00,
+    0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE,
+    0x42, 0x60, 0x82,
+  ]);
+
   @override
   Future<({List<MemberCardModel> suggestedMembers, SearchPreferencesModel savedPreferences})>
       fetchDiscoveryFeed() async => (
@@ -123,6 +138,45 @@ class _FakeDiscoveryRepo extends Fake implements DiscoveryRepository {
         minAge: 18,
         maxAge: 60,
       );
+
+  @override
+  Future<MemberProfileDetailModel> fetchMemberProfile(int targetUserId) async {
+    return MemberProfileDetailModel(
+      userId: targetUserId,
+      fullName: 'مريم أحمد',
+      gender: 'female',
+      ageYears: 27,
+      maritalStatus: 'single',
+      educationLevel: 'bachelor',
+      occupation: 'مهندسة برمجيات',
+      smokingStatus: 'non_smoker',
+      nationality: 'مصرية',
+      countryOfResidence: 'مصر',
+      region: 'القاهرة',
+      photoPrivacy: 'public',
+      photoAuthorized: true,
+      primaryPhotoId: 501,
+      primaryPhotoUrl: 'https://naseebak-api.hazem.my/api/v1/profile/photos/501/stream',
+      isFavorited: false,
+      zodiacSign: 'الجوزاء',
+      previouslyMarried: false,
+      hasChildren: false,
+      childrenCount: 0,
+      heightCm: 165,
+      homeOwnership: 'owned',
+      hobbies: const ['القراءة', 'السفر'],
+      bio: 'أبحث عن شريك حياة ملتزم وطموح.',
+      matchmakingButtonState: 'available',
+      viewerHasActiveSubscription: true,
+      viewerCanSendMatchRequests: true,
+      viewerCanSendMessages: true,
+    );
+  }
+
+  @override
+  Future<Uint8List> fetchAuthorizedPhotoBytes(int photoId) async {
+    return validPngBytes;
+  }
 }
 
 class _FakeProfileRepo extends Fake implements ProfileRepository {
@@ -306,6 +360,34 @@ void main() {
 
       final paddingWidget = tester.widget<Padding>(paddingFinder.first);
       expect(paddingWidget.padding, const EdgeInsets.symmetric(horizontal: 20, vertical: 8));
+    });
+
+    testWidgets('7. MemberProfileScreen displays profile owner photo inside hero photo container when photoAuthorized is true', (tester) async {
+      final fakeDisc = _FakeDiscoveryRepo();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            discoveryRepositoryProvider.overrideWithValue(fakeDisc),
+          ],
+          child: const MaterialApp(
+            home: MemberProfileScreen(memberUserId: 77),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Verify profile owner name & hero photo container are displayed
+      expect(find.textContaining('مريم أحمد'), findsOneWidget);
+      expect(find.byKey(const Key('member_profile_hero_photo_container')), findsOneWidget);
+      expect(find.byKey(const Key('member_profile_hero_photo_77')), findsOneWidget);
+
+      // Verify the actual Image widget is rendered inside the hero photo container
+      final heroImageFinder = find.descendant(
+        of: find.byKey(const Key('member_profile_hero_photo_container')),
+        matching: find.byType(Image),
+      );
+      expect(heroImageFinder, findsOneWidget);
     });
   });
 }

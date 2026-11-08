@@ -119,7 +119,7 @@ class ProfileAccessControlService
         }
 
         // Unapproved or rejected photos are NEVER visible to other regular members
-        if ($photo->moderation_status !== 'approved') {
+        if (!$photo->isModerationApprovedForDisplay()) {
             return false;
         }
 

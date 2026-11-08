@@ -108,7 +108,9 @@ class SecurePhotoStorageService
                 'mime_type' => $outputMime,
                 'file_size_bytes' => $byteSize,
                 'is_primary' => $isPrimary,
-                'moderation_status' => 'pending',
+                'moderation_status' => \App\Models\UserProfile::isModerationRequired()
+                    ? UserPhoto::STATUS_PENDING
+                    : UserPhoto::STATUS_APPROVED,
             ]);
         });
 

@@ -606,8 +606,9 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      // Gradient Cover Background
+                      // Hero Photo Cover Background (displays member's uploaded photo when authorized, or refined portrait cover fallback)
                       Container(
+                        key: const Key('member_profile_hero_photo_container'),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
@@ -617,12 +618,14 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                                 : const [Color(0xFF243B53), Color(0xFF102A43)],
                           ),
                         ),
-                        child: Center(
-                          child: Icon(
-                            isFemale ? Icons.face_3_rounded : Icons.face_rounded,
-                            size: 110,
-                            color: Colors.white.withOpacity(0.85),
-                          ),
+                        child: AuthorizedPhotoAvatar(
+                          key: Key('member_profile_hero_photo_${member.userId}'),
+                          photoId: member.primaryPhotoId,
+                          photoAuthorized: member.photoAuthorized,
+                          fallbackName: member.fullName,
+                          isFullBleedCover: true,
+                          gender: member.gender,
+                          showGoldBorder: false,
                         ),
                       ),
 

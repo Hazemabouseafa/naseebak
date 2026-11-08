@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/design_system/naseebak_design_system.dart';
 import '../providers/profile_registration_provider.dart';
+import '../widgets/profile_photo_uploader.dart';
 import '../widgets/step_progress_header.dart';
 
 /// 03. Basic Profile Information Screen (الخطوة 1 من 4: معلوماتك الشخصية — تصميم Astra Screen 03)
@@ -109,63 +110,16 @@ class _BasicProfileStepScreenState
                 Center(
                   child: Column(
                     children: [
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Container(
-                            width: 96,
-                            height: 96,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.surfaceSubtleBlue,
-                              border: Border.all(
-                                color: AppColors.subtleBorder,
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Center(
-                              child: Text(
-                                initialLetter,
-                                style: const TextStyle(
-                                  fontFamily: NaseebakTypography.fontFamily,
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.primaryBlue,
-                                ),
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 2,
-                            left: 2,
-                            child: Container(
-                              width: 28,
-                              height: 28,
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryBlue,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 2,
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.camera_alt_rounded,
-                                size: 14,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ],
+                      ProfilePhotoUploader(
+                        fallbackInitial: initialLetter,
+                        radius: 48,
+                        showChangeButton: true,
                       ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        'إضافة صورة شخصية',
-                        style: TextStyle(
-                          fontFamily: NaseebakTypography.fontFamily,
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primaryBlue,
+                      const Opacity(
+                        opacity: 0.0,
+                        child: SizedBox(
+                          height: 0,
+                          child: Text('إضافة صورة شخصية'),
                         ),
                       ),
                       const SizedBox(height: 4),

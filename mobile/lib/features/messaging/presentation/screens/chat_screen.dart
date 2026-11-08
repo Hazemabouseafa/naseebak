@@ -433,66 +433,89 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     ),
                     const SizedBox(width: 10),
 
-                    // Avatar with Online Green Dot
-                    Stack(
-                      children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: AppColors.surfaceSubtleBlue,
-                          child: Text(
-                            displayTitle.isNotEmpty ? displayTitle.substring(0, 1) : 'ن',
-                            style: const TextStyle(
-                              fontFamily: NaseebakTypography.fontFamily,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primaryBlue,
+                    // Avatar with Online Green Dot (displays member photo when authorized & opens MemberProfileScreen on tap)
+                    GestureDetector(
+                      onTap: otherMember == null
+                          ? null
+                          : () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => MemberProfileScreen(
+                                    memberUserId: otherMember.userId,
+                                  ),
+                                ),
+                              );
+                            },
+                      child: Stack(
+                        children: [
+                          AuthorizedPhotoAvatar(
+                            photoId: otherMember?.primaryPhotoId,
+                            photoAuthorized:
+                                otherMember?.photoAuthorized ?? false,
+                            fallbackName: displayTitle,
+                            radius: 20,
+                            showGoldBorder: false,
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            left: 0,
+                            child: Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: AppColors.success,
+                                shape: BoxShape.circle,
+                                border:
+                                    Border.all(color: Colors.white, width: 1.5),
+                              ),
                             ),
                           ),
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          child: Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: AppColors.success,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 1.5),
-                            ),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     const SizedBox(width: 10),
 
                     // Name and "متصل الآن"
                     Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            displayTitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontFamily: NaseebakTypography.fontFamily,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary,
+                      child: GestureDetector(
+                        onTap: otherMember == null
+                            ? null
+                            : () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => MemberProfileScreen(
+                                      memberUserId: otherMember.userId,
+                                    ),
+                                  ),
+                                );
+                              },
+                        behavior: HitTestBehavior.opaque,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              displayTitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontFamily: NaseebakTypography.fontFamily,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                              ),
                             ),
-                          ),
-                          const Text(
-                            'متصل الآن',
-                            style: TextStyle(
-                              fontFamily: NaseebakTypography.fontFamily,
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.success,
+                            const Text(
+                              'متصل الآن',
+                              style: TextStyle(
+                                fontFamily: NaseebakTypography.fontFamily,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.success,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
 
