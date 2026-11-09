@@ -873,4 +873,67 @@ class AdminDashboardPhase4Test extends TestCase
         $this->assertEquals(1, $revokedCount);
         $this->assertFalse($member->fresh()->hasActiveSubscription());
     }
+
+    /** 26. Admin can delete a member from the Filament Dashboard and audit log is recorded */
+    public function test_admin_can_delete_member_from_dashboard_and_records_audit_log(): void
+    {
+        $this->seedDefaultPaymentAndSubscriptionPlan();
+        $superAdmin = $this->createAdmin(Administrator::ROLE_SUPER_ADMIN);
+        $viewer = $this->createMember([], ['gender' => 'female', 'full_name' => 'هدى محمود']);
+        $targetMember = $this->createMember([
+            'google_sub' => 'google-sub-to-delete-999',
+            'email' => 'delete.me@example.com',
+        ], [
+            'gender' => 'male',
+            'full_name' => 'رامي عادل',
+            'moderation_status' => UserProfile::STATUS_APPROVED,
+        ]);
+
+        $this->actingAs($superAdmin, 'admin');
+        $this->assertTrue(\App\Filament\Resources\MemberResource::canDelete($targetMember));
+
+        // Before deletion: member appears in MemberResource query and in discovery search
+        $this->assertEquals(
+            1,
+            \App\Filament\Resources\MemberResource::getEloquentQuery()->where('id', $targetMember->id)->count()
+        );
+
+        // Delete member via admin operation endpoint
+        $this->actingAs($superAdmin, 'admin')
+            ->deleteJson("/admin/operations/members/{$targetMember->id}", [
+                'reason' => 'حذف حساب تجريبي من لوحة التحكم',
+            ])
+            ->assertOk()
+            ->assertJsonPath('status', 'success')
+            ->assertJsonPath('data.status', 'deleted')
+            ->assertJsonPath('data.user_id', $targetMember->id);
+
+        // Verify member is soft-deleted and hidden from Filament MemberResource table query
+        $this->assertSoftDeleted('users', ['id' => $targetMember->id]);
+        $this->assertEquals(
+            0,
+            \App\Filament\Resources\MemberResource::getEloquentQuery()->where('id', $targetMember->id)->count()
+        );
+
+        // Verify google_sub and email were anonymized so the Google account is freed
+        $deletedRow = User::withTrashed()->find($targetMember->id);
+        $this->assertNotNull($deletedRow);
+        $this->assertEquals('deleted', $deletedRow->account_status);
+        $this->assertNotEquals('google-sub-to-delete-999', $deletedRow->google_sub);
+        $this->assertNotEquals('delete.me@example.com', $deletedRow->email);
+
+        // Verify member no longer appears in search results for other members
+        $this->actingAs($viewer, 'sanctum')
+            ->getJson('/api/v1/members/search')
+            ->assertOk()
+            ->assertJsonCount(0, 'data.members');
+
+        // Verify immutable AdminAuditLog entry was recorded
+        $this->assertDatabaseHas('admin_audit_logs', [
+            'administrator_id' => $superAdmin->id,
+            'action' => 'member.deleted',
+            'target_id' => $targetMember->id,
+            'justification' => 'حذف حساب تجريبي من لوحة التحكم',
+        ]);
+    }
 }

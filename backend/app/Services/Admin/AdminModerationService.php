@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\UserPhoto;
 use App\Models\UserProfile;
 use App\Models\UserReport;
+use App\Services\Auth\AccountDeletionService;
 use App\Services\Profile\SecurePhotoStorageService;
 use DomainException;
 use Illuminate\Support\Facades\DB;
@@ -570,6 +571,70 @@ class AdminModerationService
             }
 
             return $revokedCount;
+        });
+    }
+
+    /**
+     * Deletes a member account from the Admin Dashboard:
+     * - Revokes active subscriptions and Sanctum tokens
+     * - Deletes private photos from storage and database
+     * - Cancels pending matchmaking requests & closes conversations
+     * - Anonymizes profile, email, and google_sub (allowing fresh re-registration if needed)
+     * - Soft-deletes the User record and writes an immutable AdminAuditLog entry
+     */
+    public function deleteMember(
+        Administrator $actor,
+        User $member,
+        ?string $reason = null,
+        ?string $ipAddress = null
+    ): array {
+        $effectiveReason = trim((string) $reason) !== ''
+            ? trim((string) $reason)
+            : 'حذف حساب العضو من لوحة التحكم بواسطة الإدارة';
+
+        return DB::transaction(function () use ($actor, $member, $effectiveReason, $ipAddress) {
+            $previousStatus = $member->account_status;
+            $previousFullName = $member->profile?->full_name;
+            $memberId = $member->id;
+
+            // Revoke any active subscriptions before deleting the member
+            $member->subscriptions()
+                ->whereIn('status', Subscription::ENTITLED_STATUSES)
+                ->update([
+                    'status' => Subscription::STATUS_REVOKED,
+                    'revoked_at' => now(),
+                    'auto_renewing' => false,
+                ]);
+
+            $result = app(AccountDeletionService::class)->executeUserDeletion(
+                user: $member,
+                reason: $effectiveReason,
+                actor: "admin:{$actor->id}"
+            );
+
+            // Anonymize google_sub as well when deleted by admin so the Google email is freed if needed
+            User::withTrashed()
+                ->where('id', $memberId)
+                ->update([
+                    'google_sub' => 'deleted_' . $memberId . '_' . Str::random(12),
+                ]);
+
+            $this->auditService->record(
+                actor: $actor,
+                action: 'member.deleted',
+                target: $member,
+                previousValues: [
+                    'account_status' => $previousStatus,
+                    'full_name' => $previousFullName,
+                ],
+                newValues: [
+                    'account_status' => 'deleted',
+                ],
+                reason: $effectiveReason,
+                ipAddress: $ipAddress
+            );
+
+            return $result;
         });
     }
 }

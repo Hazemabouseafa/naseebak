@@ -25,6 +25,11 @@ class MemberModerationPolicy
         return $actor->isSuperAdmin() || $actor->isModerator();
     }
 
+    public function deleteMember(Administrator $actor, User $member): bool
+    {
+        return $actor->isSuperAdmin() || $actor->isModerator();
+    }
+
     public function moderateProfile(Administrator $actor, UserProfile $profile): bool
     {
         return $actor->isSuperAdmin() || $actor->isModerator();

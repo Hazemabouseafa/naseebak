@@ -89,6 +89,10 @@ Route::prefix('admin/operations')->group(function () {
             ->whereNumber('member')
             ->name('admin.operations.members.restore');
 
+        Route::delete('/members/{member}', [AdminOperationsController::class, 'deleteMember'])
+            ->whereNumber('member')
+            ->name('admin.operations.members.delete');
+
         // Profile moderation (Approve, Reject, Request Correction)
         Route::post('/profiles/{profile}/moderate', [AdminOperationsController::class, 'moderateProfile'])
             ->whereNumber('profile')

@@ -45,7 +45,9 @@ class MemberResource extends Resource
 
     public static function canDelete($record): bool
     {
-        return false;
+        /** @var ?Administrator $admin */
+        $admin = Auth::guard('admin')->user();
+        return $admin !== null && $admin->is_active;
     }
 
     public static function infolist(Infolist $infolist): Infolist
@@ -355,6 +357,34 @@ class MemberResource extends Resource
                             ->success()
                             ->send();
                     }),
+
+                Tables\Actions\Action::make('delete_member')
+                    ->label('حذف العضو')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('حذف حساب العضو نهائياً')
+                    ->modalDescription('سيؤدي هذا الإجراء إلى حذف حساب العضو وملفه الشخصي وصوره وإلغاء جلساته النشطة وإخفائه بالكامل من التطبيق ولوحة التحكم. هل أنت متأكد من المتابعة؟')
+                    ->form([
+                        Textarea::make('reason')
+                            ->label('سبب الحذف (اختياري)')
+                            ->placeholder('مثال: حذف الحساب بناءً على مراجعة الإدارة أو حساب تجريبي')
+                            ->maxLength(500),
+                    ])
+                    ->action(function (User $record, array $data, AdminModerationService $service) {
+                        /** @var Administrator $actor */
+                        $actor = Auth::guard('admin')->user();
+                        $service->deleteMember(
+                            actor: $actor,
+                            member: $record,
+                            reason: $data['reason'] ?? null,
+                        );
+
+                        Notification::make()
+                            ->title('تم حذف حساب العضو بنجاح')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkAction::make('approve_selected_profiles')
@@ -418,6 +448,42 @@ class MemberResource extends Resource
 
                         Notification::make()
                             ->title("تم تفعيل الاشتراك اليدوي لـ {$activatedCount} عضو بنجاح")
+                            ->success()
+                            ->send();
+                    }),
+
+                Tables\Actions\BulkAction::make('delete_selected_members')
+                    ->label('حذف الأعضاء المحددين')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('حذف الأعضاء المحددين نهائياً')
+                    ->modalDescription('سيتم حذف جميع الأعضاء المحددين وبياناتهم وصورهم وإلغاء جلساتهم النشطة فوراً. هل أنت متأكد من المتابعة؟')
+                    ->deselectRecordsAfterCompletion()
+                    ->form([
+                        Textarea::make('reason')
+                            ->label('سبب الحذف (اختياري)')
+                            ->placeholder('مثال: تنظيف الحسابات التجريبية أو المخالفة')
+                            ->maxLength(500),
+                    ])
+                    ->action(function (Collection $records, array $data, AdminModerationService $service) {
+                        /** @var Administrator $actor */
+                        $actor = Auth::guard('admin')->user();
+                        $deletedCount = 0;
+
+                        foreach ($records as $member) {
+                            if ($member instanceof User) {
+                                $service->deleteMember(
+                                    actor: $actor,
+                                    member: $member,
+                                    reason: $data['reason'] ?? null,
+                                );
+                                $deletedCount++;
+                            }
+                        }
+
+                        Notification::make()
+                            ->title("تم حذف {$deletedCount} عضو بنجاح")
                             ->success()
                             ->send();
                     }),

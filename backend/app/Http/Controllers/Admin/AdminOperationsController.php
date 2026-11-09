@@ -210,6 +210,31 @@ class AdminOperationsController extends Controller
     }
 
     /**
+     * Deletes a member account from the platform and records an audit log entry.
+     */
+    public function deleteMember(Request $request, User $member): JsonResponse
+    {
+        $validated = $request->validate([
+            'reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        /** @var Administrator $actor */
+        $actor = Auth::guard('admin')->user();
+
+        $result = $this->moderationService->deleteMember(
+            actor: $actor,
+            member: $member,
+            reason: $validated['reason'] ?? null,
+            ipAddress: $request->ip()
+        );
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $result,
+        ]);
+    }
+
+    /**
      * Moderates a member profile ('approved', 'rejected', 'correction_requested').
      */
     public function moderateProfile(Request $request, UserProfile $profile): JsonResponse

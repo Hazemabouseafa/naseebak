@@ -83,6 +83,38 @@ class ViewMember extends ViewRecord
                         ->success()
                         ->send();
                 }),
+
+            Action::make('delete_member_header')
+                ->label('حذف حساب العضو')
+                ->icon('heroicon-o-trash')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->modalHeading('حذف حساب العضو نهائياً')
+                ->modalDescription('سيؤدي هذا الإجراء إلى حذف حساب العضو وملفه الشخصي وصوره وإلغاء جلساته النشطة وإخفائه بالكامل من التطبيق ولوحة التحكم.')
+                ->form([
+                    Textarea::make('reason')
+                        ->label('سبب الحذف (اختياري)')
+                        ->placeholder('مثال: حذف الحساب بناءً على مراجعة الإدارة')
+                        ->maxLength(500),
+                ])
+                ->action(function (array $data, AdminModerationService $service) {
+                    /** @var User $record */
+                    $record = $this->record;
+                    /** @var Administrator $actor */
+                    $actor = Auth::guard('admin')->user();
+                    $service->deleteMember(
+                        actor: $actor,
+                        member: $record,
+                        reason: $data['reason'] ?? null,
+                    );
+
+                    Notification::make()
+                        ->title('تم حذف حساب العضو بنجاح')
+                        ->success()
+                        ->send();
+
+                    $this->redirect(MemberResource::getUrl('index'));
+                }),
         ];
     }
 }
