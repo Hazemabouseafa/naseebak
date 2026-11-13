@@ -41,14 +41,43 @@ class ManagePaymentGatewaysPage extends Page implements HasForms
     {
         abort_unless(self::canAccess(), 403);
 
+        $this->refreshFormState();
+    }
+
+    protected function refreshFormState(): void
+    {
         $setting = PaymentSetting::first();
+        $diagnostics = $setting?->gatewayDiagnostics() ?? [];
+
+        $paymobDetails = ($diagnostics['paymob']['status_label_ar'] ?? '')
+            . (!empty($diagnostics['paymob']['missing_items'])
+                ? ' — ينقص: ' . implode(', ', $diagnostics['paymob']['missing_items'])
+                : '');
+
+        $shaDetails = ($diagnostics['sha7nawy']['status_label_ar'] ?? '')
+            . (!empty($diagnostics['sha7nawy']['missing_items'])
+                ? ' — المتطلبات الناقصة: ' . implode(', ', $diagnostics['sha7nawy']['missing_items'])
+                : '');
+
         $this->form->fill([
             'active_web_payment_gateway' => $setting?->active_web_payment_gateway ?? 'paymob',
-            'paymob_status' => $setting?->isGatewayConfigured('paymob') ? 'مُعَدّ وجاهز للتشغيل' : 'غير مكتمل الإعدادات البيئية',
-            'sha7nawy_status' => $setting?->isGatewayConfigured('sha7nawy') ? 'مُعَدّ وجاهز للتشغيل (https://gate.sha7nawy.com)' : 'بانتظار استكمال مفاتيح الربط الرسمية',
+            'paymob_status' => $paymobDetails,
+            'sha7nawy_status' => $shaDetails,
             'last_updated_at' => $setting?->updated_at?->format('Y-m-d H:i:s') ?? '-',
             'last_updated_by' => $setting?->updatedByAdmin?->name ?? 'النظام الافتراضي',
         ]);
+    }
+
+    public function checkReadiness(): void
+    {
+        abort_unless(self::canAccess(), 403);
+
+        $this->refreshFormState();
+
+        Notification::make()
+            ->title('تم فحص جاهزية متغيرات البيئة لبوابات الدفع دون كشف المفاتيح السرية')
+            ->info()
+            ->send();
     }
 
     public function form(Form $form): Form

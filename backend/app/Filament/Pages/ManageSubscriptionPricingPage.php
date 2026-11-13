@@ -4,10 +4,12 @@ namespace App\Filament\Pages;
 
 use App\Models\Administrator;
 use App\Models\PaymentSetting;
+use App\Models\SubscriptionPlan;
 use App\Providers\Filament\AdminPanelProvider;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
@@ -20,8 +22,8 @@ class ManageSubscriptionPricingPage extends Page implements HasForms
     use InteractsWithForms;
 
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
-    protected static ?string $navigationLabel = 'أسعار الاشتراك';
-    protected static ?string $title = 'إدارة أسعار الاشتراك الشهري عبر الويب';
+    protected static ?string $navigationLabel = 'إدارة باقات الاشتراك';
+    protected static ?string $title = 'إدارة باقات وأسعار الاشتراك عبر الموقع الإلكتروني';
     protected static ?string $navigationGroup = AdminPanelProvider::NAV_GROUP_BILLING;
     protected static ?int $navigationSort = 2;
     protected static string $view = 'filament.pages.manage-subscription-pricing';
@@ -40,10 +42,17 @@ class ManageSubscriptionPricingPage extends Page implements HasForms
         abort_unless(self::canAccess(), 403);
 
         $setting = PaymentSetting::first();
+        $monthly = SubscriptionPlan::where('code', 'monthly_membership')->first();
+        $quarterly = SubscriptionPlan::where('code', 'quarterly_membership')->first();
+
         $this->form->fill([
-            'web_monthly_price' => $setting?->web_monthly_price ?? '250.00',
+            'monthly_name_ar' => $monthly?->name_ar ?? 'الباقة الشهرية',
+            'web_monthly_price' => $monthly?->web_price_amount ?? ($setting?->web_monthly_price ?? '250.00'),
+            'monthly_is_active' => (bool) ($monthly?->is_active ?? true),
+            'quarterly_name_ar' => $quarterly?->name_ar ?? 'الباقة الربع سنوية',
+            'quarterly_web_price' => $quarterly?->web_price_amount ?? '600.00',
+            'quarterly_is_active' => (bool) ($quarterly?->is_active ?? true),
             'web_currency' => $setting?->web_currency ?? 'EGP',
-            'subscription_duration_days' => $setting?->subscription_duration_days ?? 30,
             'google_play_product_id' => config('naseebak.google_play.monthly_subscription_id', 'naseebak_monthly_membership'),
             'reason' => '',
         ]);
@@ -53,35 +62,65 @@ class ManageSubscriptionPricingPage extends Page implements HasForms
     {
         return $form
             ->schema([
-                Section::make('تسعير العضوية الشهرية عبر الويب (Paymob / Sha7nawy)')
-                    ->description('يُستخدم هذا السعر في عمليات الدفع الجديدة عبر بوابات الدفع الإلكترونية فقط، ولا يؤثر على أسعار متجر Google Play أو المعاملات السابقة.')
+                Section::make('الباقة الشهرية (شهر واحد — الموقع الإلكتروني فقط)')
+                    ->description('تُستخدم هذه الإعدادات لطلبات الدفع الجديدة عبر الموقع الإلكتروني فقط ولا تغير الطلبات أو المعاملات السابقة.')
                     ->columns(2)
                     ->schema([
+                        TextInput::make('monthly_name_ar')
+                            ->label('اسم الباقة المعروض للمستخدمين')
+                            ->required()
+                            ->maxLength(80),
+
                         TextInput::make('web_monthly_price')
-                            ->label('سعر الاشتراك الشهري (ج.م - EGP)')
+                            ->label('سعر الباقة الشهرية (ج.م - EGP)')
                             ->numeric()
                             ->minValue(0.01)
                             ->step(0.01)
                             ->required()
-                            ->helperText('يجب أن يكون السعر أكبر من الصفر وبحد أقصى منزلتين عشريتين.'),
+                            ->helperText('بحد أقصى منزلتين عشريتين.'),
 
+                        Toggle::make('monthly_is_active')
+                            ->label('الباقة الشهرية متاحة للاشتراك عبر الموقع')
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make('الباقة الربع سنوية (3 أشهر ميلادية — الموقع الإلكتروني فقط)')
+                    ->description('مدة الاشتراك 3 أشهر ميلادية من تاريخ التفعيل أو التمديد، وتُحتسب نسبة التوفير تلقائياً مقارنةً بالباقة الشهرية.')
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('quarterly_name_ar')
+                            ->label('اسم الباقة المعروض للمستخدمين')
+                            ->required()
+                            ->maxLength(80),
+
+                        TextInput::make('quarterly_web_price')
+                            ->label('سعر الباقة الربع سنوية (ج.م - EGP)')
+                            ->numeric()
+                            ->minValue(0.01)
+                            ->step(0.01)
+                            ->required()
+                            ->helperText('بحد أقصى منزلتين عشريتين.'),
+
+                        Toggle::make('quarterly_is_active')
+                            ->label('الباقة الربع سنوية متاحة للاشتراك عبر الموقع')
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make('إعدادات مرجعية وتدقيق التغيير')
+                    ->columns(2)
+                    ->schema([
                         TextInput::make('web_currency')
                             ->label('العملة المعتمدة')
                             ->disabled()
                             ->dehydrated(false),
 
-                        TextInput::make('subscription_duration_days')
-                            ->label('مدة الاشتراك (بالأيام)')
-                            ->disabled()
-                            ->dehydrated(false),
-
                         TextInput::make('google_play_product_id')
-                            ->label('معرف باقة Google Play (يُدار السعر عبر Google Play Console)')
+                            ->label('معرف باقة Google Play المرجعي')
                             ->disabled()
                             ->dehydrated(false),
 
                         Textarea::make('reason')
-                            ->label('سبب تعديل السعر (يُسجل في سجل النشاط الإداري)')
+                            ->label('سبب تعديل الباقات أو الأسعار (يُسجل في سجل النشاط الإداري)')
                             ->rows(2)
                             ->maxLength(500)
                             ->columnSpanFull(),
@@ -99,15 +138,30 @@ class ManageSubscriptionPricingPage extends Page implements HasForms
         $actor = Auth::guard('admin')->user();
         $setting = PaymentSetting::firstOrFail();
 
-        $setting->updateMonthlyWebPriceAtomically(
+        $setting->updatePlanPricingAtomically(
+            planCode: 'monthly_membership',
             newPrice: $validated['web_monthly_price'],
+            nameAr: $validated['monthly_name_ar'],
+            isActive: (bool) ($validated['monthly_is_active'] ?? true),
             adminId: $actor->id,
             ipAddress: request()?->ip(),
             reason: $validated['reason'] ?? null
         );
 
+        if (SubscriptionPlan::where('code', 'quarterly_membership')->exists()) {
+            $setting->updatePlanPricingAtomically(
+                planCode: 'quarterly_membership',
+                newPrice: $validated['quarterly_web_price'],
+                nameAr: $validated['quarterly_name_ar'],
+                isActive: (bool) ($validated['quarterly_is_active'] ?? true),
+                adminId: $actor->id,
+                ipAddress: request()?->ip(),
+                reason: $validated['reason'] ?? null
+            );
+        }
+
         Notification::make()
-            ->title('تم تحديث سعر الاشتراك الشهري عبر الويب وتسجيل العملية في سجل النشاط')
+            ->title('تم تحديث باقات الاشتراك والأسعار وتسجيل العملية في سجل النشاط')
             ->success()
             ->send();
     }

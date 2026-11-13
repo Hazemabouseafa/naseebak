@@ -216,7 +216,8 @@ class SubscriptionEntitlementService
                 ? $currentActiveWebSub->ends_at->copy()
                 : $now->copy();
 
-            $newEndsAt = $this->addCalendarMonths($baseStart, 1);
+            $monthsToGrant = max(1, $plan->effectiveMonths());
+            $newEndsAt = $this->addCalendarMonths($baseStart, $monthsToGrant);
 
             if ($currentActiveWebSub !== null && $currentActiveWebSub->channel === $lockedTx->gateway) {
                 $metadata = $currentActiveWebSub->verification_metadata ?? [];
@@ -228,6 +229,8 @@ class SubscriptionEntitlementService
                 $grantedPeriods[(string) $lockedTx->id] = [
                     'previous_ends_at' => $currentActiveWebSub->ends_at?->toIso8601String(),
                     'granted_ends_at' => $newEndsAt->toIso8601String(),
+                    'granted_months' => $monthsToGrant,
+                    'plan_code' => $plan->code,
                 ];
 
                 $metadata['last_granted_transaction_id'] = $lockedTx->id;
@@ -236,6 +239,7 @@ class SubscriptionEntitlementService
                 $metadata['granted_periods'] = $grantedPeriods;
 
                 $currentActiveWebSub->update([
+                    'subscription_plan_id' => $plan->id,
                     'status' => Subscription::STATUS_ACTIVE,
                     'ends_at' => $newEndsAt,
                     'cancelled_at' => null,
@@ -264,6 +268,8 @@ class SubscriptionEntitlementService
                             (string) $lockedTx->id => [
                                 'previous_ends_at' => $currentActiveWebSub?->ends_at?->toIso8601String(),
                                 'granted_ends_at' => $newEndsAt->toIso8601String(),
+                                'granted_months' => $monthsToGrant,
+                                'plan_code' => $plan->code,
                             ],
                         ],
                         'extended_from_previous_subscription_id' => $currentActiveWebSub?->id,
@@ -486,7 +492,14 @@ class SubscriptionEntitlementService
                 $recalculatedEnd = Carbon::parse($recordedPreviousEnd);
             } else {
                 $baseStart = $sub->starts_at ? $sub->starts_at->copy() : now();
-                $recalculatedEnd = $this->addCalendarMonths($baseStart, $remainingSucceededCount);
+                $remainingMonths = PaymentTransaction::with('plan')
+                    ->where('subscription_id', $sub->id)
+                    ->where('status', PaymentTransaction::STATUS_SUCCEEDED)
+                    ->where('signature_verified', true)
+                    ->get()
+                    ->sum(fn (PaymentTransaction $tx): int => max(1, $tx->plan?->effectiveMonths() ?? 1));
+
+                $recalculatedEnd = $this->addCalendarMonths($baseStart, max(1, (int) $remainingMonths));
             }
 
             if ($recalculatedEnd->lessThanOrEqualTo(now())) {

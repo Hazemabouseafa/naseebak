@@ -64,27 +64,31 @@ class PaymobGatewayService implements PaymentGatewayInterface
      */
     public function createPayment(User $user, SubscriptionPlan $plan, string $fixedPriceEgp): array
     {
-        $numericPrice = round((float) $fixedPriceEgp, 2);
-        if ($numericPrice <= 0) {
+        $amountMinorCents = trim($fixedPriceEgp) !== ''
+            ? SubscriptionPlan::parseDecimalToMinorUnits($fixedPriceEgp)
+            : $plan->effectivePriceMinor();
+
+        if ($amountMinorCents <= 0) {
             throw new DomainException('سعر الاشتراك غير صالح لإنشاء طلب دفع.');
         }
 
-        $amountMinorCents = (int) round($numericPrice * 100);
+        $fixedAmountDecimal = SubscriptionPlan::formatMinorUnitsToDecimal($amountMinorCents);
         $internalRef = 'NSB-PMB-' . strtoupper(Str::random(14));
 
         /** @var PaymentTransaction $transaction */
-        $transaction = DB::transaction(function () use ($user, $plan, $numericPrice, $amountMinorCents, $internalRef) {
+        $transaction = DB::transaction(function () use ($user, $plan, $fixedAmountDecimal, $amountMinorCents, $internalRef) {
             return PaymentTransaction::create([
                 'idempotency_key' => (string) Str::uuid(),
                 'internal_reference' => $internalRef,
                 'user_id' => $user->id,
                 'subscription_plan_id' => $plan->id,
                 'gateway' => Subscription::CHANNEL_PAYMOB,
-                'amount' => number_format($numericPrice, 2, '.', ''),
+                'amount' => $fixedAmountDecimal,
                 'amount_minor' => $amountMinorCents,
                 'currency' => 'EGP',
                 'status' => PaymentTransaction::STATUS_PENDING,
                 'signature_verified' => false,
+                'expires_at' => now()->addHours(2),
             ]);
         });
 
@@ -111,11 +115,15 @@ class PaymobGatewayService implements PaymentGatewayInterface
                 'currency' => 'EGP',
                 'payment_methods' => [$integrationId],
                 'special_reference' => $internalRef,
+                'redirection_url' => route('website.payment.return', ['reference' => $internalRef]),
+                'notification_url' => url('/api/v1/webhooks/paymob'),
                 'items' => [
                     [
                         'name' => $plan->name_ar,
                         'amount' => $amountMinorCents,
-                        'description' => 'اشتراك شهري في تطبيق نصيبك',
+                        'description' => $plan->effectiveMonths() > 1
+                            ? 'اشتراك في تطبيق نصيبك لمدة ' . $plan->effectiveMonths() . ' أشهر'
+                            : 'اشتراك شهري في تطبيق نصيبك',
                         'quantity' => 1,
                     ],
                 ],
@@ -311,6 +319,22 @@ class PaymobGatewayService implements PaymentGatewayInterface
                 ]);
 
                 $this->entitlementService->activateOrExtendFromVerifiedWebTransaction($lockedTx);
+            } elseif ($isPending && !$errorOccured) {
+                // Pending settlement reported by Paymob: keep pending without activating membership
+                if ($lockedTx->status !== PaymentTransaction::STATUS_SUCCEEDED) {
+                    $lockedTx->update([
+                        'gateway_transaction_id' => $lockedTx->gateway_transaction_id ?: $paymobTxId,
+                        'gateway_order_id' => $paymobOrderId ?: $lockedTx->gateway_order_id,
+                        'status' => PaymentTransaction::STATUS_PENDING,
+                        'signature_verified' => true,
+                        'verified_at' => now(),
+                        'gateway_response_summary' => [
+                            'paymob_tx_id' => $paymobTxId,
+                            'pending' => true,
+                            'success' => false,
+                        ],
+                    ]);
+                }
             } else {
                 // Failed payment: never activate subscription or overwrite an already succeeded order
                 if ($lockedTx->status !== PaymentTransaction::STATUS_SUCCEEDED) {

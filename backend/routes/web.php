@@ -3,6 +3,9 @@
 use App\Http\Controllers\Admin\AdminOperationsController;
 use App\Http\Controllers\Api\V1\HealthCheckController;
 use App\Http\Controllers\Web\AccountDeletionWebController;
+use App\Http\Controllers\Web\GoogleWebAuthController;
+use App\Http\Controllers\Web\WebsiteCheckoutController;
+use App\Http\Controllers\Web\WebsiteController;
 use App\Http\Controllers\Web\WebSubscriptionPortalController;
 use Illuminate\Support\Facades\Route;
 
@@ -11,15 +14,43 @@ use Illuminate\Support\Facades\Route;
 | Naseebak Web & Administration Routes
 |--------------------------------------------------------------------------
 | 1. Filament Admin Panel mounts at /admin using the 'admin' session guard.
-| 2. Separate Web Customer Subscription Portal mounts at /membership using
-|    Google OpenID Connect ('google_sub' matching) and the 'web' session guard.
+| 2. Official Website & Web Subscription Checkout use Google Sign-In
+|    ('google_sub' matching) and the 'web' session guard.
 */
 
-Route::get('/', fn () => response()->json([
-    'app' => 'نصيبك — Naseebak Platform',
-    'admin_dashboard' => url('/admin'),
-    'legal_delete_account' => url('/legal/delete-account'),
-]));
+Route::get('/', [WebsiteController::class, 'landing'])->name('website.home');
+Route::get('/support', [WebsiteController::class, 'support'])->name('website.support');
+Route::get('/plans', [WebsiteCheckoutController::class, 'plans'])->name('website.plans');
+
+// Website Google OAuth 2.0 Authentication
+Route::get('/login', [GoogleWebAuthController::class, 'showLogin'])->name('website.login');
+Route::get('/auth/google/redirect', [GoogleWebAuthController::class, 'redirect'])
+    ->middleware('throttle:30,1')
+    ->name('website.auth.google.redirect');
+Route::get('/auth/google/callback', [GoogleWebAuthController::class, 'callback'])
+    ->middleware('throttle:30,1')
+    ->name('website.auth.google.callback');
+Route::post('/auth/logout', [GoogleWebAuthController::class, 'logout'])
+    ->name('website.auth.logout');
+
+// Payment gateway browser return page (reads authoritative DB status only)
+Route::get('/payment/return/{reference}', [WebsiteCheckoutController::class, 'paymentReturn'])
+    ->name('website.payment.return');
+
+// Authenticated Customer Website Dashboard & Web Checkout
+Route::middleware(['auth:web', 'active_account'])->group(function () {
+    Route::get('/account', [WebsiteCheckoutController::class, 'account'])->name('website.account');
+    Route::get('/plans/{planCode}/checkout', [WebsiteCheckoutController::class, 'confirmOrder'])
+        ->name('website.checkout.confirm');
+    Route::post('/checkout', [WebsiteCheckoutController::class, 'createOrder'])
+        ->middleware('throttle:15,1')
+        ->name('website.checkout.store');
+    Route::get('/orders/{reference}/status', [WebsiteCheckoutController::class, 'orderStatus'])
+        ->name('website.orders.status');
+    Route::post('/orders/{reference}/cancel', [WebsiteCheckoutController::class, 'cancelOrder'])
+        ->middleware('throttle:15,1')
+        ->name('website.orders.cancel');
+});
 
 // Google Play Compliance & Legal Documentation
 Route::prefix('legal')->group(function () {
@@ -38,6 +69,10 @@ Route::prefix('legal')->group(function () {
         ->name('legal.privacy_policy');
     Route::view('/terms-of-service', 'legal.terms_of_service')
         ->name('legal.terms_of_service');
+    Route::get('/subscription-terms', [WebsiteController::class, 'subscriptionTerms'])
+        ->name('legal.subscription_terms');
+    Route::get('/refund-policy', [WebsiteController::class, 'refundPolicy'])
+        ->name('legal.refund_policy');
     Route::view('/child-safety', 'legal.child_safety')
         ->name('legal.child_safety');
 });
@@ -112,6 +147,9 @@ Route::prefix('admin/operations')->group(function () {
         Route::middleware('admin_active:super_admin')->group(function () {
             Route::put('/settings/pricing', [AdminOperationsController::class, 'updateSubscriptionPricing'])
                 ->name('admin.operations.settings.pricing');
+
+            Route::put('/settings/plans/{planCode}', [AdminOperationsController::class, 'updatePlanPricing'])
+                ->name('admin.operations.settings.plan_pricing');
 
             Route::put('/settings/payment-gateway', [AdminOperationsController::class, 'switchPaymentGateway'])
                 ->name('admin.operations.settings.payment_gateway');

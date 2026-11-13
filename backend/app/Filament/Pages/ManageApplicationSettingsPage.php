@@ -54,6 +54,7 @@ class ManageApplicationSettingsPage extends Page implements HasForms
             'maintenance_mode' => (bool) ($general['maintenance_mode'] ?? false),
             'support_email' => $general['support_email'] ?? 'support@naseebak.app',
             'support_whatsapp' => $general['support_whatsapp'] ?? '',
+            'google_play_store_url' => $general['google_play_store_url'] ?? '',
             'privacy_policy_url' => $urls['privacy_policy_url'] ?? url('/legal/privacy-policy'),
             'terms_of_service_url' => $urls['terms_of_service_url'] ?? url('/legal/terms-of-service'),
             'account_deletion_url' => $urls['account_deletion_url'] ?? url('/legal/delete-account'),
@@ -105,6 +106,14 @@ class ManageApplicationSettingsPage extends Page implements HasForms
                             ->label('رقم تواصل الدعم الفني (اختياري)')
                             ->maxLength(40),
 
+                        TextInput::make('google_play_store_url')
+                            ->label('رابط التطبيق الرسمي على Google Play (اختياري)')
+                            ->placeholder('https://play.google.com/store/apps/details?id=com.naseebak.app')
+                            ->url()
+                            ->nullable()
+                            ->maxLength(255)
+                            ->columnSpanFull(),
+
                         TextInput::make('privacy_policy_url')
                             ->label('رابط سياسة الخصوصية')
                             ->url()
@@ -144,6 +153,9 @@ class ManageApplicationSettingsPage extends Page implements HasForms
                         'maintenance_mode' => (bool) $validated['maintenance_mode'],
                         'support_email' => $validated['support_email'],
                         'support_whatsapp' => $validated['support_whatsapp'] ?? null,
+                        'google_play_store_url' => filled($validated['google_play_store_url'] ?? null)
+                            ? trim((string) $validated['google_play_store_url'])
+                            : null,
                     ],
                     'description_ar' => 'الإعدادات العامة للتطبيق وحالة الصيانة والتواصل مع الدعم',
                     'updated_by_admin_id' => $actor->id,

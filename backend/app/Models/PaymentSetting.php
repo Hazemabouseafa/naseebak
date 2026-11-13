@@ -27,6 +27,16 @@ class PaymentSetting extends Model
         'updated_by_admin_id',
     ];
 
+    public static function current(): self
+    {
+        return self::first() ?? new self([
+            'active_web_payment_gateway' => 'paymob',
+            'web_monthly_price' => '250.00',
+            'web_currency' => 'EGP',
+            'subscription_duration_days' => 30,
+        ]);
+    }
+
     protected function casts(): array
     {
         return [
@@ -129,22 +139,10 @@ class PaymentSetting extends Model
         ?string $ipAddress = null,
         ?string $reason = null
     ): void {
-        if (!is_numeric($newPrice)) {
-            throw new InvalidArgumentException('سعر الاشتراك الشهري يجب أن يكون رقماً صالحاً.');
-        }
+        $minorUnits = SubscriptionPlan::parseDecimalToMinorUnits($newPrice);
+        $formattedPrice = SubscriptionPlan::formatMinorUnitsToDecimal($minorUnits);
 
-        $numericPrice = (float) $newPrice;
-        if ($numericPrice <= 0) {
-            throw new InvalidArgumentException('سعر الاشتراك الشهري يجب أن يكون أكبر من الصفر.');
-        }
-
-        // Enforce maximum 2 decimal places precision
-        $formattedPrice = number_format(round($numericPrice, 2), 2, '.', '');
-        if (abs($numericPrice - (float) $formattedPrice) > 0.0001) {
-            throw new InvalidArgumentException('سعر الاشتراك الشهري يجب ألا يتجاوز منزلتين عشريتين.');
-        }
-
-        DB::transaction(function () use ($formattedPrice, $adminId, $ipAddress, $reason) {
+        DB::transaction(function () use ($formattedPrice, $minorUnits, $adminId, $ipAddress, $reason) {
             /** @var self $lockedSetting */
             $lockedSetting = self::where('id', $this->id)->lockForUpdate()->firstOrFail();
             $previousPrice = (string) $lockedSetting->web_monthly_price;
@@ -158,6 +156,7 @@ class PaymentSetting extends Model
             SubscriptionPlan::where('code', 'monthly_membership')
                 ->update([
                     'web_price_amount' => $formattedPrice,
+                    'price_minor' => $minorUnits,
                 ]);
 
             AdminAuditLog::create([
@@ -171,6 +170,7 @@ class PaymentSetting extends Model
                 ],
                 'new_values' => [
                     'web_monthly_price' => $formattedPrice,
+                    'price_minor' => $minorUnits,
                     'currency' => $lockedSetting->web_currency,
                 ],
                 'ip_address' => $ipAddress,
@@ -179,5 +179,131 @@ class PaymentSetting extends Model
 
             $this->refresh();
         });
+    }
+
+    /**
+     * Updates either monthly_membership or quarterly_membership plan price/title/status atomically
+     * using exact integer minor units without touching historical orders or Google Play products.
+     */
+    public function updatePlanPricingAtomically(
+        string $planCode,
+        float|string|int $newPrice,
+        ?string $nameAr,
+        ?bool $isActive,
+        int $adminId,
+        ?string $ipAddress = null,
+        ?string $reason = null
+    ): SubscriptionPlan {
+        if (!in_array($planCode, ['monthly_membership', 'quarterly_membership'], true)) {
+            throw new InvalidArgumentException("رمز الباقة غير مدعوم للتعديل عبر الموقع: {$planCode}");
+        }
+
+        $minorUnits = SubscriptionPlan::parseDecimalToMinorUnits($newPrice);
+        $formattedPrice = SubscriptionPlan::formatMinorUnitsToDecimal($minorUnits);
+
+        return DB::transaction(function () use ($planCode, $minorUnits, $formattedPrice, $nameAr, $isActive, $adminId, $ipAddress, $reason) {
+            /** @var self $lockedSetting */
+            $lockedSetting = self::where('id', $this->id)->lockForUpdate()->firstOrFail();
+
+            /** @var SubscriptionPlan $plan */
+            $plan = SubscriptionPlan::where('code', $planCode)->lockForUpdate()->firstOrFail();
+
+            $previousValues = [
+                'code' => $plan->code,
+                'name_ar' => $plan->name_ar,
+                'web_price_amount' => (string) $plan->web_price_amount,
+                'price_minor' => (int) $plan->effectivePriceMinor(),
+                'is_active' => (bool) $plan->is_active,
+            ];
+
+            $updates = [
+                'web_price_amount' => $formattedPrice,
+                'price_minor' => $minorUnits,
+            ];
+
+            if ($nameAr !== null && trim($nameAr) !== '') {
+                $updates['name_ar'] = trim($nameAr);
+            }
+
+            if ($isActive !== null) {
+                $updates['is_active'] = $isActive;
+            }
+
+            $plan->update($updates);
+
+            if ($planCode === 'monthly_membership') {
+                $lockedSetting->update([
+                    'web_monthly_price' => $formattedPrice,
+                    'updated_by_admin_id' => $adminId,
+                ]);
+            }
+
+            AdminAuditLog::create([
+                'administrator_id' => $adminId,
+                'action' => 'subscription_plan_pricing.updated',
+                'target_type' => SubscriptionPlan::class,
+                'target_id' => $plan->id,
+                'previous_values' => $previousValues,
+                'new_values' => [
+                    'code' => $plan->code,
+                    'name_ar' => $plan->name_ar,
+                    'web_price_amount' => (string) $plan->web_price_amount,
+                    'price_minor' => (int) $plan->price_minor,
+                    'is_active' => (bool) $plan->is_active,
+                ],
+                'ip_address' => $ipAddress,
+                'justification' => $reason ?: "تحديث تسعير الباقة ({$plan->code}) إلى {$formattedPrice} {$plan->web_price_currency}",
+            ]);
+
+            $this->refresh();
+
+            return $plan->fresh();
+        });
+    }
+
+    /**
+     * Non-secret diagnostic snapshot of configured web payment gateways.
+     */
+    public function gatewayDiagnostics(): array
+    {
+        $paymobMissing = [];
+        if (blank(config('naseebak.web_payments.paymob.api_key')) && blank(config('naseebak.web_payments.paymob.secret_key'))) {
+            $paymobMissing[] = 'PAYMOB_API_KEY / PAYMOB_SECRET_KEY';
+        }
+        if (blank(config('naseebak.web_payments.paymob.secret_key')) || blank(config('naseebak.web_payments.paymob.public_key'))) {
+            $paymobMissing[] = 'PAYMOB_SECRET_KEY / PAYMOB_PUBLIC_KEY (Intention API)';
+        }
+        if (blank(config('naseebak.web_payments.paymob.hmac_secret'))) {
+            $paymobMissing[] = 'PAYMOB_HMAC_SECRET';
+        }
+        if (blank(config('naseebak.web_payments.paymob.integration_id_card'))) {
+            $paymobMissing[] = 'PAYMOB_INTEGRATION_ID_CARD';
+        }
+
+        $shaMissing = [];
+        if (blank(config('naseebak.web_payments.sha7nawy.api_key'))) {
+            $shaMissing[] = 'SHA7NAWY_API_KEY';
+        }
+        if (blank(config('naseebak.web_payments.sha7nawy.merchant_id'))) {
+            $shaMissing[] = 'SHA7NAWY_MERCHANT_ID';
+        }
+        if (blank(config('naseebak.web_payments.sha7nawy.webhook_secret'))) {
+            $shaMissing[] = 'SHA7NAWY_WEBHOOK_SECRET';
+        }
+
+        return [
+            'paymob' => [
+                'configured' => $this->isGatewayConfigured('paymob'),
+                'missing_items' => $paymobMissing,
+                'status_label_ar' => $this->isGatewayConfigured('paymob') ? 'جاهزة ومفعّلة للربط' : 'بيانات الربط غير مكتملة في البيئة',
+                'notes_ar' => 'تعتمد على Paymob Intention API وتوقيع HMAC-SHA512 للتحقق من الـ Webhook.',
+            ],
+            'sha7nawy' => [
+                'configured' => $this->isGatewayConfigured('sha7nawy'),
+                'missing_items' => array_merge($shaMissing, ['Official Sha7nawy API & Webhook Specification']),
+                'status_label_ar' => 'بانتظار مواصفات الـ API الرسمية والاعتمادات (Sha7nawy)',
+                'notes_ar' => 'البوابة محمية بإغلاق آمن (Fail-Closed) ولن تصدر طلبات دفع وهمية قبل استلام التوثيق الرسمي.',
+            ],
+        ];
     }
 }

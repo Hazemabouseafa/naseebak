@@ -13,6 +13,8 @@ return [
     'google_auth' => [
         'android_client_id' => env('GOOGLE_ANDROID_CLIENT_ID', '520721691788-0fki6oqjcsjtk6g9qbo2ean3fj3cpeq2.apps.googleusercontent.com'),
         'web_client_id' => env('GOOGLE_WEB_CLIENT_ID', '520721691788-4ngp8rrm7g4foja1f3ql24bv2apdgcoo.apps.googleusercontent.com'),
+        'web_client_secret' => env('GOOGLE_WEB_CLIENT_SECRET'),
+        'web_redirect_uri' => env('GOOGLE_WEB_REDIRECT_URI'),
         'allowed_issuers' => [
             'accounts.google.com',
             'https://accounts.google.com',
@@ -23,6 +25,7 @@ return [
         'package_name' => env('GOOGLE_PLAY_PACKAGE_NAME', 'com.naseebak.app'),
         'service_account_json' => env('GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_PATH'),
         'monthly_subscription_id' => env('GOOGLE_PLAY_MONTHLY_SUBSCRIPTION_ID', 'naseebak_monthly_membership'),
+        'store_url' => env('GOOGLE_PLAY_STORE_URL'),
         'rtdn_oidc_audience' => env('GOOGLE_PLAY_RTDN_OIDC_AUDIENCE'),
         'rtdn_service_account_email' => env('GOOGLE_PLAY_RTDN_SERVICE_ACCOUNT_EMAIL'),
         'rtdn_oidc_public_key_pem' => env('GOOGLE_PLAY_RTDN_OIDC_PUBLIC_KEY_PEM'),

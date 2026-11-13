@@ -9,10 +9,10 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Seed initial payment settings (single active_web_payment_gateway configuration)
-        DB::table('payment_settings')->updateOrInsert(
-            ['id' => 1],
-            [
+        // 1. Seed initial payment settings if not already present (preserve existing admin configuration)
+        if (!DB::table('payment_settings')->where('id', 1)->exists()) {
+            DB::table('payment_settings')->insert([
+                'id' => 1,
                 'active_web_payment_gateway' => 'paymob',
                 'web_monthly_price' => 250.00,
                 'web_currency' => 'EGP',
@@ -22,30 +22,57 @@ class DatabaseSeeder extends Seeder
                 'sha7nawy_integration_status' => 'pending_credentials',
                 'created_at' => now(),
                 'updated_at' => now(),
-            ]
-        );
+            ]);
+        }
 
-        // 2. Seed monthly subscription plan
-        DB::table('subscription_plans')->updateOrInsert(
-            ['code' => 'monthly_membership'],
-            [
-                'name_ar' => 'العضوية الشهرية — نصيبك',
-                'description_ar' => 'تتيح لك العضوية الشهرية إرسال طلبات التعارف وبدء المحادثات الخاصة بعد قبول الطرف الآخر.',
+        // 2. Seed monthly & quarterly subscription plans if not already present (preserve admin pricing overrides)
+        if (!DB::table('subscription_plans')->where('code', 'monthly_membership')->exists()) {
+            DB::table('subscription_plans')->insert([
+                'code' => 'monthly_membership',
+                'name_ar' => 'الباقة الشهرية',
+                'description_ar' => 'اشتراك كامل المزايا لمدة شهر ميلادي واحد عبر الموقع الإلكتروني مع التفعيل التلقائي على التطبيق.',
                 'duration_days' => 30,
+                'duration_months' => 1,
                 'google_play_product_id' => config('naseebak.google_play.monthly_subscription_id', 'naseebak_monthly_membership'),
-                'web_price_amount' => 250.00,
+                'web_price_amount' => '250.00',
+                'price_minor' => 25000,
                 'web_price_currency' => 'EGP',
                 'is_active' => true,
+                'sort_order' => 1,
                 'features_ar' => json_encode([
-                    'البحث بجميع المعايير المتاحة',
+                    'البحث المتقدم بجميع المعايير المتاحة',
                     'إرسال طلبات التعارف للأعضاء',
                     'المحادثة الخاصة بعد موافقة الطرف الآخر',
                     'إدارة الاشتراك بسهولة وأمان',
                 ], JSON_UNESCAPED_UNICODE),
                 'created_at' => now(),
                 'updated_at' => now(),
-            ]
-        );
+            ]);
+        }
+
+        if (!DB::table('subscription_plans')->where('code', 'quarterly_membership')->exists()) {
+            DB::table('subscription_plans')->insert([
+                'code' => 'quarterly_membership',
+                'name_ar' => 'الباقة الربع سنوية',
+                'description_ar' => 'اشتراك كامل المزايا لمدة 3 أشهر ميلادية عبر الموقع الإلكتروني مع توفير واضح مقارنة بالباقة الشهرية.',
+                'duration_days' => 90,
+                'duration_months' => 3,
+                'google_play_product_id' => null,
+                'web_price_amount' => '600.00',
+                'price_minor' => 60000,
+                'web_price_currency' => 'EGP',
+                'is_active' => true,
+                'sort_order' => 2,
+                'features_ar' => json_encode([
+                    'تواصل كامل بعد الموافقة على طلبات التعارف لمدة 3 أشهر',
+                    'استخدام البحث المتقدم ومعايير التوافق بدون قيود العضوية المجانية',
+                    'ظهور أولوية وشارة العضو المشترك خلال فترة التفعيل',
+                    'توفير واضح مقارنة بالتجديد الشهري المتكرر',
+                ], JSON_UNESCAPED_UNICODE),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
         // 3. Seed core application settings
         $defaultSettings = [

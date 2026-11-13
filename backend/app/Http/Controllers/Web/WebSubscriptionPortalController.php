@@ -8,7 +8,8 @@ use App\Models\PaymentTransaction;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Services\Auth\GoogleIdTokenVerifierService;
-use App\Services\Payment\PaymentGatewayManager;
+use App\Services\Auth\GoogleUserResolverService;
+use App\Services\Payment\WebsiteCheckoutService;
 use App\Services\Subscription\SubscriptionEntitlementService;
 use DomainException;
 use Illuminate\Auth\AuthenticationException;
@@ -32,8 +33,9 @@ class WebSubscriptionPortalController extends Controller
 {
     public function __construct(
         private readonly GoogleIdTokenVerifierService $googleVerifier,
+        private readonly GoogleUserResolverService $userResolver,
         private readonly SubscriptionEntitlementService $entitlementService,
-        private readonly PaymentGatewayManager $gatewayManager,
+        private readonly WebsiteCheckoutService $checkoutService,
     ) {}
 
     /**
@@ -53,14 +55,14 @@ class WebSubscriptionPortalController extends Controller
             'entitlement' => $user ? $this->entitlementService->getEntitlementPayload($user) : null,
             'plan' => $plan,
             'setting' => $setting,
-            'googleWebClientId' => config('naseebak.auth.google_web_client_id'),
+            'googleWebClientId' => config('naseebak.google_auth.web_client_id'),
         ]);
     }
 
     /**
      * POST /membership/auth/google
      *
-     * Authenticates an existing member on the web customer portal using a verified Google ID token
+     * Authenticates a member on the web customer portal using a verified Google ID token
      * matched strictly by Google's stable `sub` identifier (`google_sub`).
      */
     public function loginWithGoogle(Request $request): JsonResponse
@@ -71,31 +73,22 @@ class WebSubscriptionPortalController extends Controller
 
         try {
             $verified = $this->googleVerifier->verifyIdToken($validated['id_token']);
+            $resolved = $this->userResolver->resolveOrCreateMember($verified);
+            $user = $resolved['user'];
         } catch (AuthenticationException $e) {
             return response()->json([
                 'status' => 'error',
                 'code' => 'INVALID_GOOGLE_TOKEN',
                 'message' => $e->getMessage(),
             ], 401);
-        }
+        } catch (DomainException $e) {
+            $status = in_array((int) $e->getCode(), [403, 409, 422], true) ? (int) $e->getCode() : 403;
 
-        // Link strictly via Google's stable subject identifier ('google_sub'), NEVER by email alone
-        $user = User::where('google_sub', $verified['sub'])->first();
-
-        if (!$user) {
             return response()->json([
                 'status' => 'error',
-                'code' => 'MEMBER_ACCOUNT_NOT_FOUND',
-                'message' => 'يرجى إنشاء حسابك أولاً عبر تطبيق نصيبك قبل إدارة الاشتراك عبر البوابة الإلكترونية.',
-            ], 404);
-        }
-
-        if ($user->account_status !== 'active') {
-            return response()->json([
-                'status' => 'error',
-                'code' => 'ACCOUNT_NOT_ACTIVE',
-                'message' => 'هذا الحساب موقوف أو غير نشط حالياً.',
-            ], 403);
+                'code' => 'GOOGLE_LOGIN_REJECTED',
+                'message' => $e->getMessage(),
+            ], $status);
         }
 
         Auth::guard('web')->login($user);
@@ -167,7 +160,8 @@ class WebSubscriptionPortalController extends Controller
      */
     public function createCheckoutSession(Request $request): JsonResponse
     {
-        $request->validate([
+        $validated = $request->validate([
+            'plan_code' => ['nullable', 'string', 'in:monthly_membership,quarterly_membership'],
             'user_id' => ['prohibited'],
             'amount' => ['prohibited'],
             'price' => ['prohibited'],
@@ -187,23 +181,10 @@ class WebSubscriptionPortalController extends Controller
             ], 401);
         }
 
-        $setting = PaymentSetting::first();
-        $plan = SubscriptionPlan::where('code', 'monthly_membership')->where('is_active', true)->first();
-
-        if (!$setting || !$plan) {
-            return response()->json([
-                'status' => 'error',
-                'code' => 'PLAN_UNAVAILABLE',
-                'message' => 'باقة الاشتراك الشهري غير متاحة حالياً.',
-            ], 503);
-        }
-
-        // Fixed server-side price snapshot at order creation time
-        $fixedPriceEgp = (string) $setting->web_monthly_price;
+        $planCode = $validated['plan_code'] ?? 'monthly_membership';
 
         try {
-            $gateway = $this->gatewayManager->getActiveWebGateway();
-            $checkoutResult = $gateway->createPayment($user, $plan, $fixedPriceEgp);
+            $checkoutResult = $this->checkoutService->initiateCheckout($user, $planCode);
         } catch (DomainException $e) {
             return response()->json([
                 'status' => 'error',

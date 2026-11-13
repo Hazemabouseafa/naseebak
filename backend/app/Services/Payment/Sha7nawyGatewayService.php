@@ -42,27 +42,31 @@ class Sha7nawyGatewayService implements PaymentGatewayInterface
 
     public function createPayment(User $user, SubscriptionPlan $plan, string $fixedPriceEgp): array
     {
-        $numericPrice = round((float) $fixedPriceEgp, 2);
-        if ($numericPrice <= 0) {
+        $amountMinorCents = trim($fixedPriceEgp) !== ''
+            ? SubscriptionPlan::parseDecimalToMinorUnits($fixedPriceEgp)
+            : $plan->effectivePriceMinor();
+
+        if ($amountMinorCents <= 0) {
             throw new DomainException('سعر الاشتراك غير صالح لإنشاء طلب دفع.');
         }
 
-        $amountMinorCents = (int) round($numericPrice * 100);
+        $fixedAmountDecimal = SubscriptionPlan::formatMinorUnitsToDecimal($amountMinorCents);
         $internalRef = 'NSB-SH7-' . strtoupper(Str::random(14));
 
         // Persist the internal pending transaction snapshot safely
-        DB::transaction(function () use ($user, $plan, $numericPrice, $amountMinorCents, $internalRef) {
+        DB::transaction(function () use ($user, $plan, $fixedAmountDecimal, $amountMinorCents, $internalRef) {
             PaymentTransaction::create([
                 'idempotency_key' => (string) Str::uuid(),
                 'internal_reference' => $internalRef,
                 'user_id' => $user->id,
                 'subscription_plan_id' => $plan->id,
                 'gateway' => Subscription::CHANNEL_SHA7NAWY,
-                'amount' => number_format($numericPrice, 2, '.', ''),
+                'amount' => $fixedAmountDecimal,
                 'amount_minor' => $amountMinorCents,
                 'currency' => 'EGP',
                 'status' => PaymentTransaction::STATUS_PENDING,
                 'signature_verified' => false,
+                'expires_at' => now()->addHours(2),
             ]);
         });
 

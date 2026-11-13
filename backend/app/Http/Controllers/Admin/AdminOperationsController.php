@@ -383,6 +383,57 @@ class AdminOperationsController extends Controller
     }
 
     /**
+     * Updates a specific subscription plan's price, display title, or active status (Super Admin only).
+     */
+    public function updatePlanPricing(Request $request, string $planCode): JsonResponse
+    {
+        if (!in_array($planCode, ['monthly_membership', 'quarterly_membership'], true)) {
+            return response()->json([
+                'status' => 'error',
+                'code' => 'UNSUPPORTED_PLAN_CODE',
+                'message' => 'رمز الباقة غير مدعوم للتعديل.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'web_price_amount' => ['required', 'numeric', 'gt:0', 'regex:/^\d+(\.\d{1,2})?$/'],
+            'name_ar' => ['nullable', 'string', 'max:80'],
+            'is_active' => ['nullable', 'boolean'],
+            'reason' => ['nullable', 'string', 'max:500'],
+        ], [
+            'web_price_amount.gt' => 'سعر الباقة يجب أن يكون أكبر من الصفر.',
+            'web_price_amount.regex' => 'سعر الباقة يجب أن يكون رقماً صالحاً بحد أقصى منزلتين عشريتين.',
+        ]);
+
+        /** @var Administrator $actor */
+        $actor = Auth::guard('admin')->user();
+        $setting = PaymentSetting::firstOrFail();
+
+        $plan = $setting->updatePlanPricingAtomically(
+            planCode: $planCode,
+            newPrice: $validated['web_price_amount'],
+            nameAr: $validated['name_ar'] ?? null,
+            isActive: array_key_exists('is_active', $validated) ? (bool) $validated['is_active'] : null,
+            adminId: $actor->id,
+            ipAddress: $request->ip(),
+            reason: $validated['reason'] ?? null
+        );
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'code' => $plan->code,
+                'name_ar' => $plan->name_ar,
+                'duration_months' => $plan->effectiveMonths(),
+                'web_price_amount' => (string) $plan->web_price_amount,
+                'price_minor' => $plan->effectivePriceMinor(),
+                'currency' => $plan->web_price_currency,
+                'is_active' => (bool) $plan->is_active,
+            ],
+        ]);
+    }
+
+    /**
      * Atomically switches the single active web payment gateway ('paymob' or 'sha7nawy') (Super Admin only).
      */
     public function switchPaymentGateway(Request $request): JsonResponse

@@ -5,12 +5,12 @@
 #
 # COOLIFY-MANAGED DOMAIN ROUTING:
 # External HTTPS/WSS routing is managed natively by Coolify's reverse proxy:
-# - Laravel API:    naseebak-api.hazem.my  → naseebak-staging-api (Port 8080)
-# - Laravel Reverb: naseebak-ws.hazem.my   → naseebak-staging-reverb (Port 8081)
+# - Laravel Website & API: https://naseebak.hazem.my, https://naseebak-api.hazem.my → naseebak-staging-api (Port 8080)
+# - Laravel Reverb:        https://naseebak-ws.hazem.my                                → naseebak-staging-reverb (Port 8081)
 #
 # In the Coolify UI (under Application > Domains / FQDN):
-# - Set API domain:    https://naseebak-api.hazem.my (Container Port 8080)
-# - Set Reverb domain: https://naseebak-ws.hazem.my (Container Port 8081)
+# - Set Domains / FQDN: https://naseebak.hazem.my,https://naseebak-api.hazem.my (Container Port 8080)
+# - Set Reverb domain:  https://naseebak-ws.hazem.my (Container Port 8081)
 #
 # Both services connect to the external 'coolify' network and expose their
 # respective ports (8080 and 8081) without conflicting manual Traefik labels.
@@ -99,8 +99,17 @@ services:
       REVERB_SCHEME: http
       GOOGLE_ANDROID_CLIENT_ID: ${STAGING_GOOGLE_ANDROID_CLIENT_ID:-520721691788-0fki6oqjcsjtk6g9qbo2ean3fj3cpeq2.apps.googleusercontent.com}
       GOOGLE_WEB_CLIENT_ID: ${STAGING_GOOGLE_WEB_CLIENT_ID:-520721691788-4ngp8rrm7g4foja1f3ql24bv2apdgcoo.apps.googleusercontent.com}
+      GOOGLE_WEB_CLIENT_SECRET: ${STAGING_GOOGLE_WEB_CLIENT_SECRET:-}
+      GOOGLE_WEB_REDIRECT_URI: ${STAGING_GOOGLE_WEB_REDIRECT_URI:-https://naseebak.hazem.my/auth/google/callback}
+      GOOGLE_PLAY_STORE_URL: ${STAGING_GOOGLE_PLAY_STORE_URL:-}
       GOOGLE_PLAY_PACKAGE_NAME: ${STAGING_GOOGLE_PLAY_PACKAGE_NAME:-com.naseebak.app}
       GOOGLE_PLAY_MONTHLY_SUBSCRIPTION_ID: ${STAGING_GOOGLE_PLAY_MONTHLY_SUBSCRIPTION_ID:-naseebak_monthly_membership}
+      PAYMOB_API_KEY: ${STAGING_PAYMOB_API_KEY:-}
+      PAYMOB_SECRET_KEY: ${STAGING_PAYMOB_SECRET_KEY:-}
+      PAYMOB_PUBLIC_KEY: ${STAGING_PAYMOB_PUBLIC_KEY:-}
+      PAYMOB_HMAC_SECRET: ${STAGING_PAYMOB_HMAC_SECRET:-}
+      PAYMOB_INTEGRATION_ID_CARD: ${STAGING_PAYMOB_INTEGRATION_ID_CARD:-}
+      PAYMOB_IFRAME_ID: ${STAGING_PAYMOB_IFRAME_ID:-}
       MAIL_MAILER: ${STAGING_MAIL_MAILER:-log}
       MAIL_HOST: ${STAGING_MAIL_HOST:-127.0.0.1}
       MAIL_PORT: "${STAGING_MAIL_PORT:-587}"

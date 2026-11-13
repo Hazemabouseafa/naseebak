@@ -14,6 +14,8 @@ class PaymentTransaction extends Model
     public const STATUS_PENDING = 'pending';
     public const STATUS_SUCCEEDED = 'succeeded';
     public const STATUS_FAILED = 'failed';
+    public const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_EXPIRED = 'expired';
     public const STATUS_REFUNDED = 'refunded';
     public const STATUS_DISPUTED = 'disputed';
 
@@ -33,6 +35,8 @@ class PaymentTransaction extends Model
         'signature_verified',
         'verified_at',
         'paid_at',
+        'cancelled_at',
+        'expires_at',
         'gateway_response_summary',
     ];
 
@@ -44,6 +48,8 @@ class PaymentTransaction extends Model
             'signature_verified' => 'boolean',
             'verified_at' => 'datetime',
             'paid_at' => 'datetime',
+            'cancelled_at' => 'datetime',
+            'expires_at' => 'datetime',
             'gateway_response_summary' => 'array',
         ];
     }
