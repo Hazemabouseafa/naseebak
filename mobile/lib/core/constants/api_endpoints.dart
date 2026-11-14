@@ -91,4 +91,11 @@ class ApiEndpoints {
   static String notificationDelete(int notificationId) =>
       '/notifications/$notificationId';
   static const String notificationPreferences = '/notification-preferences';
+
+  // Phase 20: Member Support Inquiries & Complaints
+  static const String supportTickets = '/support/tickets';
+  static String supportTicketDetail(int ticketId) =>
+      '/support/tickets/$ticketId';
+  static String supportTicketReplies(int ticketId) =>
+      '/support/tickets/$ticketId/replies';
 }

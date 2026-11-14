@@ -6,6 +6,8 @@ import '../../../matchmaking/presentation/screens/matchmaking_requests_screen.da
 import '../../../messaging/data/repositories/messaging_repository.dart';
 import '../../../messaging/presentation/screens/chat_screen.dart';
 import '../../../subscription/presentation/screens/subscription_screen.dart';
+import '../../../support/presentation/screens/support_ticket_detail_screen.dart';
+import '../../../support/presentation/screens/support_tickets_screen.dart';
 import '../../presentation/screens/notification_center_screen.dart';
 import '../models/notification_model.dart';
 import 'push_notification_service.dart';
@@ -37,6 +39,7 @@ class NotificationNavigationService {
     'conversation',
     'subscription',
     'notification_center',
+    'support_ticket',
   };
 
   const NotificationNavigationService({required Ref ref}) : _ref = ref;
@@ -179,6 +182,32 @@ class NotificationNavigationService {
             builder: (_) => const SubscriptionScreen(),
           ),
         );
+      }
+      return const NotificationNavigationResult(navigated: true);
+    }
+
+    // 4b. Handle support ticket reply deep link
+    if (actionRoute == 'support_ticket') {
+      final rawTicketId =
+          routingMetadata['ticket_id'] ?? fallbackReferenceId;
+      final ticketId = rawTicketId is int
+          ? rawTicketId
+          : int.tryParse('${rawTicketId ?? ''}');
+
+      if (context.mounted) {
+        if (ticketId != null && ticketId > 0) {
+          await Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => SupportTicketDetailScreen(ticketId: ticketId),
+            ),
+          );
+        } else {
+          await Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const SupportTicketsScreen(),
+            ),
+          );
+        }
       }
       return const NotificationNavigationResult(navigated: true);
     }

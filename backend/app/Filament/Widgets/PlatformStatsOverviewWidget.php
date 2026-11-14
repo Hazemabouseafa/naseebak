@@ -61,6 +61,11 @@ class PlatformStatsOverviewWidget extends BaseWidget
             UserReport::STATUS_UNDER_REVIEW,
         ])->count();
 
+        $openSupportTickets = \App\Models\SupportTicket::whereIn(
+            'status',
+            \App\Models\SupportTicket::OPEN_STATUSES
+        )->count();
+
         $pendingMatchmakingRequests = MatchmakingRequest::where('status', MatchmakingRequest::STATUS_PENDING)->count();
         $acceptedMatchmakingRequests = MatchmakingRequest::where('status', MatchmakingRequest::STATUS_ACCEPTED)->count();
         $rejectedMatchmakingRequests = MatchmakingRequest::where('status', MatchmakingRequest::STATUS_REJECTED)->count();
@@ -74,6 +79,7 @@ class PlatformStatsOverviewWidget extends BaseWidget
             'expired_subscriptions' => $expiredSubscriptions,
             'verified_payments_total' => round($verifiedPaymentsSum, 2),
             'open_reports' => $openReports,
+            'open_support_tickets' => $openSupportTickets,
             'pending_matchmaking_requests' => $pendingMatchmakingRequests,
             'accepted_matchmaking_requests' => $acceptedMatchmakingRequests,
             'rejected_matchmaking_requests' => $rejectedMatchmakingRequests,
@@ -125,6 +131,9 @@ class PlatformStatsOverviewWidget extends BaseWidget
             Stat::make('البلاغات المفتوحة', number_format($metrics['open_reports']))
                 ->description('بلاغات جديدة أو قيد المراجعة')
                 ->color($metrics['open_reports'] > 0 ? 'danger' : 'success'),
+            Stat::make('الاستفسارات والشكاوى المفتوحة', number_format($metrics['open_support_tickets']))
+                ->description('استفسارات وشكاوى بانتظار الرد')
+                ->color($metrics['open_support_tickets'] > 0 ? 'warning' : 'success'),
         ];
     }
 }

@@ -16,6 +16,7 @@ import '../../../subscription/presentation/providers/subscription_provider.dart'
 import '../../../subscription/presentation/screens/my_subscription_screen.dart';
 import '../../../subscription/presentation/screens/subscription_screen.dart';
 import '../../../subscription/presentation/widgets/subscription_status_widget.dart';
+import '../../../support/presentation/screens/support_tickets_screen.dart';
 
 /// Screen 07 (Batch 2B) — My Profile Screen (`ملفي الشخصي`)
 /// واجهة العضو الشخصية وإدارة حسابه بتصميم نَصِيبُكَ الفاخر (Astra Design System)
@@ -673,6 +674,20 @@ class _MyProfileScreenState extends ConsumerState<MyProfileScreen> {
                                     MaterialPageRoute<void>(
                                       builder: (_) =>
                                           const NotificationPreferencesScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                              const Divider(height: 16),
+                              _buildSettingsRow(
+                                key: const Key('open_support_tickets_btn'),
+                                icon: Icons.support_agent_rounded,
+                                title: 'الاستفسارات والشكاوى',
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute<void>(
+                                      builder: (_) =>
+                                          const SupportTicketsScreen(),
                                     ),
                                   );
                                 },

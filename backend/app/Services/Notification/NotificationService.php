@@ -1131,12 +1131,44 @@ class NotificationService
         ];
     }
 
+    /**
+     * Notifies an active member when administration replies to their support inquiry or complaint.
+     */
+    public function notifySupportTicketReplied(
+        User $user,
+        \App\Models\SupportTicket $ticket,
+        \App\Models\SupportTicketReply $reply
+    ): ?NotificationRecord {
+        if ($user->account_status !== 'active') {
+            return null;
+        }
+
+        $typeLabel = $ticket->type === \App\Models\SupportTicket::TYPE_COMPLAINT ? 'شكوتك' : 'استفسارك';
+        $preview = mb_substr(trim((string) $reply->body), 0, 120);
+
+        return $this->createAndDispatchNotification(
+            recipient: $user,
+            eventType: NotificationRecord::TYPE_SUPPORT_REPLY,
+            titleAr: "رد الإدارة على {$typeLabel} ({$ticket->ticket_number})",
+            bodyAr: $preview !== '' ? $preview : 'تم إضافة رد جديد من إدارة نَصِيبُكَ.',
+            deduplicationKey: "support_ticket_reply:{$ticket->id}:{$reply->id}",
+            actionRoute: NotificationRecord::ROUTE_SUPPORT_TICKET,
+            referenceType: 'support_ticket',
+            referenceId: $ticket->id,
+            routingMetadata: [
+                'ticket_id' => $ticket->id,
+                'reference_id' => $ticket->id,
+            ]
+        );
+    }
+
     private function sanitizeRoutingMetadata(array $metadata): array
     {
         $allowedKeys = [
             'request_id',
             'conversation_id',
             'reference_id',
+            'ticket_id',
             'tab',
         ];
 

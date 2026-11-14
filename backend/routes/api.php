@@ -163,6 +163,14 @@ Route::prefix('v1')->group(function () {
         Route::patch('/notification-preferences', [NotificationPreferenceController::class, 'update'])
             ->middleware('throttle:30,1');
 
+        // Phase 20: Member Inquiries & Complaints (Support Tickets)
+        Route::get('/support/tickets', [\App\Http\Controllers\Api\V1\SupportTicketController::class, 'index']);
+        Route::post('/support/tickets', [\App\Http\Controllers\Api\V1\SupportTicketController::class, 'store'])
+            ->middleware('throttle:10,1');
+        Route::get('/support/tickets/{supportTicket}', [\App\Http\Controllers\Api\V1\SupportTicketController::class, 'show']);
+        Route::post('/support/tickets/{supportTicket}/replies', [\App\Http\Controllers\Api\V1\SupportTicketController::class, 'reply'])
+            ->middleware('throttle:20,1');
+
         // Phase 5 Paid-Entitlement Gate Check
         Route::middleware(['profile_completed', 'subscribed'])->group(function () {
             Route::post('/subscription/authorized-contact-check', fn () => response()->json([

@@ -21,6 +21,7 @@ class NotificationRecord extends Model
     public const TYPE_SUBSCRIPTION_EXPIRING_SOON = 'subscription_expiring_soon';
     public const TYPE_SUBSCRIPTION_EXPIRED = 'subscription_expired';
     public const TYPE_ADMIN_ANNOUNCEMENT = 'admin_announcement';
+    public const TYPE_SUPPORT_REPLY = 'support_reply';
 
     public const ROUTE_MATCHMAKING_INCOMING = 'matchmaking_incoming';
     public const ROUTE_MATCHMAKING_ACCEPTED = 'matchmaking_accepted';
@@ -28,6 +29,7 @@ class NotificationRecord extends Model
     public const ROUTE_CONVERSATION = 'conversation';
     public const ROUTE_SUBSCRIPTION = 'subscription';
     public const ROUTE_NOTIFICATION_CENTER = 'notification_center';
+    public const ROUTE_SUPPORT_TICKET = 'support_ticket';
 
     public const ALLOWED_ROUTES = [
         self::ROUTE_MATCHMAKING_INCOMING,
@@ -36,6 +38,7 @@ class NotificationRecord extends Model
         self::ROUTE_CONVERSATION,
         self::ROUTE_SUBSCRIPTION,
         self::ROUTE_NOTIFICATION_CENTER,
+        self::ROUTE_SUPPORT_TICKET,
     ];
 
     public const DELIVERY_QUEUED = 'queued';

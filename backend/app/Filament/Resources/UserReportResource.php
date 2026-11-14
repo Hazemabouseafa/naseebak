@@ -24,9 +24,9 @@ class UserReportResource extends Resource
 {
     protected static ?string $model = UserReport::class;
     protected static ?string $navigationIcon = 'heroicon-o-shield-exclamation';
-    protected static ?string $navigationLabel = 'البلاغات والشكاوى';
-    protected static ?string $modelLabel = 'بلاغ';
-    protected static ?string $pluralModelLabel = 'البلاغات والشكاوى';
+    protected static ?string $navigationLabel = 'بلاغات الأعضاء';
+    protected static ?string $modelLabel = 'بلاغ عضو';
+    protected static ?string $pluralModelLabel = 'بلاغات الأعضاء';
     protected static ?string $navigationGroup = AdminPanelProvider::NAV_GROUP_USERS;
     protected static ?int $navigationSort = 4;
 

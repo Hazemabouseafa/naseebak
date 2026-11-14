@@ -505,6 +505,11 @@ class _NotificationCenterScreenState
         bgColor = const Color(0xFFFEF9EE);
         iconColor = AppColors.goldAccent;
         break;
+      case 'support_reply':
+        icon = Icons.support_agent_rounded;
+        bgColor = const Color(0xFFECFDF5);
+        iconColor = AppColors.success;
+        break;
       default:
         icon = Icons.notifications_rounded;
         bgColor = AppColors.surfaceSubtleBlue;

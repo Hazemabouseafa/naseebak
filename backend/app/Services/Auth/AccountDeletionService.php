@@ -80,6 +80,14 @@ class AccountDeletionService
             })->where('status', '!=', Conversation::STATUS_CLOSED)
                 ->update(['status' => Conversation::STATUS_CLOSED]);
 
+            // Close open support tickets belonging to the deleted user so they do not stay pending for admins
+            \App\Models\SupportTicket::where('user_id', $user->id)
+                ->where('status', '!=', \App\Models\SupportTicket::STATUS_CLOSED)
+                ->update([
+                    'status' => \App\Models\SupportTicket::STATUS_CLOSED,
+                    'closed_at' => now(),
+                ]);
+
             // G. De-identify and update user profile
             if ($user->profile) {
                 $user->profile->update([

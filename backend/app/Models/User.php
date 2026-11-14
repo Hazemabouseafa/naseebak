@@ -180,4 +180,9 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(MatchmakingRequest::class, 'recipient_id');
     }
+
+    public function supportTickets(): HasMany
+    {
+        return $this->hasMany(SupportTicket::class, 'user_id');
+    }
 }
