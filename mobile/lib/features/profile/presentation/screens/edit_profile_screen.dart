@@ -475,6 +475,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               children: [
                                 const _FieldLabel('المؤهل الدراسي'),
                                 DropdownButtonFormField<String>(
+                                  isExpanded: true,
                                   value: _workingDraft.educationLevel,
                                   decoration: InputDecoration(
                                     filled: true,

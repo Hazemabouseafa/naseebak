@@ -382,6 +382,7 @@ class _AdvancedSearchScreenState extends ConsumerState<AdvancedSearchScreen> {
                         children: [
                           const _SearchLabel('المؤهل الدراسي'),
                           DropdownButtonFormField<String?>(
+                            isExpanded: true,
                             value: _draftFilters.educationLevel,
                             items: const [
                               DropdownMenuItem<String?>(

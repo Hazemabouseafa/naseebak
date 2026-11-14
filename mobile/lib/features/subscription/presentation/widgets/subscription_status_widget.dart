@@ -125,24 +125,27 @@ class SubscriptionStatusWidget extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              if (!isActive && onSubscribeTap != null) ...[
-                Expanded(
-                  child: ElevatedButton(
-                    key: const Key('status_widget_subscribe_btn'),
-                    onPressed: onSubscribeTap,
-                    child: const Text('اشترك الآن'),
+              Expanded(
+                child: ElevatedButton.icon(
+                  key: const Key('status_widget_manage_btn'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryBlue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: onManageTap ?? onSubscribeTap,
+                  icon: const Icon(Icons.badge_outlined, size: 18),
+                  label: const Text(
+                    'عضويتي في نَصِيبُكَ',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13.5,
+                    ),
                   ),
                 ),
-                if (onManageTap != null) const SizedBox(width: 10),
-              ],
-              if (onManageTap != null)
-                Expanded(
-                  child: OutlinedButton(
-                    key: const Key('status_widget_manage_btn'),
-                    onPressed: onManageTap,
-                    child: const Text('اشتراكي'),
-                  ),
-                ),
+              ),
             ],
           ),
         ],

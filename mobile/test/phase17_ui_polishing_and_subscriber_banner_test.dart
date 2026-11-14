@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:naseebak_mobile/core/design_system/naseebak_design_system.dart';
-import 'package:naseebak_mobile/core/theme/app_theme.dart';
 import 'package:naseebak_mobile/features/discovery/data/models/member_profile_model.dart';
 import 'package:naseebak_mobile/features/discovery/data/models/search_preferences_model.dart';
 import 'package:naseebak_mobile/features/discovery/data/repositories/discovery_repository.dart';
@@ -15,7 +14,6 @@ import 'package:naseebak_mobile/features/discovery/presentation/screens/member_p
 import 'package:naseebak_mobile/features/messaging/data/models/conversation_model.dart';
 import 'package:naseebak_mobile/features/messaging/data/repositories/messaging_repository.dart';
 import 'package:naseebak_mobile/features/messaging/data/services/realtime_messaging_service.dart';
-import 'package:naseebak_mobile/features/messaging/presentation/providers/messaging_provider.dart';
 import 'package:naseebak_mobile/features/messaging/presentation/screens/conversations_screen.dart';
 import 'package:naseebak_mobile/features/profile/data/models/profile_model.dart';
 import 'package:naseebak_mobile/features/profile/data/repositories/profile_repository.dart';

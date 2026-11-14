@@ -234,7 +234,7 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                 ),
                 const SizedBox(height: 14),
                 const Text(
-                  'يتطلب التواصل اشتراكًا شهريًا',
+                  'يتطلب التواصل عضوية فعّالة',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: NaseebakTypography.fontFamily,
@@ -245,7 +245,7 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'يمكنك تصفح الملفات والبحث وإضافة الأعضاء إلى المفضلة مجانًا، أما إرسال طلب التعارف وبدء التواصل فيتطلب عضوية شهرية نشطة وموثقة في نَصِيبُكَ.',
+                  'يمكنك تصفح الملفات والبحث وإضافة الأعضاء إلى المفضلة مجانًا، أما إرسال طلب التعارف وبدء التواصل فيتطلب عضوية فعّالة وموثقة في نَصِيبُكَ.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: NaseebakTypography.fontFamily,
@@ -257,7 +257,7 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                 const SizedBox(height: 18),
                 NaseebakPrimaryButton(
                   buttonKey: const Key('sheet_open_subscription_screen_btn'),
-                  label: 'اشترك الآن',
+                  label: 'عرض تفاصيل العضوية',
                   onPressed: () async {
                     Navigator.of(sheetContext).pop();
                     await Navigator.of(context).push(
@@ -305,7 +305,7 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
           isEnabled: true,
         ),
       'subscription_required' => (
-          label: 'يتطلب التواصل اشتراكًا شهريًا',
+          label: 'يتطلب التواصل عضوية فعّالة',
           icon: Icons.workspace_premium_outlined,
           isEnabled: true,
         ),
@@ -322,7 +322,7 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
       _ => (
           label: member.viewerCanSendMatchRequests
               ? 'إرسال طلب تعارف'
-              : 'يتطلب التواصل اشتراكًا شهريًا',
+              : 'يتطلب التواصل عضوية فعّالة',
           icon: Icons.favorite_border_rounded,
           isEnabled: true,
         ),
@@ -433,6 +433,7 @@ class _MemberProfileScreenState extends ConsumerState<MemberProfileScreen> {
                       ),
                       const SizedBox(height: 6),
                       DropdownButtonFormField<String>(
+                        isExpanded: true,
                         value: selectedCategory,
                         items: const [
                           DropdownMenuItem(

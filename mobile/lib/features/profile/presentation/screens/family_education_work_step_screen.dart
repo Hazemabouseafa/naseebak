@@ -101,6 +101,7 @@ class _FamilyEducationWorkStepScreenState
                 ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
+                  isExpanded: true,
                   value: draft.educationLevel,
                   items: const [
                     DropdownMenuItem(

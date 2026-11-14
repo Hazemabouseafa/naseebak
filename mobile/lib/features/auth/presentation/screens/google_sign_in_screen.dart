@@ -160,7 +160,7 @@ class GoogleSignInScreen extends ConsumerWidget {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                         ),
                         child: authState.isLoading
                             ? const SizedBox(
@@ -171,29 +171,33 @@ class GoogleSignInScreen extends ConsumerWidget {
                                   color: AppColors.primaryBlue,
                                 ),
                               )
-                            : const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'G',
-                                    style: TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w900,
-                                      fontFamily: 'sans-serif',
-                                      color: Color(0xFF4285F4),
+                            : const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'G',
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w900,
+                                        fontFamily: 'sans-serif',
+                                        color: Color(0xFF4285F4),
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(width: 12),
-                                  Text(
-                                    AppStrings.continueWithGoogle,
-                                    style: TextStyle(
-                                      fontFamily: NaseebakTypography.fontFamily,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
+                                    SizedBox(width: 12),
+                                    Text(
+                                      AppStrings.continueWithGoogle,
+                                      style: TextStyle(
+                                        fontFamily: NaseebakTypography.fontFamily,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.textPrimary,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                       ),
                     ),

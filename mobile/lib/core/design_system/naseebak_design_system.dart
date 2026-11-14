@@ -1129,7 +1129,7 @@ class NaseebakPremiumBanner extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'انضم لعضوية نصيبك بلس',
+                      'تعرّف على مزايا العضوية',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -1152,7 +1152,7 @@ class NaseebakPremiumBanner extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: const Text(
-                    'اكتشف الاشتراك',
+                    'عضويتي',
                     style: TextStyle(
                       fontFamily: NaseebakTypography.fontFamily,
                       fontSize: 12.5,

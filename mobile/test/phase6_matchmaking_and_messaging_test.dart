@@ -346,7 +346,10 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('يتطلب التواصل اشتراكًا شهريًا'), findsOneWidget);
+        expect(
+          find.text('يتطلب التواصل عضوية فعّالة'),
+          findsOneWidget,
+        );
 
         await tester.tap(find.byKey(const Key('member_send_request_btn')));
         await tester.pumpAndSettle();

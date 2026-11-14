@@ -189,7 +189,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 }
               },
               child: const Text(
-                'اشترك الآن',
+                'عرض العضوية',
                 style: TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
@@ -323,6 +323,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     const Text('سبب البلاغ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
                     const SizedBox(height: 6),
                     DropdownButtonFormField<String>(
+                      isExpanded: true,
                       value: selectedCategory,
                       items: const [
                         DropdownMenuItem(value: 'inappropriate_behavior', child: Text('سلوك أو محتوى غير لائق')),
@@ -620,7 +621,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       const SizedBox(width: 8),
                       const Expanded(
                         child: Text(
-                          'إرسال الرسائل يتطلب اشتراكًا شهريًا نشطًا.',
+                          'إرسال الرسائل يتطلب عضوية فعّالة.',
                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                         ),
                       ),
@@ -639,7 +640,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             await ref.read(messagingProvider.notifier).resynchronizeAfterReconnection();
                           }
                         },
-                        child: const Text('اشترك الآن', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                        child: const Text('عرض العضوية', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
                       ),
                     ],
                   ),

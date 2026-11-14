@@ -362,10 +362,10 @@ class MemberCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(18),
                               ),
                             ),
-                            child: Stack(
+                            child: const Stack(
                               alignment: Alignment.center,
                               children: [
-                                const Row(
+                                Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
@@ -386,7 +386,7 @@ class MemberCard extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                                const Opacity(
+                                Opacity(
                                   opacity: 0.0,
                                   child: Text('عرض الملف'),
                                 ),

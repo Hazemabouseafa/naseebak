@@ -145,6 +145,7 @@ class _ReportMemberDialogState extends ConsumerState<ReportMemberDialog> {
               ),
               const SizedBox(height: 6),
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 value: _selectedCategory,
                 decoration: InputDecoration(
                   filled: true,

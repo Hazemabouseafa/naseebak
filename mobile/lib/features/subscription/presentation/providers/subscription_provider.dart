@@ -102,7 +102,8 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
         _billingClient.purchaseStream.listen(_handlePurchaseUpdates);
   }
 
-  /// Loads subscription status, plans, history, and localized Google Play pricing.
+  /// Loads subscription status and history from the authoritative Laravel API.
+  /// Follows Google Play consumption-only guidelines without querying in-app billing.
   Future<void> loadSubscriptionCenter() async {
     state = state.copyWith(
       isLoading: true,
@@ -117,22 +118,11 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       final history = await _repository.fetchSubscriptionHistory();
 
       final primaryPlan = plans.isNotEmpty ? plans.first : null;
-      StoreProductPricingModel? storeProduct;
-
-      if (primaryPlan != null) {
-        try {
-          storeProduct = await _billingClient.querySubscriptionProduct(
-            primaryPlan.googlePlayProductId,
-          );
-        } catch (_) {
-          storeProduct = null;
-        }
-      }
 
       final resolvedPhase = _resolveUiPhase(
         entitlement: overview.entitlement,
         currentSub: overview.currentSubscription,
-        storeProduct: storeProduct,
+        storeProduct: null,
       );
 
       state = state.copyWith(
@@ -141,7 +131,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
         entitlement: overview.entitlement,
         currentSubscription: overview.currentSubscription,
         activePlan: primaryPlan,
-        storePricing: storeProduct,
+        storePricing: null,
         history: history,
         googlePlayManageUrl: overview.googlePlayManageUrl,
       );
@@ -154,8 +144,9 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     }
   }
 
-  /// Refreshes only the backend entitlement state.
+  /// Refreshes only the backend entitlement state from the authoritative Laravel API.
   Future<void> refreshEntitlementOnly() async {
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
       final overview = await _repository.fetchSubscriptionOverview();
       final history = await _repository.fetchSubscriptionHistory();
@@ -163,7 +154,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       final resolvedPhase = _resolveUiPhase(
         entitlement: overview.entitlement,
         currentSub: overview.currentSubscription,
-        storeProduct: state.storePricing,
+        storeProduct: null,
       );
 
       state = state.copyWith(
@@ -177,6 +168,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       );
     } catch (e) {
       state = state.copyWith(
+        isLoading: false,
         errorMessage: e.toString().replaceFirst('Exception: ', ''),
       );
     }
@@ -348,22 +340,24 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     }
 
     if (currentSub != null) {
-      if (currentSub.status == 'pending') {
+      if (currentSub.status == 'pending' ||
+          entitlement.subscriptionStatus == 'pending') {
         return SubscriptionUiPhase.purchasePending;
       }
       if (currentSub.status == 'expired' ||
           currentSub.status == 'refunded' ||
           currentSub.status == 'revoked' ||
-          currentSub.status == 'on_hold') {
+          currentSub.status == 'on_hold' ||
+          entitlement.subscriptionStatus == 'expired') {
         return SubscriptionUiPhase.expiredSubscription;
       }
     }
 
-    if (storeProduct == null) {
-      return SubscriptionUiPhase.productUnavailable;
+    if (entitlement.subscriptionStatus == 'expired') {
+      return SubscriptionUiPhase.expiredSubscription;
     }
 
-    return SubscriptionUiPhase.availablePlan;
+    return SubscriptionUiPhase.noSubscription;
   }
 
   @override
